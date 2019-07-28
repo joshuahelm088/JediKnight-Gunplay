@@ -23,6 +23,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 // cg_event.c -- handle entity events at snapshot or playerstate transitions
 
+#include "g_local.h"
 #include "cg_local.h"
 #include "cg_media.h"
 #include "FxScheduler.h"
@@ -30,6 +31,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "../game/anims.h"
 
 extern void CG_TryPlayCustomSound( vec3_t origin, int entityNum, soundChannel_t channel, const char *soundName, int customSoundSet );
+extern void G_SoundOnEnt(gentity_t *ent, soundChannel_t channel, const char *soundPath);
 
 //==========================================================================
 
@@ -755,6 +757,28 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		cent->pe.painDirection ^= 1;
 		}
 		break;
+
+    case EV_PAIN_ARMOR:
+    {
+        const int armor = es->eventParm;
+
+        if (cent->gent && cent->gent->NPC && (cent->gent->NPC->aiFlags & NPCAI_DIE_ON_IMPACT))
+        {
+            return;
+        }
+
+        DEBUGNAME("EV_PAIN_ARMOR");
+        /*if (cg.time - cent->pe.painTime < 50) {
+        return;
+        }*/
+
+        G_SoundOnEnt(cent->gent, CHAN_BODY, "sound/items/respawn1.wav");
+
+        // save pain time for programitic twitch animation
+        cent->pe.painTime = cg.time;
+        cent->pe.painDirection ^= 1;
+    }
+    break;
 
 	case EV_DEATH1:
 	case EV_DEATH2:

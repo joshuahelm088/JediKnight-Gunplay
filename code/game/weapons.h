@@ -184,6 +184,7 @@ typedef struct ammoData_s
 #define	BLASTER_NPC_DAMAGE_EASY		6
 #define	BLASTER_NPC_DAMAGE_NORMAL	12 // 14
 #define	BLASTER_NPC_DAMAGE_HARD		16 // 18
+#define BLASTER_BOLT_SIZE			4.3f
 
 // Tenloss Disruptor
 //----------

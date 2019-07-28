@@ -1584,6 +1584,7 @@ public:
 	vec3_t		velocity;
 	int			weaponTime;
 	int			weaponChargeTime;
+    qboolean	weaponSemiAutoFired;
 	int			rechargeTime;		// for the phaser
 	int			gravity;
 	int			leanofs;

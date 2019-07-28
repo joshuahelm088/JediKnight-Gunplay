@@ -1295,6 +1295,7 @@ static void CG_RegisterGraphics( void ) {
 
 	//Models & Shaders
 	cgs.media.damageBlendBlobShader	= cgi_R_RegisterShader( "gfx/misc/borgeyeflare" );
+    cgs.media.damageArmorBlendBlobShader = cgi_R_RegisterShader("gfx/misc/armor_flare");
 
 	cg.loadLCARSStage = 6;
 

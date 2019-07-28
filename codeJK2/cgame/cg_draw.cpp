@@ -543,8 +543,8 @@ static void CG_DrawArmor(int x,int y)
 	//	Outer Armor circular
 	memcpy(calcColor, colorTable[CT_HUD_GREEN], sizeof(vec4_t));
 
-	hold = ps->stats[STAT_ARMOR]-(ps->stats[STAT_MAX_HEALTH]/2);
-	armorPercent = (float) hold/(ps->stats[STAT_MAX_HEALTH]/2);
+	hold = ps->stats[STAT_ARMOR]-(ps->stats[STAT_MAX_ARMOR]/2);
+	armorPercent = (float) hold/(ps->stats[STAT_MAX_ARMOR]/2);
 	if (armorPercent <0)
 	{
 		armorPercent = 0;
@@ -562,7 +562,7 @@ static void CG_DrawArmor(int x,int y)
 	}
 	else
 	{
-		armorPercent = (float) ps->stats[STAT_ARMOR]/(ps->stats[STAT_MAX_HEALTH]/2);
+		armorPercent = (float) ps->stats[STAT_ARMOR]/(ps->stats[STAT_MAX_ARMOR]/2);
 	}
 	memcpy(calcColor, colorTable[CT_HUD_GREEN], sizeof(vec4_t));
 	calcColor[0] *= armorPercent;

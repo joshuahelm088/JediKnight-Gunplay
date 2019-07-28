@@ -272,7 +272,7 @@ void NPC_ChoosePainAnimation( gentity_t *self, gentity_t *other, vec3_t point, i
 		}
 		else
 		{
-			pain_chance = NPC_GetPainChance( self, damage );
+            pain_chance = 1.0;// NPC_GetPainChance(self, damage);
 		}
 		if ( self->client->NPC_class == CLASS_DESANN )
 		{

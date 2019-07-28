@@ -104,6 +104,10 @@ void WP_FireBryarPistol( gentity_t *ent, qboolean alt_fire )
 //		damage *= 2;
 //	}
 
+    // Make it easier to hit things
+    VectorSet(missile->maxs, BRYAR_BOLT_SIZE, BRYAR_BOLT_SIZE, BRYAR_BOLT_SIZE);
+    VectorScale(missile->maxs, -1, missile->mins);
+
 	missile->damage = damage;
 	missile->dflags = DAMAGE_DEATH_KNOCKBACK;
 

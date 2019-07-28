@@ -95,6 +95,9 @@ void WP_FireBlasterMissile( gentity_t *ent, vec3_t start, vec3_t dir, qboolean a
 //		}
 //	}
 
+    VectorSet(missile->maxs, BLASTER_BOLT_SIZE, BLASTER_BOLT_SIZE, BLASTER_BOLT_SIZE);
+    VectorScale(missile->maxs, -1, missile->mins);
+
 	missile->damage = damage;
 	missile->dflags = DAMAGE_DEATH_KNOCKBACK;
 	if ( altFire )

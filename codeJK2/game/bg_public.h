@@ -332,6 +332,7 @@ typedef enum {
 	EV_DEMP2_ALT_IMPACT,
 
 	EV_PAIN,
+    EV_PAIN_ARMOR,
 	EV_DEATH1,
 	EV_DEATH2,
 	EV_DEATH3,

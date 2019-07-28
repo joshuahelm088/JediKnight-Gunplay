@@ -2450,10 +2450,10 @@ static void Q3_SetArmor( int entID, int data )
 
 	ent->client->ps.stats[STAT_ARMOR] = data;
 	if ( ent->s.number == 0 )
-	{//clamp armor to max_health
-		if ( ent->client->ps.stats[STAT_ARMOR] > ent->client->ps.stats[STAT_MAX_HEALTH] )
+	{//clamp armor to max armor
+		if ( ent->client->ps.stats[STAT_ARMOR] > ent->client->ps.stats[STAT_MAX_ARMOR] )
 		{
-			ent->client->ps.stats[STAT_ARMOR] = ent->client->ps.stats[STAT_MAX_HEALTH];
+			ent->client->ps.stats[STAT_ARMOR] = ent->client->ps.stats[STAT_MAX_ARMOR];
 		}
 	}
 }

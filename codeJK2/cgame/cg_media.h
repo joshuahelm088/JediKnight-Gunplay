@@ -174,6 +174,7 @@ typedef struct {
 	qhandle_t	wakeMarkShader;
 
 	qhandle_t	damageBlendBlobShader;
+    qhandle_t	damageArmorBlendBlobShader;
 
 	// fonts...
 	//
