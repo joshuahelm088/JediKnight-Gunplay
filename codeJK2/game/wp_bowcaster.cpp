@@ -122,7 +122,10 @@ static void WP_BowcasterMainFire( gentity_t *ent )
 		missile->splashRadius = weaponData[WP_BOWCASTER].splashRadius;
 
 		// we don't want it to bounce
-		missile->bounceCount = 0;
+		//missile->bounceCount = 0;
+
+		missile->s.eFlags |= EF_BOUNCE;
+		missile->bounceCount = 6;
 		ent->client->sess.missionStats.shotsFired++;
 	}
 }
@@ -170,7 +173,7 @@ static void WP_BowcasterAltFire( gentity_t *ent )
 //	}
 
 	missile->s.eFlags |= EF_BOUNCE;
-	missile->bounceCount = 3;
+	missile->bounceCount = 6;
 
 	missile->damage = damage;
 	missile->dflags = DAMAGE_DEATH_KNOCKBACK;

@@ -47,6 +47,9 @@ static void WP_RepeaterMainFire( gentity_t *ent, vec3_t dir )
 	missile->classname = "repeater_proj";
 	missile->s.weapon = WP_REPEATER;
 
+	VectorSet(missile->maxs, REPEATER_SIZE, REPEATER_SIZE, REPEATER_SIZE);
+	VectorScale(missile->maxs, -1, missile->mins);
+
 	// Do the damages
 	if ( ent->s.number != 0 )
 	{

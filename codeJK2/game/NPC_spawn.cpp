@@ -495,11 +495,11 @@ int NPC_WeaponsForTeam( team_t team, int spawnflags, const char *NPC_type )
 		}
 		if ( Q_stricmp( "impofficer", NPC_type ) == 0 )
 		{
-			return ( 1 << WP_BLASTER);
+			return ( 1 << WP_BLASTER_PISTOL);
 		}
 		if ( Q_stricmp( "impcommander", NPC_type ) == 0 )
 		{
-			return ( 1 << WP_BLASTER);
+			return ( 1 << WP_BLASTER_PISTOL);
 		}
 		if (( Q_stricmp( "probe", NPC_type ) == 0 ) || ( Q_stricmp( "seeker", NPC_type ) == 0 ))
 		{

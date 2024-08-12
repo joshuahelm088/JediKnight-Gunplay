@@ -54,6 +54,7 @@ void NPC_Probe_Precache(void)
 	G_EffectIndex( "env/med_explode2" );
 	G_EffectIndex( "probeexplosion1");
 	G_EffectIndex( "bryar/muzzle_flash" );
+	G_EffectIndex("bluepsparks");
 
 	RegisterItem( FindItemForAmmo( AMMO_BLASTER ));
 	RegisterItem( FindItemForWeapon( WP_BRYAR_PISTOL ) );
@@ -195,7 +196,7 @@ ImperialProbe_Strafe
 -------------------------
 */
 
-#define HUNTER_STRAFE_VEL	256
+#define HUNTER_STRAFE_VEL	128//256
 #define HUNTER_STRAFE_DIS	200
 #define HUNTER_UPWARD_PUSH	32
 
@@ -489,7 +490,10 @@ void NPC_Probe_Pain( gentity_t *self, gentity_t *inflictor, gentity_t *other, ve
 			self->s.powerups |= ( 1 << PW_SHOCKED );
 			self->client->ps.powerups[PW_SHOCKED] = level.time + 3000;
 
-			self->NPC->localState = LSTATE_DROP;
+			//self->NPC->localState = LSTATE_DROP;
+			self->NPC->localState = LSTATE_SPINNING;
+			TIMER_Set(self, "shocked", Q_irand(6000, 8000));
+			TIMER_Set(self, "droidspark", Q_irand(100, 500));
 		} 
 	}
 	else
@@ -570,6 +574,8 @@ ImperialProbe_Wait
 */
 void ImperialProbe_Wait(void)
 {
+	vec3_t sparkDir = { 0,0,1 };
+
 	if ( NPCInfo->localState == LSTATE_DROP )
 	{
 		vec3_t endPos;
@@ -585,6 +591,24 @@ void ImperialProbe_Wait(void)
 			G_Damage(NPC, NPC->enemy, NPC->enemy, NULL, NULL, 2000, 0,MOD_UNKNOWN); 
 		} 
 	}
+	else if (NPCInfo->localState == LSTATE_SPINNING)
+	{
+		vec3_t sparkPos;
+		VectorSet(sparkPos, NPC->currentOrigin[0], NPC->currentOrigin[1], NPC->currentOrigin[2] + 64);
+
+		NPC->s.loopSound = 0;
+
+		if (TIMER_Done(NPC, "shocked"))
+		{
+			NPCInfo->localState = LSTATE_DROP;
+		}
+
+		if (TIMER_Done(NPC, "droidspark"))
+		{
+			TIMER_Set(NPC, "droidspark", Q_irand(100, 500));
+			G_PlayEffect("bluesparks", sparkPos, sparkDir);
+		}
+	}
 
 	NPC_UpdateAngles( qtrue, qtrue );
 }
@@ -597,7 +621,11 @@ NPC_BSImperialProbe_Default
 void NPC_BSImperialProbe_Default( void )
 {
 
-	if ( NPC->enemy )
+	if (NPCInfo->localState == LSTATE_SPINNING)
+	{
+		ImperialProbe_Wait();
+	}
+	else if ( NPC->enemy )
 	{
 		NPCInfo->goalEntity = NPC->enemy;
 		ImperialProbe_AttackDecision();

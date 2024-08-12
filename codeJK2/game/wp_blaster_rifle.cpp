@@ -59,6 +59,9 @@ static void WP_FireBlasterMissile( gentity_t *ent, vec3_t start, vec3_t dir, qbo
 	missile->classname = "blaster_proj";
 	missile->s.weapon = WP_BLASTER;
 
+	VectorSet(missile->maxs, BLASTER_BOLT_SIZE, BLASTER_BOLT_SIZE, BLASTER_BOLT_SIZE);
+	VectorScale(missile->maxs, -1, missile->mins);
+
 	// Do the damages
 	if ( ent->s.number != 0 )
 	{

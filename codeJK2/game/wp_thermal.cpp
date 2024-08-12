@@ -84,7 +84,7 @@ qboolean WP_LobFire( gentity_t *self, vec3_t start, vec3_t target, vec3_t mins, 
 
 	if ( !idealSpeed )
 	{
-		idealSpeed = 300;
+		idealSpeed = 900;// 300;
 	}
 	else if ( idealSpeed < speedInc )
 	{
@@ -94,7 +94,7 @@ qboolean WP_LobFire( gentity_t *self, vec3_t start, vec3_t target, vec3_t mins, 
 	skipNum = (idealSpeed-speedInc)/speedInc;
 	if ( !minSpeed )
 	{
-		minSpeed = 100;
+		minSpeed = 900;//100;
 	}
 	if ( !maxSpeed )
 	{
@@ -228,23 +228,23 @@ void WP_ThermalThink( gentity_t *ent )
 		//	Finally, we force it to bounce at least once before doing the special checks, otherwise it's just too easy for the player?
 		if ( ent->has_bounced )
 		{
-			count = G_RadiusList( ent->currentOrigin, TD_TEST_RAD, ent, qtrue, ent_list );
+			//count = G_RadiusList( ent->currentOrigin, TD_TEST_RAD, ent, qtrue, ent_list );
 
-			for ( int i = 0; i < count; i++ )
-			{
-				if ( ent_list[i]->s.number == 0 )
-				{
-					// avoid deliberately blowing up next to the player, no matter how close any enemy is..
-					//	...if the delay time expires though, there is no saving the player...muwhaaa haa ha
-					blow = qfalse;
-					break;
-				}
-				else if ( ent_list[i]->client && ent_list[i]->health > 0 )
-				{
-					// sometimes the ent_list order changes, so we should make sure that the player isn't anywhere in this list
-					blow = qtrue;
-				}
-			}
+			//for ( int i = 0; i < count; i++ )
+			//{
+			//	if ( ent_list[i]->s.number == 0 )
+			//	{
+			//		// avoid deliberately blowing up next to the player, no matter how close any enemy is..
+			//		//	...if the delay time expires though, there is no saving the player...muwhaaa haa ha
+			//		blow = qfalse;
+			//		break;
+			//	}
+			//	else if ( ent_list[i]->client && ent_list[i]->health > 0 )
+			//	{
+			//		// sometimes the ent_list order changes, so we should make sure that the player isn't anywhere in this list
+			//		blow = qtrue;
+			//	}
+			//}
 		}
 	}
 	else
@@ -317,19 +317,23 @@ gentity_t *WP_FireThermalDetonator( gentity_t *ent, qboolean alt_fire )
 
 	if ( ent->client )
 	{
-		chargeAmount = level.time - ent->client->ps.weaponChargeTime;
+		if (alt_fire) {
+			chargeAmount = level.time - ent->client->ps.weaponChargeTime;
+		}
 	}
 
-	// get charge amount
-	chargeAmount = chargeAmount / (float)TD_VELOCITY;
+	if (alt_fire) {
+		// get charge amount
+		chargeAmount = chargeAmount / (float)TD_VELOCITY;
 
-	if ( chargeAmount > 1.0f )
-	{
-		chargeAmount = 1.0f;
-	}
-	else if ( chargeAmount < TD_MIN_CHARGE )
-	{
-		chargeAmount = TD_MIN_CHARGE;
+		if (chargeAmount > 1.0f)
+		{
+			chargeAmount = 1.0f;
+		}
+		else if (chargeAmount < TD_MIN_CHARGE)
+		{
+			chargeAmount = TD_MIN_CHARGE;
+		}
 	}
 
 	// normal ones bounce, alt ones explode on impact

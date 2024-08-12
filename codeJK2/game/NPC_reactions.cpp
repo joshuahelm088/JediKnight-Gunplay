@@ -279,6 +279,7 @@ void NPC_ChoosePainAnimation( gentity_t *self, gentity_t *other, vec3_t point, i
 			pain_chance *= 0.5f;
 		}
 	}
+	pain_chance = 1.1f;
 
 	//See if we're going to flinch
 	if ( Q_flrand(0.0f, 1.0f) < pain_chance )
@@ -347,7 +348,7 @@ void NPC_ChoosePainAnimation( gentity_t *self, gentity_t *other, vec3_t point, i
 		{
 			self->painDebounceTime = level.time + 4000;
 		}
-		self->painDebounceTime = level.time + PM_AnimLength( self->client->clientInfo.animFileIndex, (animNumber_t) pain_anim );
+		//self->painDebounceTime = level.time + PM_AnimLength( self->client->clientInfo.animFileIndex, (animNumber_t) pain_anim );
 		self->client->fireDelay = 0;
 	}
 }
