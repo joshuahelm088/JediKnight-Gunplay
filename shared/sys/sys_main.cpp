@@ -564,7 +564,8 @@ void *Sys_LoadSPGameDll( const char *name, GetGameAPIProc **GetGameAPI )
 	if (!libHandle) {
 		char *basepath = Cvar_VariableString( "fs_basepath" );
 		char *homepath = Cvar_VariableString( "fs_homepath" );
-		char *cdpath = Cvar_VariableString( "fs_cdpath" );
+		char* cdpath = Cvar_VariableString("fs_cdpath");
+		char* debugpath = Cvar_VariableString("fs_debugpath");
 		char *gamedir = Cvar_VariableString( "fs_game" );
 #ifdef MACOS_X
         char *apppath = Cvar_VariableString( "fs_apppath" );
@@ -577,6 +578,7 @@ void *Sys_LoadSPGameDll( const char *name, GetGameAPIProc **GetGameAPI )
 #endif
 			basepath,
 			cdpath,
+			debugpath,
 		};
 		size_t numPaths = ARRAY_LEN( searchPaths );
 
