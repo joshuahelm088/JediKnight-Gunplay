@@ -172,6 +172,7 @@ typedef struct ammoData_s
 #define BRYAR_PISTOL_VEL			3350 // 1800
 #define BRYAR_PISTOL_DAMAGE			50// 14
 #define BRYAR_CHARGE_UNIT			200.0f	// bryar charging gives us one more unit every 200ms--if you change this, you'll have to do the same in bg_pmove
+#define BRYAR_BOLT_SIZE				5
 
 // E11 Blaster
 //---------
@@ -185,7 +186,7 @@ typedef struct ammoData_s
 #define	BLASTER_NPC_DAMAGE_EASY		6
 #define	BLASTER_NPC_DAMAGE_NORMAL	12 // 14
 #define	BLASTER_NPC_DAMAGE_HARD		16 // 18
-#define BLASTER_BOLT_SIZE			1
+#define BLASTER_BOLT_SIZE			5
 
 // Tenloss Disruptor
 //----------
@@ -210,9 +211,9 @@ typedef struct ammoData_s
 #define	BOWCASTER_NPC_DAMAGE_HARD	36
 #define BOWCASTER_SPLASH_DAMAGE		0
 #define BOWCASTER_SPLASH_RADIUS		0
-#define BOWCASTER_SIZE				6//3
+#define BOWCASTER_SIZE				8//3
 
-#define BOWCASTER_ALT_SPREAD		5.0f
+#define BOWCASTER_ALT_SPREAD		2.2f//5.0f
 #define BOWCASTER_VEL_RANGE			0.3f
 #define BOWCASTER_CHARGE_UNIT		200.0f	// bowcaster charging gives us one more unit every 200ms--if you change this, you'll have to do the same in bg_pmove
 
@@ -225,7 +226,7 @@ typedef struct ammoData_s
 #define	REPEATER_NPC_DAMAGE_EASY	2
 #define	REPEATER_NPC_DAMAGE_NORMAL	4
 #define	REPEATER_NPC_DAMAGE_HARD	6
-#define	REPEATER_SIZE				1
+#define	REPEATER_SIZE				3//1
 
 #define REPEATER_ALT_SIZE				4	// half of bbox size
 #define	REPEATER_ALT_DAMAGE				60
@@ -252,11 +253,11 @@ typedef struct ammoData_s
 
 // Golan Arms Flechette
 //---------
-#define FLECHETTE_SHOTS				8//10
-#define FLECHETTE_SPREAD			2.5f//4.0f
-#define FLECHETTE_DAMAGE			10//15
+#define FLECHETTE_SHOTS				6//10
+#define FLECHETTE_SPREAD			2.95f//4.0f
+#define FLECHETTE_DAMAGE			12//15
 #define FLECHETTE_VEL				3500
-#define FLECHETTE_SIZE				1.75f//1.5f
+#define FLECHETTE_SIZE				2.1f//1.5f
 
 #define FLECHETTE_ALT_DAMAGE		20
 #define FLECHETTE_ALT_SPLASH_DAM	20
@@ -271,7 +272,7 @@ typedef struct ammoData_s
 
 // Personal Rocket Launcher
 //---------
-#define	ROCKET_VELOCITY				900
+#define	ROCKET_VELOCITY				1600//900
 #define	ROCKET_DAMAGE				100
 #define	ROCKET_SPLASH_DAMAGE		100
 #define	ROCKET_SPLASH_RADIUS		160

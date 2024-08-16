@@ -1240,45 +1240,49 @@ This doesn't actually affect the camera's info, but passed information instead
 -------------------------
 */
 
-void CGCam_UpdateShake( vec3_t origin, vec3_t angles )
-{
-	vec3_t	moveDir;
-	int i;
-	float	intensity_scale, intensity;
+void VectorLerp(float t, const vec3_t start, const vec3_t end, vec3_t result) {
+	for (int i = 0; i < 3; i++) {
+		result[i] = start[i] + t * (end[i] - start[i]);
+	}
+}
 
-	if ( client_camera.shake_duration <= 0 )
-		return;
+void CGCam_UpdateShake(vec3_t origin, vec3_t angles) {
+	static vec3_t shakeOffset = { 0, 0, 0 };
+	vec3_t targetOffset, lerpedOffset;
+	float intensity_scale, intensity;
+	const float progressRate = 0.035f; // Adjust the progress rate to control how quickly it lerps towards the target
+	const float snapBackRate = 0.025f;
 
-	if ( cg.time > ( client_camera.shake_start + client_camera.shake_duration ) )
-	{
+	// Check if shake has ended
+	if (cg.time > (client_camera.shake_start + client_camera.shake_duration)) {
 		client_camera.shake_intensity = 0;
 		client_camera.shake_duration = 0;
 		client_camera.shake_start = 0;
+
+		// Lerp shakeOffset back to zero smoothly when the shake ends
+		VectorLerp(snapBackRate, shakeOffset, vec3_origin, shakeOffset);
+		VectorAdd(angles, shakeOffset, angles);
+
 		return;
 	}
 
 	//intensity_scale now also takes into account FOV with 90.0 as normal
 	intensity_scale = 1.0f - ( (float) ( cg.time - client_camera.shake_start ) / (float) client_camera.shake_duration ) * (((client_camera.FOV+client_camera.FOV2)/2.0f)/90.0f);
-
+	intensity_scale *= (1/progressRate);
 	intensity = client_camera.shake_intensity * intensity_scale;
 
-	for ( i = 0; i < 3; i++ )
-	{
-		moveDir[i] = ( Q_flrand(-1.0f, 1.0f) * intensity );
+	// Generate a new random target offset within a defined intensity range
+	for (int i = 0; i < 2; i++) {  // No ROLL, only apply to X and Y axes
+		targetOffset[i] = Q_flrand(-1.0f, 1.0f) * intensity;
 	}
+	targetOffset[2] = 0;
 
-	//FIXME: Lerp
+	// Lerp smoothly towards the new target offset
+	VectorLerp(progressRate, shakeOffset, targetOffset, lerpedOffset);
 
-	//Move the camera
-	VectorAdd( origin, moveDir, origin );
-
-	for ( i=0; i < 2; i++ ) // Don't do ROLL
-		moveDir[i] = ( Q_flrand(-1.0f, 1.0f) * intensity );
-
-	//FIXME: Lerp
-
-	//Move the angles
-	VectorAdd( angles, moveDir, angles );
+	// Apply the lerped offset to the camera angles
+	VectorCopy(lerpedOffset, shakeOffset);
+	VectorAdd(angles, shakeOffset, angles);
 }
 
 void CGCam_Smooth( float intensity, int duration )

@@ -67,6 +67,9 @@ void WP_FireBryarPistol( gentity_t *ent, qboolean alt_fire )
 	missile->classname = "bryar_proj";
 	missile->s.weapon = WP_BRYAR_PISTOL;
 
+	VectorSet(missile->maxs, BRYAR_BOLT_SIZE, BRYAR_BOLT_SIZE, BRYAR_BOLT_SIZE);
+	VectorScale(missile->maxs, -1, missile->mins);
+
 	if ( alt_fire )
 	{
 		int count = ( level.time - ent->client->ps.weaponChargeTime ) / BRYAR_CHARGE_UNIT;

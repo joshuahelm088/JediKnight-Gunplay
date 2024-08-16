@@ -565,7 +565,7 @@ void G_InitCvars( void ) {
 	// latched vars
 
 	// change anytime vars
-	g_speed = gi.cvar( "g_speed", "250", CVAR_CHEAT );
+	g_speed = gi.cvar( "g_speed", "325"/*"250"*/, CVAR_CHEAT);
 	g_gravity = gi.cvar( "g_gravity", "800", CVAR_SAVEGAME|CVAR_ROM );
 	g_sex = gi.cvar ("sex", "male", CVAR_USERINFO | CVAR_ARCHIVE|CVAR_SAVEGAME|CVAR_NORESTART );
 	g_spskill = gi.cvar ("g_spskill", "0", CVAR_ARCHIVE | CVAR_SAVEGAME|CVAR_NORESTART);
