@@ -2628,6 +2628,30 @@ void CG_FireWeapon( centity_t *cent, qboolean alt_fire )
 		}
 	}
 
+	float kickIntensity = 0.35f;
+	int kickDuration = 150;
+	vec3_t kickDir = { -1, 0, 0 };
+
+	switch (ent->weapon)
+	{
+		case WP_THERMAL:
+		case WP_DET_PACK:
+		case WP_TRIP_MINE:
+			break;
+		case WP_ROCKET_LAUNCHER:
+			break;
+		case WP_FLECHETTE:
+			VectorSet(kickDir, 0.0f, 0.0f, -1.0f );
+			kickIntensity = 0.85f;
+			break;
+		case WP_BRYAR_PISTOL:
+			VectorSet(kickDir, 1.0f, 0.0f, 0.0f);
+			kickIntensity = 0.85f;
+			break;
+	}
+
+	CGCam_Kickback(0.35f, 250, kickDir);
+
 	// Do overcharge sound that get's added to the top
 /*	if (( ent->powerups & ( 1<<PW_WEAPON_OVERCHARGE )))
 	{

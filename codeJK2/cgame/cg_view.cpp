@@ -1713,6 +1713,7 @@ static qboolean CG_CalcViewValues( void ) {
 	// shake the camera if necessary
 	CGCam_UpdateSmooth( cg.refdef.vieworg, cg.refdefViewAngles );
 	CGCam_UpdateShake( cg.refdef.vieworg, cg.refdefViewAngles );
+	CGCam_UpdateKickback(cg.refdef.vieworg, cg.refdefViewAngles);
 
 	/*
 	if ( in_camera )

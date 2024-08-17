@@ -1285,6 +1285,68 @@ void CGCam_UpdateShake(vec3_t origin, vec3_t angles) {
 	VectorAdd(angles, shakeOffset, angles);
 }
 
+/*
+-------------------------
+CGCam_Kickback
+-------------------------
+*/
+
+void CGCam_Kickback(float intensity, int duration, vec3_t direction)
+{
+	if (intensity > MAX_SHAKE_INTENSITY)
+		intensity = MAX_SHAKE_INTENSITY;
+
+	client_camera.kick_intensity = intensity;
+	client_camera.kick_duration = duration;
+	client_camera.kick_start = cg.time;
+	VectorSet(client_camera.kick_direction, direction[0], direction[1], direction[2]);
+}
+
+/*
+-------------------------
+CGCam_UpdateKickback
+-------------------------
+*/
+
+void CGCam_UpdateKickback(vec3_t origin, vec3_t angles) {
+	static vec3_t kickbackOffset = { 0, 0, 0 };
+	vec3_t targetOffset, lerpedOffset;
+	float intensity_scale, intensity;
+	const float progressRate = 0.35f; // Controls how quickly it lerps towards the target
+	const float snapBackRate = 0.025f; // Controls how quickly it snaps back after the kickback
+
+	// Check if kickback has ended
+	if (cg.time > (client_camera.kick_start + client_camera.kick_duration)) {
+		client_camera.kick_intensity = 0;
+		client_camera.kick_duration = 0;
+		client_camera.kick_start = 0;
+
+		// Lerp kickbackOffset back to zero smoothly when the kickback ends
+		VectorLerp(snapBackRate, kickbackOffset, vec3_origin, kickbackOffset);
+		VectorAdd(angles, kickbackOffset, angles);
+
+		return;
+	}
+
+	// Scale intensity based on time and FOV
+	intensity_scale = 1.0f - ((float)(cg.time - client_camera.kick_start) / (float)client_camera.kick_duration) * (((client_camera.FOV + client_camera.FOV2) / 2.0f) / 90.0f);
+	intensity_scale *= (1 / progressRate);
+	intensity = client_camera.kick_intensity * intensity_scale;
+
+	// Calculate the target offset based on the kick direction and intensity
+	for (int i = 0; i < 3; i++) {
+		targetOffset[i] = client_camera.kick_direction[i] * intensity;
+	}
+
+	// Lerp smoothly towards the new target offset
+	VectorLerp(progressRate, kickbackOffset, targetOffset, lerpedOffset);
+
+	// Apply the lerped offset to the camera angles
+	VectorCopy(lerpedOffset, kickbackOffset);
+	VectorAdd(angles, kickbackOffset, angles);
+}
+
+
 void CGCam_Smooth( float intensity, int duration )
 {
 	client_camera.smooth_active=false; // means smooth_origin and angles are valid

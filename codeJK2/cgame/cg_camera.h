@@ -114,6 +114,12 @@ typedef struct camera_s
 	int		shake_duration;
 	int		shake_start;
 
+	//Kickback information
+	float	kick_intensity;
+	int		kick_duration;
+	int		kick_start;
+	vec3_t	kick_direction;
+
 	//Smooth information
 	float	smooth_intensity;
 	int		smooth_duration;
@@ -155,6 +161,8 @@ void CGCam_DrawWideScreen( void );
 
 void CGCam_Shake( float intensity, int duration );
 void CGCam_UpdateShake( vec3_t origin, vec3_t angles );
+void CGCam_Kickback(float intensity, int duration, vec3_t direction);
+void CGCam_UpdateKickback(vec3_t origin, vec3_t angles);
 
 void CGCam_Follow( const char *cameraGroup, float speed, float initLerp );
 void CGCam_Track( const char *trackName, float speed, float initLerp );
