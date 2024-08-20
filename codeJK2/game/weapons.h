@@ -170,14 +170,14 @@ typedef struct ammoData_s
 // Bryar Pistol
 //--------
 #define BRYAR_PISTOL_VEL			3350 // 1800
-#define BRYAR_PISTOL_DAMAGE			50// 14
+#define BRYAR_PISTOL_DAMAGE			14
 #define BRYAR_CHARGE_UNIT			200.0f	// bryar charging gives us one more unit every 200ms--if you change this, you'll have to do the same in bg_pmove
-#define BRYAR_BOLT_SIZE				5
+#define BRYAR_BOLT_SIZE				4
 
 // E11 Blaster
 //---------
-#define BLASTER_MAIN_SPREAD			0.5f
-#define BLASTER_ALT_SPREAD			1.5f
+#define BLASTER_MAIN_SPREAD			2f//0.5f
+#define BLASTER_ALT_SPREAD			2f//1.5f
 #define BLASTER_NPC_SPREAD			0.5f
 #define BLASTER_VELOCITY			3150 // 2300
 #define BLASTER_NPC_VEL_CUT			0.5f
@@ -186,7 +186,7 @@ typedef struct ammoData_s
 #define	BLASTER_NPC_DAMAGE_EASY		6
 #define	BLASTER_NPC_DAMAGE_NORMAL	12 // 14
 #define	BLASTER_NPC_DAMAGE_HARD		16 // 18
-#define BLASTER_BOLT_SIZE			5
+#define BLASTER_BOLT_SIZE			4
 
 // Tenloss Disruptor
 //----------

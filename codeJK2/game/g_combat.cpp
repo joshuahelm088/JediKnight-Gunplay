@@ -4287,7 +4287,7 @@ void PlayerPain( gentity_t *self, gentity_t *inflictor, gentity_t *other, vec3_t
 	}
 	if ( self->painDebounceTime <= level.time )
 	{
-		self->painDebounceTime = level.time + 700;
+		self->painDebounceTime = level.time + 70;//700;
 	}
 }
 /*
@@ -5381,6 +5381,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_
 				}
 			}
 		}
+	} else {
+		GEntity_PainFunc(targ, inflictor, attacker, point, take, mod, hitLoc);
 	}
 }
 

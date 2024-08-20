@@ -35,8 +35,8 @@ extern void G_SoundOnEnt( gentity_t *ent, soundChannel_t channel, const char *so
 #define SENTRY_FORWARD_MULTIPLIER	5
 
 #define SENTRY_VELOCITY_DECAY	0.85f
-#define SENTRY_STRAFE_VEL		256
-#define SENTRY_STRAFE_DIS		200
+#define SENTRY_STRAFE_VEL		128//256
+#define SENTRY_STRAFE_DIS		100//200
 #define SENTRY_UPWARD_PUSH		32
 #define SENTRY_HOVER_HEIGHT		24
 
@@ -446,7 +446,7 @@ void Sentry_RangedAttack( qboolean visible, qboolean advance )
 			{
 				NPCInfo->localState = LSTATE_ACTIVE;
 				NPC->fly_sound_debounce_time = NPCInfo->burstCount = 0;
-				TIMER_Set( NPC, "attackDelay", Q_irand( 2000, 3500) );
+				TIMER_Set( NPC, "attackDelay", Q_irand( 1000/*2000*/, 1700/*3500*/) );
 				NPC->flags |= FL_SHIELDED;
 				NPC_SetAnim( NPC, SETANIM_BOTH, BOTH_FLY_SHIELDED, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD );
 				G_SoundOnEnt( NPC, CHAN_AUTO, "sound/chars/sentry/misc/sentry_shield_close" );
