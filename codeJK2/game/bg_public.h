@@ -67,7 +67,7 @@ extern float DEFAULT_PLAYER_RADIUS;
 #define	DEAD_VIEWHEIGHT		-16
 //Player movement values
 #define	MIN_WALK_NORMAL		0.7		// can't walk on very steep slopes
-#define	JUMP_VELOCITY		225		// 270
+#define	JUMP_VELOCITY		285//225		// 270
 #define	STEPSIZE			18
 
 
