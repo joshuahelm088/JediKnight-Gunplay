@@ -124,6 +124,8 @@ const float pm_airDecelRate = 1.35f;	//Used for air decelleration away from curr
 
 int	c_pmove = 0;
 
+bool pm_firedLastFrame = false;
+
 extern void PM_SetTorsoAnimTimer( gentity_t *ent, int *torsoAnimTimer, int time );
 extern void PM_SetLegsAnimTimer( gentity_t *ent, int *legsAnimTimer, int time );
 //extern void PM_SetAnim(pmove_t	*pm,int setAnimParts,int anim,int setAnimFlags);
@@ -7958,6 +7960,12 @@ static void PM_Weapon( void )
 	int			addTime, amount, trueCount = 1;
 	qboolean	delayed_fire = qfalse;
 
+	if (pm->cmd.buttons & (BUTTON_ATTACK | BUTTON_ALT_ATTACK)) {
+		pm_firedLastFrame = true;
+	} else if (!(pm->cmd.buttons & (BUTTON_ATTACK | BUTTON_ALT_ATTACK))) {
+		pm_firedLastFrame = false;
+	}
+
 	if (pm->ps->weapon == WP_SABER && (cg.zoomMode==3||!cg.zoomMode||pm->ps->clientNum) )		// WP_LIGHTSABER
 	{	// Separate logic for lightsaber, but not for player when zoomed
 		PM_WeaponLightsaber();
@@ -8047,7 +8055,13 @@ static void PM_Weapon( void )
 
 	if ( pm->ps->weaponTime > 0 )
 	{
-		return;
+		if (pm->ps->weapon != WP_BRYAR_PISTOL) {
+			return;
+		} else {
+			if (pm_firedLastFrame) {
+				return;
+			}
+		}
 	}
 
 	// change weapon if time

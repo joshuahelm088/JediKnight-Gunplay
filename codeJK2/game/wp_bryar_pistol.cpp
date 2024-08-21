@@ -70,6 +70,15 @@ void WP_FireBryarPistol( gentity_t *ent, qboolean alt_fire )
 	VectorSet(missile->maxs, BRYAR_BOLT_SIZE, BRYAR_BOLT_SIZE, BRYAR_BOLT_SIZE);
 	VectorScale(missile->maxs, -1, missile->mins);
 
+	if (!ent->NPC) {
+		float kickIntensity = 0.35f;
+		int kickDuration = 150;
+		vec3_t kickDir = { -1, 0, 0 };
+		VectorSet(kickDir, 1.0f, 0.0f, 0.0f);
+		kickIntensity = 0.85f;
+		CGCam_Kickback(0.35f, 250, kickDir);
+	}
+
 	if ( alt_fire )
 	{
 		int count = ( level.time - ent->client->ps.weaponChargeTime ) / BRYAR_CHARGE_UNIT;

@@ -113,6 +113,15 @@ void WP_FireBlaster( gentity_t *ent, qboolean alt_fire )
 
 	vectoangles( wpFwd, angs );
 
+	if (!ent->NPC) {
+		float kickIntensity = 0.35f;
+		int kickDuration = 150;
+		vec3_t kickDir = { -1, 0, 0 };
+		VectorSet(kickDir, 1.0f, 0.0f, 0.0f);
+		kickIntensity = 0.85f;
+		CGCam_Kickback(0.35f, 250, kickDir);
+	}
+
 	if ( alt_fire )
 	{
 		// add some slop to the alt-fire direction
