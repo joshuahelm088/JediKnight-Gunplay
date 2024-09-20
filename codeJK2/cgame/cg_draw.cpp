@@ -257,7 +257,7 @@ static void CG_DrawMessageLit(centity_t *cent,int x,int y)
 		{
 			if (!cg.messageLitActive)
 			{
-				cgi_S_StartSound( NULL, 0, CHAN_AUTO, cgs.media.messageLitSound );
+				//cgi_S_StartSound( NULL, 0, CHAN_AUTO, cgs.media.messageLitSound );
 				cg.messageLitActive = qtrue;
 			}
 

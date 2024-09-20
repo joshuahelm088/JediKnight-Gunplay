@@ -93,6 +93,8 @@ void CG_ItemPickup( int itemNum, qboolean bHadItem ) {
 	cg.itemPickup = itemNum;
 	cg.itemPickupTime = cg.time;
 	cg.itemPickupBlendTime = cg.time;
+	cg.pickupFlashTime = cg.time;
+	cg.pickupFlashType = bg_itemlist[itemNum].giType;
 
 	if (bg_itemlist[itemNum].classname && bg_itemlist[itemNum].classname[0])
 	{

@@ -105,17 +105,17 @@ pmove_t		*pm;
 pml_t		pml;
 
 // movement parameters
-const float	pm_stopspeed = 50.0f;//100.0f;
+const float	pm_stopspeed = 175.0f;//100.0f;
 const float	pm_duckScale = 0.50f;
 const float	pm_swimScale = 0.50f;
 float	pm_ladderScale = 0.7f;
 
-const float	pm_accelerate = 10.0f;//12.0f;
+const float	pm_accelerate = 6.0f;//12.0f;
 const float	pm_airaccelerate = 4.0f;
 const float	pm_wateraccelerate = 4.0f;
 const float	pm_flyaccelerate = 8.0f;
 
-const float	pm_friction = 14.0f;//6.0f;
+const float	pm_friction = 12.0f;//6.0f;
 const float	pm_waterfriction = 1.0f;
 const float	pm_flightfriction = 3.0f;
 
@@ -771,7 +771,7 @@ static qboolean PM_CheckJump( void )
 										parts = SETANIM_LEGS;
 									}
 
-									PM_SetAnim( pm, parts, newAnim, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD );
+									PM_SetAnim( pm, parts, newAnim, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD);
 								}
 							}
 						}
@@ -2739,14 +2739,14 @@ static void PM_CrashLand( void )
 	{
 		if ( !deadFallSound )
 		{
-			if ( forceLanding )
+			//if ( forceLanding )
 			{//we were force-jumping
 				PM_AddEvent( EV_FALL_SHORT );
 			}
-			else
+			/*else
 			{
 				PM_AddEvent( PM_FootstepForSurface() );
-			}
+			}*/
 		}
 	}
 

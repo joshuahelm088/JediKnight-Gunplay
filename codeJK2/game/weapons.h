@@ -176,8 +176,8 @@ typedef struct ammoData_s
 
 // E11 Blaster
 //---------
-#define BLASTER_MAIN_SPREAD			2.0f//0.5f
-#define BLASTER_ALT_SPREAD			2.0f//1.5f
+#define BLASTER_MAIN_SPREAD			2.25f//0.5f
+#define BLASTER_ALT_SPREAD			2.25f//1.5f
 #define BLASTER_NPC_SPREAD			0.5f
 #define BLASTER_VELOCITY			3150 // 2300
 #define BLASTER_NPC_VEL_CUT			0.5f
@@ -253,9 +253,9 @@ typedef struct ammoData_s
 
 // Golan Arms Flechette
 //---------
-#define FLECHETTE_SHOTS				6//10
-#define FLECHETTE_SPREAD			2.95f//4.0f
-#define FLECHETTE_DAMAGE			12//15
+#define FLECHETTE_SHOTS				10
+#define FLECHETTE_SPREAD			2.5f//4.0f
+#define FLECHETTE_DAMAGE			10//15
 #define FLECHETTE_VEL				3500
 #define FLECHETTE_SIZE				2.1f//1.5f
 

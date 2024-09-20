@@ -1501,6 +1501,61 @@ static void CG_DamageBlendBlob( void )
 }
 
 /*
+===============
+CG_PickupFlashBlendBlob
+
+===============
+*/
+static void CG_PickupFlashBlendBlob(void)
+{
+	int			t;
+	int			maxTime;
+	refEntity_t		ent;
+
+	maxTime = ITEM_BLOB_TIME;
+	t = cg.time - cg.pickupFlashTime;
+	if (t <= 0 || t >= maxTime) {
+		return;
+	}
+
+	memset(&ent, 0, sizeof(ent));
+	ent.reType = RT_SPRITE;
+	ent.renderfx = RF_FIRST_PERSON;
+
+	VectorMA(cg.refdef.vieworg, 8, cg.refdef.viewaxis[0], ent.origin);
+	VectorMA(ent.origin, cg.damageX * -8, cg.refdef.viewaxis[1], ent.origin);
+	VectorMA(ent.origin, cg.damageY * 8, cg.refdef.viewaxis[2], ent.origin);
+
+	int r = 66;
+	int g = 135;
+	int b = 245;
+	int a = 255;
+
+	switch (cg.pickupFlashType) {
+	case IT_ARMOR:
+		r = 17;
+		g = 84;
+		b = 43;
+		break;
+
+	case IT_HEALTH:
+		r = 219;
+		g = 40;
+		b = 40;
+		break;
+	}
+
+	ent.radius = 100 * 3 * (1.0 - ((float)t / maxTime));
+	ent.customShader = cgs.media.damageBlendBlobShader;
+	ent.shaderRGBA[0] = r * (1.0 - ((float)t / maxTime));
+	ent.shaderRGBA[1] = g * (1.0 - ((float)t / maxTime));
+	ent.shaderRGBA[2] = b * (1.0 - ((float)t / maxTime));
+	ent.shaderRGBA[3] = a;
+
+	cgi_R_AddRefEntityToScene(&ent);
+}
+
+/*
 ====================
 CG_SaberClashFlare
 ====================
@@ -1930,6 +1985,7 @@ wasForceSpeed=isForceSpeed;
 	// first person blend blobs, done after AnglesToAxis
 	if ( !cg.renderingThirdPerson ) {
 		CG_DamageBlendBlob();
+		CG_PickupFlashBlendBlob();
 	}
 
 	// build the render lists

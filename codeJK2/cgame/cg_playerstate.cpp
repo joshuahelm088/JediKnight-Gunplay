@@ -206,7 +206,14 @@ void CG_DamageFeedback( int yawByte, int pitchByte, int damage ) {
 	cg.damageTime = cg.snap->serverTime;
 }
 
-
+/*
+==============
+CG_PickupFlashFeedback
+==============
+*/
+void CG_PickupFlashFeedback(int yawByte, int pitchByte) {
+	cg.pickupFlashTime = cg.snap->serverTime;
+}
 
 
 /*
