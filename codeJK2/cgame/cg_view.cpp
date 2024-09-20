@@ -1559,10 +1559,10 @@ static void CG_PickupFlashBlendBlob(void)
 
 	ent.radius = 100 * 3 * (1.0 - ((float)t / maxTime));
 	ent.customShader = cgs.media.damageBlendBlobShader;
-	ent.shaderRGBA[0] = r * (1.0 - ((float)t / maxTime));
-	ent.shaderRGBA[1] = g * (1.0 - ((float)t / maxTime));
-	ent.shaderRGBA[2] = b * (1.0 - ((float)t / maxTime));
-	ent.shaderRGBA[3] = a;
+	ent.shaderRGBA[0] = r/3 * (1.0 - ((float)t / maxTime));
+	ent.shaderRGBA[1] = g/3 * (1.0 - ((float)t / maxTime));
+	ent.shaderRGBA[2] = b/3 * (1.0 - ((float)t / maxTime));
+	ent.shaderRGBA[3] = a/3;
 
 	cgi_R_AddRefEntityToScene(&ent);
 }

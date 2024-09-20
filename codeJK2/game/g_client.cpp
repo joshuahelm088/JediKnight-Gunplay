@@ -470,7 +470,7 @@ if desired.
 void ClientUserinfoChanged( int clientNum ) {
 	gentity_t	*ent = g_entities + clientNum;
 	gclient_t	*client = ent->client;
-	int			health=100, maxHealth=100;
+	int			health=100, maxHealth=100, armor=100, maxArmor=200;
 	const char	*s=NULL, *sex=NULL;
 	char		userinfo[MAX_INFO_STRING]={0},	buf[MAX_INFO_STRING]={0},
 				oldname[34]={0};
@@ -485,10 +485,12 @@ void ClientUserinfoChanged( int clientNum ) {
 	// set max health
 	maxHealth = 100;
 	health = Com_Clampi( 1, 100, atoi( Info_ValueForKey( userinfo, "handicap" ) ) );
+	armor = Com_Clampi(1, maxArmor, atoi(Info_ValueForKey(userinfo, "handicap")));
 	client->pers.maxHealth = health;
 	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > maxHealth )
 		client->pers.maxHealth = 100;
 	client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
+	client->ps.stats[STAT_MAX_ARMOR] = maxArmor;
 
 	// sex
 	sex = Info_ValueForKey( userinfo, "sex" );

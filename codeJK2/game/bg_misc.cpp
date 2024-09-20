@@ -360,7 +360,7 @@ qboolean	BG_CanItemBeGrabbed( const entityState_t *ent, const playerState_t *ps 
 	case IT_ARMOR:
 		// we also clamp armor to the maxhealth for handicapping
 		if ( ps->stats[STAT_ARMOR] >= ps->stats[STAT_MAX_ARMOR] ) {
-			//return qfalse;
+			return qfalse;
 		}
 		return qtrue;
 
