@@ -1471,6 +1471,8 @@ static void CG_DamageBlendBlob( void )
 	int			t;
 	int			maxTime;
 	refEntity_t		ent;
+	playerState_t* ps;
+	ps = &cg.snap->ps;
 
 	if ( !cg.damageValue ) {
 		return;
@@ -1490,11 +1492,21 @@ static void CG_DamageBlendBlob( void )
 	VectorMA( ent.origin, cg.damageX * -8, cg.refdef.viewaxis[1], ent.origin );
 	VectorMA( ent.origin, cg.damageY * 8, cg.refdef.viewaxis[2], ent.origin );
 
+	int r = 180;
+	int g = 50;
+	int b = 50;
+
+	if (ps->stats[STAT_ARMOR] > 0) {
+		r = 40;
+		g = 220;
+		b = 60;
+	}
+
 	ent.radius = cg.damageValue * 3 * ( 1.0 - ((float)t / maxTime) );
 	ent.customShader = cgs.media.damageBlendBlobShader;
-	ent.shaderRGBA[0] = 180 * ( 1.0 - ((float)t / maxTime) );
-	ent.shaderRGBA[1] = 50 * ( 1.0 - ((float)t / maxTime) );
-	ent.shaderRGBA[2] = 50 * ( 1.0 - ((float)t / maxTime) );
+	ent.shaderRGBA[0] = r * ( 1.0 - ((float)t / maxTime) );
+	ent.shaderRGBA[1] = g * ( 1.0 - ((float)t / maxTime) );
+	ent.shaderRGBA[2] = b * ( 1.0 - ((float)t / maxTime) );
 	ent.shaderRGBA[3] = 255;
 
 	cgi_R_AddRefEntityToScene( &ent );
@@ -1690,8 +1702,17 @@ static qboolean CG_CalcViewValues( void ) {
 	}
 	else
 	{//player's center and angles
+		// Store the previous view angles
+		vec3_t previousViewAngles;
+		VectorCopy(cg.refdefViewAngles, previousViewAngles);
+
 		VectorCopy( ps->origin, cg.refdef.vieworg );
 		VectorCopy( ps->viewangles, cg.refdefViewAngles );
+
+		// Calculate the view angles delta (current - previous)
+		cg.viewAnglesDelta[PITCH] = AngleSubtract(cg.refdefViewAngles[PITCH], previousViewAngles[PITCH]);
+		cg.viewAnglesDelta[YAW] = AngleSubtract(cg.refdefViewAngles[YAW], previousViewAngles[YAW]);
+		cg.viewAnglesDelta[ROLL] = AngleSubtract(cg.refdefViewAngles[ROLL], previousViewAngles[ROLL]);
 	}
 
 	// add error decay

@@ -747,6 +747,13 @@ void CG_CalculateWeaponPosition( vec3_t origin, vec3_t angles )
 		scale = cg.xyspeed;
 	}
 
+	float gunMoveScale = 1.25;
+
+	// Camera move the gun
+	angles[ROLL] += cg.viewAnglesDelta[ROLL] * gunMoveScale;
+	angles[YAW] += cg.viewAnglesDelta[YAW] * gunMoveScale;
+	angles[PITCH] += cg.viewAnglesDelta[PITCH] * gunMoveScale;
+
 	// gun angles from bobbing
 	angles[ROLL] += scale * cg.bobfracsin * 0.0075;
 	angles[YAW] += scale * cg.bobfracsin * 0.01;

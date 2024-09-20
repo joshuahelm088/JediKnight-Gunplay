@@ -170,7 +170,7 @@ typedef struct ammoData_s
 // Bryar Pistol
 //--------
 #define BRYAR_PISTOL_VEL			3350 // 1800
-#define BRYAR_PISTOL_DAMAGE			12
+#define BRYAR_PISTOL_DAMAGE			16 // 12
 #define BRYAR_CHARGE_UNIT			200.0f	// bryar charging gives us one more unit every 200ms--if you change this, you'll have to do the same in bg_pmove
 #define BRYAR_BOLT_SIZE				4
 
