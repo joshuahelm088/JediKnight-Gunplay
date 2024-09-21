@@ -2375,8 +2375,8 @@ Basic exploding crate
 void SP_misc_exploding_crate( gentity_t *ent )
 {
 	G_SpawnInt( "health", "40", &ent->health );
-	G_SpawnInt( "splashRadius", "128", &ent->splashRadius );
-	G_SpawnInt( "splashDamage", "50", &ent->splashDamage );
+	G_SpawnInt( "splashRadius", "256", &ent->splashRadius );
+	G_SpawnInt( "splashDamage", "100", &ent->splashDamage );
 
 	ent->s.modelindex = G_ModelIndex( "models/map_objects/nar_shaddar/crate_xplode.md3" );
 	G_SoundIndex("sound/weapons/explosions/cargoexplode.wav");

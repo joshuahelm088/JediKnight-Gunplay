@@ -1723,9 +1723,8 @@ qboolean CG_PlayerLegsYawFromMovement( centity_t *cent, const vec3_t velocity, f
 	//figure out what the offset, if any, should be
 	if ( velocity[0] || velocity[1] )
 	{
-		float	moveYaw;
-		moveYaw = vectoyaw( velocity );
-		addAngle = AngleDelta( cent->lerpAngles[YAW], moveYaw )*-1;
+		cent->moveYaw = vectoyaw( velocity );
+		addAngle = AngleDelta( cent->lerpAngles[YAW], cent->moveYaw )*-1;
 		if ( addAngle > 150 || addAngle < -150 )
 		{
 			addAngle = 0;
@@ -1748,9 +1747,31 @@ qboolean CG_PlayerLegsYawFromMovement( centity_t *cent, const vec3_t velocity, f
 			turnRate = 5;
 		}
 	}
-	else if ( !alwaysFace )
+	else// if ( !alwaysFace )
 	{
-		return qfalse;
+		addAngle = AngleDelta(cent->lerpAngles[YAW], cent->moveYaw) * -1;
+		if (addAngle > 75 || addAngle < -75)
+		{
+			cent->moveYaw = cent->lerpAngles[YAW];
+			addAngle = 0;
+		}
+		else
+		{
+			//FIXME: use actual swing/clamp tolerances
+			if (addAngle > swingTolMax)
+			{
+				addAngle = swingTolMax;
+			}
+			else if (addAngle < swingTolMin)
+			{
+				addAngle = swingTolMin;
+			}
+			if (cent->gent->client->ps.pm_flags & PMF_BACKWARDS_RUN)
+			{
+				addAngle *= -1;
+			}
+			turnRate = 5;
+		}
 	}
 	if ( cent->gent && cent->gent->client && cent->gent->client->ps.forcePowersActive & (1 << FP_SPEED) )
 	{//using force speed
@@ -1785,6 +1806,93 @@ qboolean CG_PlayerLegsYawFromMovement( centity_t *cent, const vec3_t velocity, f
 	}
 	return qtrue;
 }
+
+qboolean CG_PlayerLegsYawFromMovement2(centity_t* cent, const vec3_t velocity, float* yaw, float fwdAngle, float swingTolMin, float swingTolMax, qboolean alwaysFace)
+{
+	float newAddAngle, angleDiff, turnRate = 10, addAngle = 0;
+
+	// Figure out what the offset, if any, should be
+	if (true /*velocity[0] || velocity[1]*/) // Always allow turning, even without movement
+	{
+		float moveYaw;
+
+		// Use torso angle (cent->lerpAngles[YAW]) instead of velocity direction for turning logic
+		moveYaw = cent->lerpAngles[YAW];
+		addAngle = AngleDelta(cent->lerpAngles[YAW], moveYaw) * -1;
+
+		// Prevent legs from snapping to a random direction
+		if (addAngle > 150 || addAngle < -150)
+		{
+			// Snap to torso direction when turning exceeds threshold
+			*yaw = moveYaw; // Align legs with the torso's yaw direction
+			addAngle = 0; // Reset additional angle to avoid random snapping
+		}
+		else
+		{
+			// FIXME: Use actual swing/clamp tolerances
+			if (addAngle > swingTolMax)
+			{
+				addAngle = swingTolMax;
+			}
+			else if (addAngle < swingTolMin)
+			{
+				addAngle = swingTolMin;
+			}
+
+			if (cent->gent->client->ps.pm_flags & PMF_BACKWARDS_RUN)
+			{
+				addAngle *= -1;
+			}
+
+			turnRate = 5; // Adjust turn rate when moving
+		}
+	}
+	else if (!alwaysFace)
+	{
+		return qfalse;
+	}
+
+	if (cent->gent && cent->gent->client && cent->gent->client->ps.forcePowersActive & (1 << FP_SPEED))
+	{
+		// Scale up the turning speed when using force speed
+		turnRate /= cg_timescale.value;
+	}
+
+	// Lerp the legs' angle to the new angle
+	angleDiff = AngleDelta(cent->pe.legs.yawAngle, (*yaw + addAngle));
+	newAddAngle = angleDiff * cg.frameInterpolation * -1;
+
+	if (fabs(newAddAngle) > fabs(angleDiff))
+	{
+		newAddAngle = angleDiff * -1;
+	}
+
+	if (newAddAngle > turnRate)
+	{
+		newAddAngle = turnRate;
+	}
+	else if (newAddAngle < -turnRate)
+	{
+		newAddAngle = -turnRate;
+	}
+
+	*yaw = cent->pe.legs.yawAngle + newAddAngle;
+
+	// Now clamp
+	angleDiff = AngleDelta(fwdAngle, *yaw);
+
+	if (angleDiff > swingTolMax)
+	{
+		*yaw = fwdAngle - swingTolMax;
+	}
+	else if (angleDiff < swingTolMin)
+	{
+		*yaw = fwdAngle - swingTolMin;
+	}
+
+	return qtrue;
+}
+
 
 void CG_ATSTLegsYaw( centity_t *cent, vec3_t trailingLegsAngles )
 {
