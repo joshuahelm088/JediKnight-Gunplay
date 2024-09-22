@@ -2004,10 +2004,10 @@ wasForceSpeed=isForceSpeed;
 	CG_RunEmplacedWeapon();
 
 	// first person blend blobs, done after AnglesToAxis
-	if ( !cg.renderingThirdPerson ) {
+	//if ( !cg.renderingThirdPerson ) {
 		CG_DamageBlendBlob();
 		CG_PickupFlashBlendBlob();
-	}
+	//}
 
 	// build the render lists
 	if ( !cg.hyperspace ) {

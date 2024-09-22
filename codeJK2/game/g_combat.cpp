@@ -4234,6 +4234,9 @@ void PlayerPain( gentity_t *self, gentity_t *inflictor, gentity_t *other, vec3_t
 				if ( self->client->damage_blood )
 				{//took damage myself, not just armor
 					G_AddEvent( self, EV_PAIN, self->health );
+				} else if (self->client->damage_armor)
+				{
+					G_AddEvent(self, EV_PAIN_ARMOR, self->health);
 				}
 			}
 		}

@@ -774,7 +774,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
         return;
         }*/
 
-        G_SoundOnEnt(cent->gent, CHAN_BODY, "sound/items/respawn1.wav");
+        //G_SoundOnEnt(cent->gent, CHAN_BODY, "sound/items/respawn1.wav");
+		G_SoundOnEnt(cent->gent, CHAN_BODY, "sound/weapons/force/lightninghit1.mp3");
 
         // save pain time for programitic twitch animation
         cent->pe.painTime = cg.time;
