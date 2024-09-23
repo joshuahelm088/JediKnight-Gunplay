@@ -830,7 +830,15 @@ void NPC_Begin (gentity_t *ent)
 			//&& ent->client->NPC_class != CLASS_DESANN
 			&& ent->client->NPC_class != CLASS_JEDI )
 		{// up everyone except jedi
-			ent->NPC->stats.health += ent->NPC->stats.health/4 * g_spskill->integer; // 100% on easy, 125% on medium, 150% on hard
+			if (g_spskill->integer == 0) { // Easy
+				ent->NPC->stats.health = ent->NPC->stats.health * 0.75;
+			}
+			else if (g_spskill->integer == 1) { // Medium
+				ent->NPC->stats.health = ent->NPC->stats.health; // 100% health, no change
+			}
+			else if (g_spskill->integer == 2) { // Hard
+				ent->NPC->stats.health = ent->NPC->stats.health * 1.25;
+			}
 		}
 
 		ent->max_health = client->pers.maxHealth = client->ps.stats[STAT_MAX_HEALTH] = ent->NPC->stats.health;

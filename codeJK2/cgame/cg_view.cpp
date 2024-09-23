@@ -1495,14 +1495,16 @@ static void CG_DamageBlendBlob( void )
 	int r = 180;
 	int g = 50;
 	int b = 50;
+	float scale = 3.0f;
 
-	if (ps->stats[STAT_ARMOR] > 0) {
+	if (ps->stats[STAT_ARMOR] > 50) {
 		r = 40;
 		g = 220;
 		b = 60;
+		scale = 5.0f;
 	}
 
-	ent.radius = cg.damageValue * 3 * ( 1.0 - ((float)t / maxTime) );
+	ent.radius = cg.damageValue * scale * ( 1.0 - ((float)t / maxTime) );
 	ent.customShader = cgs.media.damageBlendBlobShader;
 	ent.shaderRGBA[0] = r * ( 1.0 - ((float)t / maxTime) );
 	ent.shaderRGBA[1] = g * ( 1.0 - ((float)t / maxTime) );
