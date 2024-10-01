@@ -1230,29 +1230,39 @@ void CG_AddViewWeapon( playerState_t *ps )
 
 	// Check if the heavy repeater is finishing up a sustained burst
 	//-------------------------------
-	if ( ps->weapon == WP_REPEATER && ps->weaponstate == WEAPON_FIRING )
+	if ( ps->weaponstate == WEAPON_FIRING )
 	{
 		if ( cent->gent && cent->gent->client && cent->gent->client->ps.weaponstate != WEAPON_FIRING )
 		{
-			int	ct = 0;
+			if (ps->weapon == WP_REPEATER) {
+				int	ct = 0;
 
-			// the more continuous shots we've got, the more smoke we spawn
-			if ( cent->gent->client->ps.weaponShotCount > 60 ) {
-				ct = 5;
-			}
-			else if ( cent->gent->client->ps.weaponShotCount > 35 ) {
-				ct = 3;
-			}
-			else if ( cent->gent->client->ps.weaponShotCount > 15 ) {
-				ct = 1;
-			}
+				// the more continuous shots we've got, the more smoke we spawn
+				if (cent->gent->client->ps.weaponShotCount > 60) {
+					ct = 5;
+				}
+				else if (cent->gent->client->ps.weaponShotCount > 35) {
+					ct = 3;
+				}
+				else if (cent->gent->client->ps.weaponShotCount > 15) {
+					ct = 1;
+				}
 
-			for ( i = 0; i < ct; i++ )
-			{
-				theFxScheduler.PlayEffect( "repeater/muzzle_smoke", cent->currentState.clientNum );
-			}
+				for (i = 0; i < ct; i++)
+				{
+					theFxScheduler.PlayEffect("repeater/muzzle_smoke", cent->currentState.clientNum);
+				}
 
-			cent->gent->client->ps.weaponShotCount = 0;
+				cent->gent->client->ps.weaponShotCount = 0;
+			}
+		}
+	}
+
+	if (cent->gent && cent->gent->client && cent->gent->client->ps.weaponstate != WEAPON_FIRING) {
+		if (cent->gent->client->ps.weaponShotCount > 0) {
+			if (cent->gent->client->ps.lastShotTime < level.time - 600) {
+				cent->gent->client->ps.weaponShotCount = 0;
+			}
 		}
 	}
 }

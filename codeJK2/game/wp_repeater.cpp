@@ -174,9 +174,11 @@ void WP_FireRepeater( gentity_t *ent, qboolean alt_fire )
 		}
 		else
 		{
-			// add some slop to the alt-fire direction
-			angs[PITCH] += Q_flrand(-1.0f, 1.0f) * REPEATER_SPREAD;
-			angs[YAW]	+= Q_flrand(-1.0f, 1.0f) * REPEATER_SPREAD;
+			if (ent->client->ps.weaponShotCount > 1) {
+				// add some slop to the alt-fire direction
+				angs[PITCH] += Q_flrand(-1.0f, 1.0f) * REPEATER_SPREAD;
+				angs[YAW] += Q_flrand(-1.0f, 1.0f) * REPEATER_SPREAD;
+			}
 		}
 
 		AngleVectors( angs, dir, NULL, NULL );

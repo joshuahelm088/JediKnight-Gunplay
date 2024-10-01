@@ -125,7 +125,7 @@ static void WP_BowcasterMainFire( gentity_t *ent )
 		//missile->bounceCount = 0;
 
 		missile->s.eFlags |= EF_BOUNCE;
-		missile->bounceCount = 6;
+		missile->bounceCount = 3;
 		ent->client->sess.missionStats.shotsFired++;
 	}
 }

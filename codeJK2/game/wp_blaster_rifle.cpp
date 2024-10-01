@@ -122,28 +122,26 @@ void WP_FireBlaster( gentity_t *ent, qboolean alt_fire )
 		CGCam_Kickback(0.35f, 250, kickDir);
 	}
 
-	if ( alt_fire )
+	if (ent->client->ps.weaponstate != WEAPON_FIRING)
 	{
-		// add some slop to the alt-fire direction
-		angs[PITCH] += Q_flrand(-1.0f, 1.0f) * BLASTER_ALT_SPREAD;
-		angs[YAW]	+= Q_flrand(-1.0f, 1.0f) * BLASTER_ALT_SPREAD;
+
+	}
+	
+	// Troopers use their aim values as well as the gun's inherent inaccuracy
+	// so check for all classes of stormtroopers and anyone else that has aim error
+	if ( ent->client && ent->NPC &&
+		( ent->client->NPC_class == CLASS_STORMTROOPER ||
+		ent->client->NPC_class == CLASS_SWAMPTROOPER ) )
+	{
+		angs[PITCH] += ( Q_flrand(-1.0f, 1.0f) * (BLASTER_NPC_SPREAD+(6-ent->NPC->currentAim)*0.25f));//was 0.5f
+		angs[YAW]	+= ( Q_flrand(-1.0f, 1.0f) * (BLASTER_NPC_SPREAD+(6-ent->NPC->currentAim)*0.25f));//was 0.5f
 	}
 	else
 	{
-		// Troopers use their aim values as well as the gun's inherent inaccuracy
-		// so check for all classes of stormtroopers and anyone else that has aim error
-		if ( ent->client && ent->NPC &&
-			( ent->client->NPC_class == CLASS_STORMTROOPER ||
-			ent->client->NPC_class == CLASS_SWAMPTROOPER ) )
-		{
-			angs[PITCH] += ( Q_flrand(-1.0f, 1.0f) * (BLASTER_NPC_SPREAD+(6-ent->NPC->currentAim)*0.25f));//was 0.5f
-			angs[YAW]	+= ( Q_flrand(-1.0f, 1.0f) * (BLASTER_NPC_SPREAD+(6-ent->NPC->currentAim)*0.25f));//was 0.5f
-		}
-		else
-		{
+		if (ent->client->ps.weaponShotCount > 1) {
 			// add some slop to the main-fire direction
 			angs[PITCH] += Q_flrand(-1.0f, 1.0f) * BLASTER_MAIN_SPREAD;
-			angs[YAW]	+= Q_flrand(-1.0f, 1.0f) * BLASTER_MAIN_SPREAD;
+			angs[YAW] += Q_flrand(-1.0f, 1.0f) * BLASTER_MAIN_SPREAD;
 		}
 	}
 
