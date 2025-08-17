@@ -313,7 +313,12 @@ void NPC_ChoosePainAnimation( gentity_t *self, gentity_t *other, vec3_t point, i
 				}
 				else if ( mod != MOD_ELECTROCUTE )
 				{
-					pain_anim = G_PickPainAnim( self, point, damage, hitLoc );
+					if (self->client->NPC_class != CLASS_PROBE) {
+						pain_anim = G_PickPainAnim(self, point, damage, hitLoc);
+					}
+					else {
+						pain_anim = BOTH_PAIN1;
+					}
 				}
 
 				if ( pain_anim == -1 )

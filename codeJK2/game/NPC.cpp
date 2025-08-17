@@ -1460,6 +1460,38 @@ void NPC_BehaviorSet_Stormtrooper( int bState )
 
 /*
 -------------------------
+NPC_BehaviorSet_Stormtrooper_New
+-------------------------
+*/
+
+void NPC_BehaviorSet_Stormtrooper_New(int bState)
+{
+	switch (bState)
+	{
+	case BS_STAND_GUARD:
+	case BS_PATROL:
+	case BS_STAND_AND_SHOOT:
+	case BS_HUNT_AND_KILL:
+	case BS_DEFAULT:
+		NPC_BSST_Default_New();
+		break;
+
+	case BS_INVESTIGATE:
+		NPC_BSST_Investigate();
+		break;
+
+	case BS_SLEEP:
+		NPC_BSST_Sleep();
+		break;
+
+	default:
+		NPC_BehaviorSet_Default(bState);
+		break;
+	}
+}
+
+/*
+-------------------------
 NPC_BehaviorSet_Jedi
 -------------------------
 */
@@ -1722,7 +1754,8 @@ void NPC_RunBehavior( int team, int bState )
 			{
 				return;
 			}
-			NPC_BehaviorSet_Stormtrooper( bState );
+			//NPC_BehaviorSet_Stormtrooper( bState );
+			NPC_BehaviorSet_Stormtrooper_New(bState);
 			break;
 
 		case TEAM_NEUTRAL:

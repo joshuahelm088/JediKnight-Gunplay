@@ -709,7 +709,108 @@ static qboolean CG_DrawCustomHealthHud( centity_t *cent )
 	}
 
 	return qtrue;
+}//-----------------------------------------------------
+
+static void CG_DrawWeaponCharge(int x, int y, centity_t* cent) {
+	x = 50;
+	// Check if the weapon is in a charging state
+	if (cg_entities[0].gent->client->ps.weaponstate != WEAPON_CHARGING_ALT &&
+		cg_entities[0].gent->client->ps.weaponstate != WEAPON_CHARGING) {
+		return;
+	}
+
+	vec4_t color1;
+	float charge = 0.0f;
+	int charge_max = 0;
+	float charge_unit = 0.0f;
+
+	// Determine weapon-specific charge settings
+	switch (cent->gent->client->ps.weapon) {
+	case WP_BRYAR_PISTOL:
+		charge_unit = BRYAR_CHARGE_UNIT;
+		charge_max = 5;
+		break;
+	case WP_DISRUPTOR:
+		charge_unit = DISRUPTOR_CHARGE_UNIT;
+		charge_max = 10;
+		break;
+	case WP_BOWCASTER:
+		charge_unit = BOWCASTER_CHARGE_UNIT * 3;
+		charge_max = 5; // Bowcaster shoots up to 5 projectiles
+		break;
+	case WP_DEMP2:
+		charge_unit = DEMP2_CHARGE_UNIT;
+		charge_max = 3;
+		break;
+	default:
+		return; // If it's not one of the specified weapons, do nothing
+	}
+
+	// Calculate the maximum charge in seconds
+	float max_charge_time = charge_max * charge_unit;
+
+	// Calculate the current charge percentage based on time
+	charge = (cg.time - cg.snap->ps.weaponChargeTime) / max_charge_time;
+
+	// Clamp the charge between 0.0 and 1.0
+	if (charge > 1.0f) {
+		charge = 1.0f;
+	}
+	else if (charge < 0.0f) {
+		charge = 0.0f;
+	}
+
+	gi.Printf(S_COLOR_RED "charge: %f\n", charge);
+
+	if (cent->gent->client->ps.weapon == WP_BOWCASTER) {
+		// Draw individual circles for Bowcaster charge
+		int numCircles = 5;
+		float chargeStep = 1.0f / numCircles; // Charge step for each projectile
+		float radius = 15.0f; // Radius of each circle
+		float circleSpacing = 30.0f; // Spacing between each circle
+		int i;
+
+		// Only draw the circles when the charge is met
+		for (i = 0; i < numCircles; i++) {
+			int circleCount = charge >= (i + 1) * chargeStep;
+			if (!(circleCount & 1)) {
+				circleCount--;
+			}
+			if (circleCount > 1) {
+				// Circle is fully charged, set to full color
+				color1[0] = 0.0f; // Fully green
+				color1[1] = 1.0f;
+				color1[2] = 0.0f;
+				color1[3] = 1.0f; // Full opacity
+
+				// Draw each circle UI element if the charge threshold is met
+				CG_DrawPic2(x + i * circleSpacing, y, radius, radius, 0, 0, 1, 1, cgi_R_RegisterShaderNoMip("gfx/2d/bincircle"));
+			}
+		}
+	}
+	else {
+		// For other weapons, show the normal charge bar
+		color1[0] = (1.0f - charge) * 2.0f; // Red decreases with charge
+		color1[1] = charge * 1.5f;          // Green increases with charge
+		color1[2] = 0.0f;                   // No blue component
+		color1[3] = 1.0f;                   // Full opacity
+
+		// If the charge is very low, make it flash
+		if (charge < 0.15f && (cg.time & 512)) {
+			VectorClear(color1);
+		}
+
+		// Clamp color values to a maximum of 1.0
+		if (color1[0] > 1.0f) color1[0] = 1.0f;
+		if (color1[1] > 1.0f) color1[1] = 1.0f;
+
+		// Draw the charge bar for other weapons
+		CG_DrawPic2(x, y, 134 * charge, 34, 0, 0, charge, 1, cgi_R_RegisterShaderNoMip("gfx/2d/crop_charge"));
+	}
 }
+
+
+
 
 //--------------------------------------
 static void CG_DrawBatteryCharge( void )
@@ -764,6 +865,7 @@ static void CG_DrawHUD( centity_t *cent )
 		CG_DrawHUDLeftFrame1(x,y);
 		CG_DrawArmor(x,y);
 		CG_DrawHealth(x,y);
+		CG_DrawWeaponCharge(50, 50, cent);
 		CG_DrawHUDLeftFrame2(x,y);
 	}
 

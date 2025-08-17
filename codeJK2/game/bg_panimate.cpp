@@ -3262,7 +3262,7 @@ void PM_TorsoAnimation( void )
 					//FIXME: if recently fired, hold the ready!
 					if ( pm->ps->weaponstate == WEAPON_CHARGING_ALT || weaponBusy )
 					{
-						PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONREADY2,SETANIM_FLAG_NORMAL);
+						PM_SetAnim(pm,SETANIM_TORSO, BOTH_ATTACK2/*TORSO_WEAPONREADY2*/,SETANIM_FLAG_NORMAL);
 					}
 					else if ( PM_RunningAnim( pm->ps->legsAnim )
 						|| PM_WalkingAnim( pm->ps->legsAnim )
@@ -3273,13 +3273,13 @@ void PM_TorsoAnimation( void )
 					}
 					else
 					{
-						PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONREADY2,SETANIM_FLAG_NORMAL);
+						PM_SetAnim(pm,SETANIM_TORSO, BOTH_ATTACK2/*TORSO_WEAPONREADY2*/,SETANIM_FLAG_NORMAL);
 					}
 					break;
 				case WP_BLASTER_PISTOL:
 					if ( weaponBusy )
 					{
-						PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONREADY2,SETANIM_FLAG_NORMAL);
+						PM_SetAnim(pm,SETANIM_TORSO, BOTH_ATTACK2/*TORSO_WEAPONREADY2*/,SETANIM_FLAG_NORMAL);
 					}
 					else if ( PM_RunningAnim( pm->ps->legsAnim )
 						|| PM_WalkingAnim( pm->ps->legsAnim )
@@ -3290,7 +3290,7 @@ void PM_TorsoAnimation( void )
 					}
 					else
 					{
-						PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONREADY2,SETANIM_FLAG_NORMAL);
+						PM_SetAnim(pm,SETANIM_TORSO, BOTH_ATTACK2/*TORSO_WEAPONREADY2*/,SETANIM_FLAG_NORMAL);
 					}
 					break;
 				case WP_NONE:
@@ -3317,7 +3317,7 @@ void PM_TorsoAnimation( void )
 					}
 					break;
 				case WP_BLASTER:
-					PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONREADY3,SETANIM_FLAG_NORMAL);
+					PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONREADY4,SETANIM_FLAG_NORMAL);
 					//PM_SetAnim(pm,SETANIM_LEGS,BOTH_ATTACK2,SETANIM_FLAG_NORMAL);
 					break;
 				case WP_DISRUPTOR:
@@ -3351,7 +3351,7 @@ void PM_TorsoAnimation( void )
 					}
 					break;
 				case WP_BOT_LASER:
-					PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONIDLE2,SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_RESTART|SETANIM_FLAG_HOLD);
+					PM_SetAnim(pm,SETANIM_TORSO, BOTH_ATTACK2/*TORSO_WEAPONIDLE2*/,SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_RESTART|SETANIM_FLAG_HOLD);
 					break;
 				case WP_THERMAL:
 					if ( pm->ps->weaponstate != WEAPON_FIRING
@@ -3518,7 +3518,7 @@ void PM_TorsoAnimation( void )
 					}
 					else
 					{
-						PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONIDLE2,SETANIM_FLAG_NORMAL);
+						PM_SetAnim(pm,SETANIM_TORSO,BOTH_ATTACK2/*TORSO_WEAPONIDLE2*/,SETANIM_FLAG_NORMAL);
 					}
 					break;
 				case WP_BLASTER_PISTOL:
@@ -3535,7 +3535,7 @@ void PM_TorsoAnimation( void )
 					}
 					else
 					{
-						PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONIDLE2,SETANIM_FLAG_NORMAL);
+						PM_SetAnim(pm,SETANIM_TORSO, BOTH_ATTACK2/*TORSO_WEAPONIDLE2*/,SETANIM_FLAG_NORMAL);
 					}
 					break;
 
@@ -3567,11 +3567,11 @@ void PM_TorsoAnimation( void )
 				case WP_BLASTER:
 					if ( weaponBusy )
 					{
-						PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONREADY3,SETANIM_FLAG_NORMAL);
+						PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONREADY4,SETANIM_FLAG_NORMAL);
 					}
 					else
 					{
-						PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONIDLE3,SETANIM_FLAG_NORMAL);
+						PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONIDLE4,SETANIM_FLAG_NORMAL);
 					}
 					break;
 
@@ -3607,7 +3607,7 @@ void PM_TorsoAnimation( void )
 					break;
 
 				case WP_BOT_LASER:
-					PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONIDLE2,SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_RESTART|SETANIM_FLAG_HOLD);
+					PM_SetAnim(pm,SETANIM_TORSO, BOTH_ATTACK2/*TORSO_WEAPONIDLE2*/,SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_RESTART|SETANIM_FLAG_HOLD);
 					break;
 
 				case WP_THERMAL:

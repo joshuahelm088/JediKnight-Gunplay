@@ -209,12 +209,12 @@ void Sentry_Fire (void)
 	// now scale for difficulty
 	if ( g_spskill->integer == 0 )
 	{
-		NPC->attackDebounceTime += 200;
+		NPC->attackDebounceTime += 100;
 		missile->damage = 1;
 	}
 	else if ( g_spskill->integer == 1 )
 	{
-		NPC->attackDebounceTime += 100;
+		NPC->attackDebounceTime += 50;
 		missile->damage = 3;
 	}
 }
@@ -436,7 +436,7 @@ void Sentry_RangedAttack( qboolean visible, qboolean advance )
 {
 	if ( TIMER_Done( NPC, "attackDelay" ) && NPC->attackDebounceTime < level.time && visible )	// Attack?
 	{
-		if ( NPCInfo->burstCount > 6 )
+		if ( NPCInfo->burstCount > 20 )
 		{
 			if ( !NPC->fly_sound_debounce_time )
 			{//delay closing down to give the player an opening

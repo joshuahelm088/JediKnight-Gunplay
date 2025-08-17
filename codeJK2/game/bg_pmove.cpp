@@ -8095,7 +8095,7 @@ static void PM_Weapon( void )
 			{
 			case WP_BRYAR_PISTOL:
 			case WP_BLASTER_PISTOL:
-				PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONIDLE2,SETANIM_FLAG_NORMAL);
+				PM_SetAnim(pm,SETANIM_TORSO, BOTH_STAND5TOAIM/*TORSO_WEAPONIDLE2*/,SETANIM_FLAG_NORMAL);
 				break;
 			default:
 				PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONIDLE3,SETANIM_FLAG_NORMAL);
@@ -8183,7 +8183,7 @@ static void PM_Weapon( void )
 			break;
 
 		case WP_BLASTER:
-			PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK3, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
+			PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK4, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
 			break;
 
 		case WP_DISRUPTOR:
@@ -8194,7 +8194,7 @@ static void PM_Weapon( void )
 			}
 			else
 			{//in primary fire mode
-				PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK3, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
+				PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK4, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
 			}
 			break;
 
@@ -8306,6 +8306,12 @@ static void PM_Weapon( void )
 	{
 		PM_AddEvent( EV_ALT_FIRE );
 		addTime = weaponData[pm->ps->weapon].altFireTime;
+		switch (pm->ps->weapon)
+		{
+		case WP_BLASTER:
+			pm->ps->weaponShotCount++;
+			break;
+		}
 	}
 	else
 	{
@@ -8321,6 +8327,7 @@ static void PM_Weapon( void )
 
 		switch( pm->ps->weapon)
 		{
+		case WP_BLASTER:
 		case WP_REPEATER:
 			// repeater is supposed to do smoke after sustained bursts
 			pm->ps->weaponShotCount++;

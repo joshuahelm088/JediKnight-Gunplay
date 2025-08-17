@@ -747,12 +747,42 @@ void CG_CalculateWeaponPosition( vec3_t origin, vec3_t angles )
 		scale = cg.xyspeed;
 	}
 
-	float gunMoveScale = 1.25;
+	// ====================================================================================================
+	//float gunMoveScale = 1.25;
 
-	// Camera move the gun
-	angles[ROLL] += cg.viewAnglesDelta[ROLL] * gunMoveScale;
-	angles[YAW] += cg.viewAnglesDelta[YAW] * gunMoveScale;
-	angles[PITCH] += cg.viewAnglesDelta[PITCH] * gunMoveScale;
+	//// Camera move the gun
+	//angles[ROLL] -= cg.viewAnglesDelta[ROLL] * gunMoveScale;
+	//angles[YAW] -= cg.viewAnglesDelta[YAW] * gunMoveScale;
+	//angles[PITCH] -= cg.viewAnglesDelta[PITCH] * gunMoveScale;
+	// 
+	// Configurable constants for tweaking
+	float lagFactor = 0.03f*3;       // Determines how quickly the weapon lags behind
+	float returnSpeed = 0.003f;// 5.0f;      // Determines how quickly the weapon returns to center
+	float maxLag = 20.0f;          // Maximum allowed lag in degrees
+
+	// Update weapon lag offset based on view angles delta
+	cg.viewModelLagOffset[PITCH] -= cg.viewAnglesDelta[PITCH] * lagFactor;
+	cg.viewModelLagOffset[YAW] -= cg.viewAnglesDelta[YAW] * lagFactor;
+
+	// Clamp the lag to prevent excessive offset
+	cg.viewModelLagOffset[PITCH] = Com_Clamp(-maxLag, maxLag, cg.viewModelLagOffset[PITCH]);
+	cg.viewModelLagOffset[YAW] = Com_Clamp(-maxLag, maxLag, cg.viewModelLagOffset[YAW]);
+
+	// Smooth return to center when no camera movement
+	if (cg.viewAnglesDelta[PITCH] == 0) {
+		cg.viewModelLagOffset[PITCH] -= cg.viewModelLagOffset[PITCH] * returnSpeed * cg.frametime;
+	}
+	if (cg.viewAnglesDelta[YAW] == 0) {
+		cg.viewModelLagOffset[YAW] -= cg.viewModelLagOffset[YAW] * returnSpeed * cg.frametime;
+	}
+
+	// Apply the lag offset to the weapon angles
+	angles[PITCH] += cg.viewModelLagOffset[PITCH];
+	angles[YAW] += cg.viewModelLagOffset[YAW];
+
+	CG_Printf("Delta PITCH: %.2f, Offset PITCH: %.2f\n", cg.viewAnglesDelta[PITCH], cg.viewModelLagOffset[PITCH]);
+
+	// ====================================================================================================
 
 	// gun angles from bobbing
 	angles[ROLL] += scale * cg.bobfracsin * 0.0075;
