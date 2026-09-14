@@ -23,7 +23,7 @@ the whole mod off to get stock behavior. All default to ON.
 #ifndef JKG_LOCAL_H
 #define JKG_LOCAL_H
 
-#include "q_shared.h"	// cvar_t
+#include "statindex.h"
 
 // Master toggle for the entire JKGunplay layer.
 extern cvar_t *g_jkgplay;
@@ -49,6 +49,9 @@ extern cvar_t *g_jkgHUD;		// custom HUD / view / weapon-draw tweaks
 #define JKG_COMBAT		JKG_ON( g_jkgCombat )
 #define JKG_CAMERA		JKG_ON( g_jkgCamera )
 #define JKG_HUD			JKG_ON( g_jkgHUD )
+
+// Armor clamp limit: separate max-armor stat when JKG_ARMOR is on, else stock max-health cap.
+#define JKG_PS_MAX_ARMOR(ps)	((ps)->stats[(JKG_ARMOR) ? STAT_MAX_ARMOR : STAT_MAX_HEALTH])
 
 // Registers all g_jkg* cvars. Called from G_InitCvars().
 void JKG_RegisterCvars( void );

@@ -24,6 +24,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "g_headers.h"
 
 #include "g_local.h"
+#include "jkg_local.h"
 #include "objectives.h"
 #include "wp_saber.h"
 
@@ -184,9 +185,9 @@ void G_Give( gentity_t *ent, const char *name, const char *args, int argc )
 	if ( give_all || !Q_stricmp( name, "armor" ) || !Q_stricmp( name, "shield" ) )
 	{
 		if ( argc == 3 )
-			ent->client->ps.stats[STAT_ARMOR] = Com_Clampi( 0, ent->client->ps.stats[STAT_MAX_ARMOR], atoi( args ) );
+			ent->client->ps.stats[STAT_ARMOR] = Com_Clampi( 0, JKG_PS_MAX_ARMOR( &ent->client->ps ), atoi( args ) );
 		else
-			ent->client->ps.stats[STAT_ARMOR] = ent->client->ps.stats[STAT_MAX_ARMOR];
+			ent->client->ps.stats[STAT_ARMOR] = JKG_PS_MAX_ARMOR( &ent->client->ps );
 
 		if ( ent->client->ps.stats[STAT_ARMOR] > 0 )
 			ent->client->ps.powerups[PW_BATTLESUIT] = Q3_INFINITE;

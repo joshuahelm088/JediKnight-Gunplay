@@ -25,6 +25,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "g_headers.h"
 
 #include "g_local.h"
+#include "jkg_local.h"
 #include "g_functions.h"
 #include "g_items.h"
 #include "wp_saber.h"
@@ -366,9 +367,9 @@ int ITM_AddArmor (gentity_t *ent, int count)
 
 	ent->client->ps.stats[STAT_ARMOR] += count;
 
-	if (ent->client->ps.stats[STAT_ARMOR] > ent->client->ps.stats[STAT_MAX_ARMOR])
+	if (ent->client->ps.stats[STAT_ARMOR] > JKG_PS_MAX_ARMOR( &ent->client->ps ))
 	{
-		ent->client->ps.stats[STAT_ARMOR] = ent->client->ps.stats[STAT_MAX_ARMOR];
+		ent->client->ps.stats[STAT_ARMOR] = JKG_PS_MAX_ARMOR( &ent->client->ps );
 		return qfalse;
 	}
 
@@ -382,8 +383,8 @@ int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
 	other->client->ps.powerups[PW_BATTLESUIT] = Q3_INFINITE;
 
 	other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
-	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[STAT_MAX_ARMOR] ) {
-		other->client->ps.stats[STAT_ARMOR] = other->client->ps.stats[STAT_MAX_ARMOR];
+	if ( other->client->ps.stats[STAT_ARMOR] > JKG_PS_MAX_ARMOR( &other->client->ps ) ) {
+		other->client->ps.stats[STAT_ARMOR] = JKG_PS_MAX_ARMOR( &other->client->ps );
 	}
 
 	return 30;

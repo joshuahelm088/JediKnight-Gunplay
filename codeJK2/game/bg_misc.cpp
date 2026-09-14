@@ -24,6 +24,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 // included in both game dll and client
 
 #include "g_local.h"
+#include "jkg_local.h"
 #include "bg_public.h"
 #include "g_items.h"
 
@@ -359,7 +360,7 @@ qboolean	BG_CanItemBeGrabbed( const entityState_t *ent, const playerState_t *ps 
 
 	case IT_ARMOR:
 		// we also clamp armor to the maxhealth for handicapping
-		if ( ps->stats[STAT_ARMOR] >= ps->stats[STAT_MAX_ARMOR] ) {
+		if ( ps->stats[STAT_ARMOR] >= JKG_PS_MAX_ARMOR( ps ) ) {
 			return qfalse;
 		}
 		return qtrue;

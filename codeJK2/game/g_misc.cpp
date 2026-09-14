@@ -26,6 +26,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "g_headers.h"
 
 #include "g_local.h"
+#include "jkg_local.h"
 #include "g_functions.h"
 #include "g_nav.h"
 #include "g_items.h"
@@ -1181,7 +1182,7 @@ void health_use( gentity_t *self, gentity_t *other, gentity_t *activator)
 			{	// Health
 				dif = other->client->ps.stats[STAT_MAX_HEALTH] - other->client->ps.stats[STAT_HEALTH];
 				// Armor
-				dif2 = other->client->ps.stats[STAT_MAX_ARMOR] - other->client->ps.stats[STAT_ARMOR];
+				dif2 = JKG_PS_MAX_ARMOR( &other->client->ps ) - other->client->ps.stats[STAT_ARMOR];
 				hold = (dif2 - dif);
 				// For every 3 points of health, you get 1 point of armor
 				// BUT!!! after health is filled up, you get the full energy going to armor
@@ -1858,7 +1859,7 @@ void shield_power_converter_use( gentity_t *self, gentity_t *other, gentity_t *a
 	{
 		self->setTime = level.time + 100;
 
-		dif = activator->client->ps.stats[STAT_MAX_ARMOR] - activator->client->ps.stats[STAT_ARMOR]; // FIXME: define for max armor?
+		dif = JKG_PS_MAX_ARMOR( &activator->client->ps ) - activator->client->ps.stats[STAT_ARMOR];
 
 		if ( dif > 0 && self->count )	// Already at full armor?..and do I even have anything to give
 		{
@@ -1895,7 +1896,7 @@ void shield_power_converter_use( gentity_t *self, gentity_t *other, gentity_t *a
 	 			self->s.frame = 1;
 			}
 		}
-		else if ( activator->client->ps.stats[STAT_ARMOR] >= activator->client->ps.stats[STAT_MAX_ARMOR]) // FIXME: define for max
+		else if ( activator->client->ps.stats[STAT_ARMOR] >= JKG_PS_MAX_ARMOR( &activator->client->ps ) )
 		{
 			// play full sound
 			G_Sound( self, G_SoundIndex( "sound/interface/shieldcon_done.mp3" ));
