@@ -161,6 +161,7 @@ void CGCam_DrawWideScreen( void );
 
 void CGCam_Shake( float intensity, int duration );
 void CGCam_UpdateShake( vec3_t origin, vec3_t angles );
+void CGCam_UpdateShake_JKG( vec3_t origin, vec3_t angles );
 void CGCam_Kickback(float intensity, int duration, vec3_t direction);
 void CGCam_UpdateKickback(vec3_t origin, vec3_t angles);
 

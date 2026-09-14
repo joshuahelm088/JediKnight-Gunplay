@@ -28,6 +28,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "cg_media.h"
 #include "FxScheduler.h"
 #include "../game/wp_saber.h"
+#include "../game/jkg_local.h"
 #include "../game/anims.h"
 #include "../game/g_functions.h"
 
@@ -1704,17 +1705,23 @@ static qboolean CG_CalcViewValues( void ) {
 	}
 	else
 	{//player's center and angles
-		// Store the previous view angles
-		vec3_t previousViewAngles;
-		VectorCopy(cg.refdefViewAngles, previousViewAngles);
+		if ( JKG_CAMERA )
+		{
+			vec3_t previousViewAngles;
+			VectorCopy( cg.refdefViewAngles, previousViewAngles );
 
-		VectorCopy( ps->origin, cg.refdef.vieworg );
-		VectorCopy( ps->viewangles, cg.refdefViewAngles );
+			VectorCopy( ps->origin, cg.refdef.vieworg );
+			VectorCopy( ps->viewangles, cg.refdefViewAngles );
 
-		// Calculate the view angles delta (current - previous)
-		cg.viewAnglesDelta[PITCH] = AngleSubtract(cg.refdefViewAngles[PITCH], previousViewAngles[PITCH]);
-		cg.viewAnglesDelta[YAW] = AngleSubtract(cg.refdefViewAngles[YAW], previousViewAngles[YAW]);
-		cg.viewAnglesDelta[ROLL] = AngleSubtract(cg.refdefViewAngles[ROLL], previousViewAngles[ROLL]);
+			cg.viewAnglesDelta[PITCH] = AngleSubtract( cg.refdefViewAngles[PITCH], previousViewAngles[PITCH] );
+			cg.viewAnglesDelta[YAW] = AngleSubtract( cg.refdefViewAngles[YAW], previousViewAngles[YAW] );
+			cg.viewAnglesDelta[ROLL] = AngleSubtract( cg.refdefViewAngles[ROLL], previousViewAngles[ROLL] );
+		}
+		else
+		{
+			VectorCopy( ps->origin, cg.refdef.vieworg );
+			VectorCopy( ps->viewangles, cg.refdefViewAngles );
+		}
 	}
 
 	// add error decay
@@ -1790,8 +1797,15 @@ static qboolean CG_CalcViewValues( void ) {
 	//VectorCopy( cg.refdef.vieworg, cgRefdefVieworg );
 	// shake the camera if necessary
 	CGCam_UpdateSmooth( cg.refdef.vieworg, cg.refdefViewAngles );
-	CGCam_UpdateShake( cg.refdef.vieworg, cg.refdefViewAngles );
-	CGCam_UpdateKickback(cg.refdef.vieworg, cg.refdefViewAngles);
+	if ( JKG_CAMERA )
+	{
+		CGCam_UpdateShake_JKG( cg.refdef.vieworg, cg.refdefViewAngles );
+		CGCam_UpdateKickback( cg.refdef.vieworg, cg.refdefViewAngles );
+	}
+	else
+	{
+		CGCam_UpdateShake( cg.refdef.vieworg, cg.refdefViewAngles );
+	}
 
 	/*
 	if ( in_camera )

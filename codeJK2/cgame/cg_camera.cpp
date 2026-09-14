@@ -27,6 +27,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "cg_media.h"
 
 #include "../game/g_roff.h"
+#include "../game/jkg_local.h"
 
 bool		in_camera = false;
 camera_t	client_camera={};
@@ -1173,7 +1174,14 @@ void CGCam_Update( void )
 
 	//Update shaking if there's any
 	//CGCam_UpdateSmooth( cg.refdef.vieworg, cg.refdefViewAngles );
-	CGCam_UpdateShake( cg.refdef.vieworg, cg.refdefViewAngles );
+	if ( JKG_CAMERA )
+	{
+		CGCam_UpdateShake_JKG( cg.refdef.vieworg, cg.refdefViewAngles );
+	}
+	else
+	{
+		CGCam_UpdateShake( cg.refdef.vieworg, cg.refdefViewAngles );
+	}
 }
 
 /*
@@ -1246,7 +1254,48 @@ void VectorLerp(float t, const vec3_t start, const vec3_t end, vec3_t result) {
 	}
 }
 
-void CGCam_UpdateShake(vec3_t origin, vec3_t angles) {
+void CGCam_UpdateShake( vec3_t origin, vec3_t angles )
+{
+	vec3_t	moveDir;
+	int i;
+	float	intensity_scale, intensity;
+
+	if ( client_camera.shake_duration <= 0 )
+		return;
+
+	if ( cg.time > ( client_camera.shake_start + client_camera.shake_duration ) )
+	{
+		client_camera.shake_intensity = 0;
+		client_camera.shake_duration = 0;
+		client_camera.shake_start = 0;
+		return;
+	}
+
+	//intensity_scale now also takes into account FOV with 90.0 as normal
+	intensity_scale = 1.0f - ( (float) ( cg.time - client_camera.shake_start ) / (float) client_camera.shake_duration ) * (((client_camera.FOV+client_camera.FOV2)/2.0f)/90.0f);
+
+	intensity = client_camera.shake_intensity * intensity_scale;
+
+	for ( i = 0; i < 3; i++ )
+	{
+		moveDir[i] = ( Q_flrand(-1.0f, 1.0f) * intensity );
+	}
+
+	//FIXME: Lerp
+
+	//Move the camera
+	VectorAdd( origin, moveDir, origin );
+
+	for ( i=0; i < 2; i++ ) // Don't do ROLL
+		moveDir[i] = ( Q_flrand(-1.0f, 1.0f) * intensity );
+
+	//FIXME: Lerp
+
+	//Move the angles
+	VectorAdd( angles, moveDir, angles );
+}
+
+void CGCam_UpdateShake_JKG(vec3_t origin, vec3_t angles) {
 	static vec3_t shakeOffset = { 0, 0, 0 };
 	vec3_t targetOffset, lerpedOffset;
 	float intensity_scale, intensity;
