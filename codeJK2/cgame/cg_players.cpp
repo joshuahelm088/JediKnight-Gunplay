@@ -30,6 +30,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "../game/ghoul2_shared.h"
 #include "../game/anims.h"
 #include "../game/wp_saber.h"
+#include "../game/jkg_local.h"
 
 #define	LOOK_SWING_SCALE	0.5
 
@@ -1723,8 +1724,17 @@ qboolean CG_PlayerLegsYawFromMovement( centity_t *cent, const vec3_t velocity, f
 	//figure out what the offset, if any, should be
 	if ( velocity[0] || velocity[1] )
 	{
-		cent->moveYaw = vectoyaw( velocity );
-		addAngle = AngleDelta( cent->lerpAngles[YAW], cent->moveYaw )*-1;
+		if ( JKG_MOVEMENT )
+		{
+			cent->moveYaw = vectoyaw( velocity );
+			addAngle = AngleDelta( cent->lerpAngles[YAW], cent->moveYaw )*-1;
+		}
+		else
+		{
+			float	moveYaw;
+			moveYaw = vectoyaw( velocity );
+			addAngle = AngleDelta( cent->lerpAngles[YAW], moveYaw )*-1;
+		}
 		if ( addAngle > 150 || addAngle < -150 )
 		{
 			addAngle = 0;
@@ -1747,7 +1757,7 @@ qboolean CG_PlayerLegsYawFromMovement( centity_t *cent, const vec3_t velocity, f
 			turnRate = 5;
 		}
 	}
-	else// if ( !alwaysFace )
+	else if ( JKG_MOVEMENT )
 	{
 		addAngle = AngleDelta(cent->lerpAngles[YAW], cent->moveYaw) * -1;
 		if (addAngle > 75 || addAngle < -75)
@@ -1772,6 +1782,10 @@ qboolean CG_PlayerLegsYawFromMovement( centity_t *cent, const vec3_t velocity, f
 			}
 			turnRate = 5;
 		}
+	}
+	else if ( !alwaysFace )
+	{
+		return qfalse;
 	}
 	if ( cent->gent && cent->gent->client && cent->gent->client->ps.forcePowersActive & (1 << FP_SPEED) )
 	{//using force speed

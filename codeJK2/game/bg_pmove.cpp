@@ -106,17 +106,17 @@ pmove_t		*pm;
 pml_t		pml;
 
 // movement parameters
-const float	pm_stopspeed = 175.0f;//100.0f;
+const float	pm_stopspeed = 100.0f;
 const float	pm_duckScale = 0.50f;
 const float	pm_swimScale = 0.50f;
 float	pm_ladderScale = 0.7f;
 
-const float	pm_accelerate = 6.0f;//12.0f;
+const float	pm_accelerate = 12.0f;
 const float	pm_airaccelerate = 4.0f;
 const float	pm_wateraccelerate = 4.0f;
 const float	pm_flyaccelerate = 8.0f;
 
-const float	pm_friction = 12.0f;//6.0f;
+const float	pm_friction = 6.0f;
 const float	pm_waterfriction = 1.0f;
 const float	pm_flightfriction = 3.0f;
 
@@ -299,7 +299,7 @@ static void PM_Friction( void ) {
 					if ( pm->cmd.buttons & BUTTON_USE )
 						friction *= pm_frictionModifier;
 
-					control = speed < pm_stopspeed ? pm_stopspeed : speed;
+					control = speed < ( JKG_MOVEMENT ? 175.0f : pm_stopspeed ) ? ( JKG_MOVEMENT ? 175.0f : pm_stopspeed ) : speed;
 					drop += control*friction*pml.frametime;
 				}
 			}
@@ -310,7 +310,7 @@ static void PM_Friction( void ) {
 	{
 		if ( !(pm->ps->pm_flags & PMF_TIME_KNOCKBACK) && !(pm->ps->pm_flags & PMF_TIME_NOFRICTION) )
 		{
-			control = speed < pm_stopspeed ? pm_stopspeed : speed;
+			control = speed < ( JKG_MOVEMENT ? 175.0f : pm_stopspeed ) ? ( JKG_MOVEMENT ? 175.0f : pm_stopspeed ) : speed;
 			drop += control*friction*pml.frametime;
 		}
 	}
@@ -1350,7 +1350,7 @@ static qboolean PM_CheckJump( void )
 		}
 		*/
 
-		pm->ps->velocity[2] = JUMP_VELOCITY;
+		pm->ps->velocity[2] = JKG_MOVEMENT ? 285.0f : (float)JUMP_VELOCITY;
 		pm->ps->forceJumpZStart = pm->ps->origin[2];//so we don't take damage if we land at same height
 		pm->ps->pm_flags |= PMF_JUMPING;
 	}
@@ -1785,7 +1785,7 @@ static void PM_AirMove( void ) {
 	if ( pm->gent && pm->gent->client && pm->gent->client->playerTeam == TEAM_STASIS )
 	{//FIXME: do a check for movetype_float
 		//Can move fairly well in air while falling
-		PM_Accelerate (wishdir, wishspeed, pm_accelerate/2.0f);
+		PM_Accelerate (wishdir, wishspeed, ( JKG_MOVEMENT ? 6.0f : pm_accelerate )/2.0f);
 	}
 	else
 	{
@@ -1985,7 +1985,7 @@ static void PM_WalkMove( void ) {
 	if ( ( pml.groundTrace.surfaceFlags & SURF_SLICK ) || (pm->ps->pm_flags&PMF_TIME_KNOCKBACK) || (pm->ps->pm_flags&PMF_TIME_NOFRICTION) ) {
 		accelerate = pm_airaccelerate;
 	} else {
-		accelerate = pm_accelerate;
+		accelerate = JKG_MOVEMENT ? 6.0f : pm_accelerate;
 	}
 
 	PM_Accelerate (wishdir, wishspeed, accelerate);
@@ -2117,8 +2117,8 @@ static void PM_NoclipMove( void ) {
 	{
 		drop = 0;
 
-		friction = pm_friction*1.5;	// extra friction
-		control = speed < pm_stopspeed ? pm_stopspeed : speed;
+		friction = ( JKG_MOVEMENT ? 12.0f : pm_friction )*1.5;	// extra friction
+		control = speed < ( JKG_MOVEMENT ? 175.0f : pm_stopspeed ) ? ( JKG_MOVEMENT ? 175.0f : pm_stopspeed ) : speed;
 		drop += control*friction*pml.frametime;
 
 		// scale the velocity
@@ -2150,7 +2150,7 @@ static void PM_NoclipMove( void ) {
 	wishspeed = VectorNormalize(wishdir);
 	wishspeed *= scale;
 
-	PM_Accelerate( wishdir, wishspeed, pm_accelerate );
+	PM_Accelerate( wishdir, wishspeed, JKG_MOVEMENT ? 6.0f : pm_accelerate );
 
 	// move
 	VectorMA (pm->ps->origin, pml.frametime, pm->ps->velocity, pm->ps->origin);
@@ -2740,14 +2740,18 @@ static void PM_CrashLand( void )
 	{
 		if ( !deadFallSound )
 		{
-			//if ( forceLanding )
-			{//we were force-jumping
+			if ( JKG_MOVEMENT )
+			{
 				PM_AddEvent( EV_FALL_SHORT );
 			}
-			/*else
+			else if ( forceLanding )
+			{
+				PM_AddEvent( EV_FALL_SHORT );
+			}
+			else
 			{
 				PM_AddEvent( PM_FootstepForSurface() );
-			}*/
+			}
 		}
 	}
 
