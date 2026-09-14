@@ -26,6 +26,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 
 #include "b_local.h"
+#include "jkg_local.h"
 #include "anims.h"
 #include "g_functions.h"
 #include "wp_saber.h"
@@ -272,14 +273,24 @@ void NPC_ChoosePainAnimation( gentity_t *self, gentity_t *other, vec3_t point, i
 		}
 		else
 		{
-            pain_chance = 1.0;// NPC_GetPainChance(self, damage);
+			if ( JKG_AI )
+			{
+				pain_chance = 1.0f;
+			}
+			else
+			{
+				pain_chance = NPC_GetPainChance( self, damage );
+			}
 		}
 		if ( self->client->NPC_class == CLASS_DESANN )
 		{
 			pain_chance *= 0.5f;
 		}
 	}
-	pain_chance = 1.1f;
+	if ( JKG_AI )
+	{
+		pain_chance = 1.1f;
+	}
 
 	//See if we're going to flinch
 	if ( Q_flrand(0.0f, 1.0f) < pain_chance )
@@ -313,11 +324,13 @@ void NPC_ChoosePainAnimation( gentity_t *self, gentity_t *other, vec3_t point, i
 				}
 				else if ( mod != MOD_ELECTROCUTE )
 				{
-					if (self->client->NPC_class != CLASS_PROBE) {
-						pain_anim = G_PickPainAnim(self, point, damage, hitLoc);
-					}
-					else {
+					if ( JKG_AI && self->client->NPC_class == CLASS_PROBE )
+					{
 						pain_anim = BOTH_PAIN1;
+					}
+					else
+					{
+						pain_anim = G_PickPainAnim( self, point, damage, hitLoc );
 					}
 				}
 
@@ -353,7 +366,10 @@ void NPC_ChoosePainAnimation( gentity_t *self, gentity_t *other, vec3_t point, i
 		{
 			self->painDebounceTime = level.time + 4000;
 		}
-		//self->painDebounceTime = level.time + PM_AnimLength( self->client->clientInfo.animFileIndex, (animNumber_t) pain_anim );
+		else if ( !JKG_AI )
+		{
+			self->painDebounceTime = level.time + PM_AnimLength( self->client->clientInfo.animFileIndex, (animNumber_t) pain_anim );
+		}
 		self->client->fireDelay = 0;
 	}
 }

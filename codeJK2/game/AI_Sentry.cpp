@@ -23,6 +23,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "b_local.h"
 #include "g_nav.h"
+#include "jkg_local.h"
 
 gentity_t *CreateMissile( vec3_t org, vec3_t dir, float vel, int life, gentity_t *owner, qboolean altFire = qfalse );
 extern gitem_t	*FindItemForAmmo( ammo_t ammo );
@@ -35,8 +36,8 @@ extern void G_SoundOnEnt( gentity_t *ent, soundChannel_t channel, const char *so
 #define SENTRY_FORWARD_MULTIPLIER	5
 
 #define SENTRY_VELOCITY_DECAY	0.85f
-#define SENTRY_STRAFE_VEL		128//256
-#define SENTRY_STRAFE_DIS		100//200
+#define SENTRY_STRAFE_VEL		256
+#define SENTRY_STRAFE_DIS		200
 #define SENTRY_UPWARD_PUSH		32
 #define SENTRY_HOVER_HEIGHT		24
 
@@ -209,12 +210,12 @@ void Sentry_Fire (void)
 	// now scale for difficulty
 	if ( g_spskill->integer == 0 )
 	{
-		NPC->attackDebounceTime += 100;
+		NPC->attackDebounceTime += JKG_AI ? 100 : 200;
 		missile->damage = 1;
 	}
 	else if ( g_spskill->integer == 1 )
 	{
-		NPC->attackDebounceTime += 50;
+		NPC->attackDebounceTime += JKG_AI ? 50 : 100;
 		missile->damage = 3;
 	}
 }
@@ -363,14 +364,14 @@ void Sentry_Strafe( void )
 	// Pick a random strafe direction, then check to see if doing a strafe would be
 	//	reasonable valid
 	dir = ( rand() & 1 ) ? -1 : 1;
-	VectorMA( NPC->currentOrigin, SENTRY_STRAFE_DIS * dir, right, end );
+	VectorMA( NPC->currentOrigin, ( JKG_AI ? 100 : SENTRY_STRAFE_DIS ) * dir, right, end );
 
 	gi.trace( &tr, NPC->currentOrigin, NULL, NULL, end, NPC->s.number, MASK_SOLID, G2_NOCOLLIDE, 0 );
 
 	// Close enough
 	if ( tr.fraction > 0.9f )
 	{
-		VectorMA( NPC->client->ps.velocity, SENTRY_STRAFE_VEL * dir, right, NPC->client->ps.velocity );
+		VectorMA( NPC->client->ps.velocity, ( JKG_AI ? 128 : SENTRY_STRAFE_VEL ) * dir, right, NPC->client->ps.velocity );
 
 		// Add a slight upward push
 		NPC->client->ps.velocity[2] += SENTRY_UPWARD_PUSH;
@@ -436,7 +437,7 @@ void Sentry_RangedAttack( qboolean visible, qboolean advance )
 {
 	if ( TIMER_Done( NPC, "attackDelay" ) && NPC->attackDebounceTime < level.time && visible )	// Attack?
 	{
-		if ( NPCInfo->burstCount > 20 )
+		if ( NPCInfo->burstCount > ( JKG_AI ? 20 : 6 ) )
 		{
 			if ( !NPC->fly_sound_debounce_time )
 			{//delay closing down to give the player an opening
@@ -446,7 +447,7 @@ void Sentry_RangedAttack( qboolean visible, qboolean advance )
 			{
 				NPCInfo->localState = LSTATE_ACTIVE;
 				NPC->fly_sound_debounce_time = NPCInfo->burstCount = 0;
-				TIMER_Set( NPC, "attackDelay", Q_irand( 1000/*2000*/, 1700/*3500*/) );
+				TIMER_Set( NPC, "attackDelay", Q_irand( JKG_AI ? 1000 : 2000, JKG_AI ? 1700 : 3500 ) );
 				NPC->flags |= FL_SHIELDED;
 				NPC_SetAnim( NPC, SETANIM_BOTH, BOTH_FLY_SHIELDED, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD );
 				G_SoundOnEnt( NPC, CHAN_AUTO, "sound/chars/sentry/misc/sentry_shield_close" );

@@ -30,6 +30,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "g_functions.h"
 #include "g_icarus.h"
 #include "wp_saber.h"
+#include "jkg_local.h"
 
 extern cvar_t *g_sex;
 
@@ -495,11 +496,11 @@ int NPC_WeaponsForTeam( team_t team, int spawnflags, const char *NPC_type )
 		}
 		if ( Q_stricmp( "impofficer", NPC_type ) == 0 )
 		{
-			return ( 1 << WP_BLASTER_PISTOL);
+			return ( 1 << ( JKG_AI ? WP_BLASTER_PISTOL : WP_BLASTER ) );
 		}
 		if ( Q_stricmp( "impcommander", NPC_type ) == 0 )
 		{
-			return ( 1 << WP_BLASTER_PISTOL);
+			return ( 1 << ( JKG_AI ? WP_BLASTER_PISTOL : WP_BLASTER ) );
 		}
 		if (( Q_stricmp( "probe", NPC_type ) == 0 ) || ( Q_stricmp( "seeker", NPC_type ) == 0 ))
 		{
@@ -830,14 +831,24 @@ void NPC_Begin (gentity_t *ent)
 			//&& ent->client->NPC_class != CLASS_DESANN
 			&& ent->client->NPC_class != CLASS_JEDI )
 		{// up everyone except jedi
-			if (g_spskill->integer == 0) { // Easy
-				ent->NPC->stats.health = ent->NPC->stats.health * 0.75;
+			if ( JKG_AI )
+			{
+				if ( g_spskill->integer == 0 )
+				{// Easy
+					ent->NPC->stats.health = ent->NPC->stats.health * 0.75;
+				}
+				else if ( g_spskill->integer == 1 )
+				{// Medium
+					ent->NPC->stats.health = ent->NPC->stats.health;
+				}
+				else if ( g_spskill->integer == 2 )
+				{// Hard
+					ent->NPC->stats.health = ent->NPC->stats.health * 1.25;
+				}
 			}
-			else if (g_spskill->integer == 1) { // Medium
-				ent->NPC->stats.health = ent->NPC->stats.health; // 100% health, no change
-			}
-			else if (g_spskill->integer == 2) { // Hard
-				ent->NPC->stats.health = ent->NPC->stats.health * 1.25;
+			else
+			{
+				ent->NPC->stats.health += ent->NPC->stats.health/4 * g_spskill->integer;
 			}
 		}
 
