@@ -24,6 +24,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "cg_local.h"
 #include "cg_media.h"
 #include "FxScheduler.h"
+#include "../game/wp_saber.h"
 #include "../game/jkg_local.h"
 #include "../game/g_local.h"
 #include "../game/anims.h"

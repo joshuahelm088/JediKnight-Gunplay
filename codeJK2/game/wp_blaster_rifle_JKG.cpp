@@ -34,7 +34,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 //---------------
 
 //---------------------------------------------------------
-static void WP_FireBlaster_JKGMissile_JKG( gentity_t *ent, vec3_t start, vec3_t dir, qboolean altFire )
+static void WP_FireBlasterMissile_JKG( gentity_t *ent, vec3_t start, vec3_t dir, qboolean altFire )
 //---------------------------------------------------------
 {
 	int velocity	= BLASTER_VELOCITY;
