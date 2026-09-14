@@ -360,12 +360,9 @@ typedef struct ammoData_s
 
 
 // >>> JKG HOOK: override stock weapon tuning numbers with JKGunplay values.
-// jkg_tuning.h #undef/#redefines the constants above. Compile-time gated by
-// the JKGUNPLAY define (set in codeJK2/game/CMakeLists.txt). Remove that define
-// for a pristine-stock build.
-#ifdef JKGUNPLAY
+// jkg_tuning.h #undef/#redefines the constants above. Add jkg_main.cpp and
+// AI_Stormtrooper_JKG.cpp to your own project/build if you use a non-CMake setup.
 #include "jkg_tuning.h"
-#endif
 // <<< JKG HOOK
 
 #endif//#ifndef __WEAPONS_H__

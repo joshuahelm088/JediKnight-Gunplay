@@ -21,7 +21,7 @@ if(NOT InOpenJK)
 	message(FATAL_ERROR "Use the top-level cmake script!")
 endif(NOT InOpenJK)
 
-set(JK2SPGameDefines ${SharedDefines} "JK2_MODE" "SP_GAME" "JKGUNPLAY")
+set(JK2SPGameDefines ${SharedDefines} "JK2_MODE" "SP_GAME")
 
 set(JK2SPGameIncludeDirectories
 	"${JK2SPDir}"
@@ -52,7 +52,6 @@ set(JK2SPGameGameFiles
 	"${JK2SPDir}/game/AI_Sentry.cpp"
 	"${JK2SPDir}/game/AI_Sniper.cpp"
 	"${JK2SPDir}/game/AI_Stormtrooper.cpp"
-	"${JK2SPDir}/game/AI_Stormtrooper_JKG.cpp"
 	"${JK2SPDir}/game/AI_Utils.cpp"
 	"${JK2SPDir}/game/G_Timer.cpp"
 	"${JK2SPDir}/game/NPC.cpp"
@@ -88,7 +87,6 @@ set(JK2SPGameGameFiles
 	"${JK2SPDir}/game/g_items.cpp"
 	"${JK2SPDir}/game/g_main.cpp"
 	"${JK2SPDir}/game/g_mem.cpp"
-	"${JK2SPDir}/game/jkg_main.cpp"
 	"${JK2SPDir}/game/g_misc.cpp"
 	"${JK2SPDir}/game/g_misc_model.cpp"
 	"${JK2SPDir}/game/g_missile.cpp"
@@ -154,8 +152,6 @@ set(JK2SPGameGameFiles
 	"${JK2SPDir}/game/g_roff.h"
 	"${JK2SPDir}/game/g_shared.h"
 	"${JK2SPDir}/game/genericparser2.h"
-	"${JK2SPDir}/game/jkg_local.h"
-	"${JK2SPDir}/game/jkg_tuning.h"
 	"${JK2SPDir}/game/ghoul2_shared.h"
 	"${JK2SPDir}/game/npc_headers.h"
 	"${JK2SPDir}/game/objectives.h"
