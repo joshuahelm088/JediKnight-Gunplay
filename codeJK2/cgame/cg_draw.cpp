@@ -866,7 +866,10 @@ static void CG_DrawHUD( centity_t *cent )
 		CG_DrawHUDLeftFrame1(x,y);
 		CG_DrawArmor(x,y);
 		CG_DrawHealth(x,y);
-		CG_DrawWeaponCharge(50, 50, cent);
+		if ( JKG_HUD )
+		{
+			CG_DrawWeaponCharge( 50, 50, cent );
+		}
 		CG_DrawHUDLeftFrame2(x,y);
 	}
 

@@ -24,6 +24,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 // cg_event.c -- handle entity events at snapshot or playerstate transitions
 
 #include "g_local.h"
+#include "../game/jkg_local.h"
 #include "cg_local.h"
 #include "cg_media.h"
 #include "FxScheduler.h"
@@ -93,8 +94,11 @@ void CG_ItemPickup( int itemNum, qboolean bHadItem ) {
 	cg.itemPickup = itemNum;
 	cg.itemPickupTime = cg.time;
 	cg.itemPickupBlendTime = cg.time;
-	cg.pickupFlashTime = cg.time;
-	cg.pickupFlashType = bg_itemlist[itemNum].giType;
+	if ( JKG_HUD )
+	{
+		cg.pickupFlashTime = cg.time;
+		cg.pickupFlashType = bg_itemlist[itemNum].giType;
+	}
 
 	if (bg_itemlist[itemNum].classname && bg_itemlist[itemNum].classname[0])
 	{
@@ -761,27 +765,19 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 
     case EV_PAIN_ARMOR:
-    {
-        const int armor = es->eventParm;
+		if ( JKG_HUD )
+		{
+			if ( cent->gent && cent->gent->NPC && ( cent->gent->NPC->aiFlags & NPCAI_DIE_ON_IMPACT ) )
+			{
+				return;
+			}
 
-        if (cent->gent && cent->gent->NPC && (cent->gent->NPC->aiFlags & NPCAI_DIE_ON_IMPACT))
-        {
-            return;
-        }
-
-        DEBUGNAME("EV_PAIN_ARMOR");
-        /*if (cg.time - cent->pe.painTime < 50) {
-        return;
-        }*/
-
-        //G_SoundOnEnt(cent->gent, CHAN_BODY, "sound/items/respawn1.wav");
-		G_SoundOnEnt(cent->gent, CHAN_BODY, "sound/weapons/force/lightninghit1.mp3");
-
-        // save pain time for programitic twitch animation
-        cent->pe.painTime = cg.time;
-        cent->pe.painDirection ^= 1;
-    }
-    break;
+			DEBUGNAME( "EV_PAIN_ARMOR" );
+			G_SoundOnEnt( cent->gent, CHAN_BODY, "sound/weapons/force/lightninghit1.mp3" );
+			cent->pe.painTime = cg.time;
+			cent->pe.painDirection ^= 1;
+		}
+		break;
 
 	case EV_DEATH1:
 	case EV_DEATH2:

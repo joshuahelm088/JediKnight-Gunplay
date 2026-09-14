@@ -28,6 +28,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "cg_local.h"
 #include "cg_media.h"
+#include "../game/jkg_local.h"
 
 /*
 ==============
@@ -212,7 +213,10 @@ CG_PickupFlashFeedback
 ==============
 */
 void CG_PickupFlashFeedback(int yawByte, int pitchByte) {
-	cg.pickupFlashTime = cg.snap->serverTime;
+	if ( JKG_HUD )
+	{
+		cg.pickupFlashTime = cg.snap->serverTime;
+	}
 }
 
 

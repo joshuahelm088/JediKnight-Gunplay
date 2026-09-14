@@ -24,7 +24,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "cg_local.h"
 #include "cg_media.h"
 #include "FxScheduler.h"
-#include "../game/wp_saber.h"
+#include "../game/jkg_local.h"
 #include "../game/g_local.h"
 #include "../game/anims.h"
 
@@ -747,42 +747,30 @@ void CG_CalculateWeaponPosition( vec3_t origin, vec3_t angles )
 		scale = cg.xyspeed;
 	}
 
-	// ====================================================================================================
-	//float gunMoveScale = 1.25;
+	if ( JKG_HUD )
+	{
+		float lagFactor = 0.03f*3;
+		float returnSpeed = 0.003f;
+		float maxLag = 20.0f;
 
-	//// Camera move the gun
-	//angles[ROLL] -= cg.viewAnglesDelta[ROLL] * gunMoveScale;
-	//angles[YAW] -= cg.viewAnglesDelta[YAW] * gunMoveScale;
-	//angles[PITCH] -= cg.viewAnglesDelta[PITCH] * gunMoveScale;
-	// 
-	// Configurable constants for tweaking
-	float lagFactor = 0.03f*3;       // Determines how quickly the weapon lags behind
-	float returnSpeed = 0.003f;// 5.0f;      // Determines how quickly the weapon returns to center
-	float maxLag = 20.0f;          // Maximum allowed lag in degrees
+		cg.viewModelLagOffset[PITCH] -= cg.viewAnglesDelta[PITCH] * lagFactor;
+		cg.viewModelLagOffset[YAW] -= cg.viewAnglesDelta[YAW] * lagFactor;
 
-	// Update weapon lag offset based on view angles delta
-	cg.viewModelLagOffset[PITCH] -= cg.viewAnglesDelta[PITCH] * lagFactor;
-	cg.viewModelLagOffset[YAW] -= cg.viewAnglesDelta[YAW] * lagFactor;
+		cg.viewModelLagOffset[PITCH] = Com_Clamp( -maxLag, maxLag, cg.viewModelLagOffset[PITCH] );
+		cg.viewModelLagOffset[YAW] = Com_Clamp( -maxLag, maxLag, cg.viewModelLagOffset[YAW] );
 
-	// Clamp the lag to prevent excessive offset
-	cg.viewModelLagOffset[PITCH] = Com_Clamp(-maxLag, maxLag, cg.viewModelLagOffset[PITCH]);
-	cg.viewModelLagOffset[YAW] = Com_Clamp(-maxLag, maxLag, cg.viewModelLagOffset[YAW]);
+		if ( cg.viewAnglesDelta[PITCH] == 0 )
+		{
+			cg.viewModelLagOffset[PITCH] -= cg.viewModelLagOffset[PITCH] * returnSpeed * cg.frametime;
+		}
+		if ( cg.viewAnglesDelta[YAW] == 0 )
+		{
+			cg.viewModelLagOffset[YAW] -= cg.viewModelLagOffset[YAW] * returnSpeed * cg.frametime;
+		}
 
-	// Smooth return to center when no camera movement
-	if (cg.viewAnglesDelta[PITCH] == 0) {
-		cg.viewModelLagOffset[PITCH] -= cg.viewModelLagOffset[PITCH] * returnSpeed * cg.frametime;
+		angles[PITCH] += cg.viewModelLagOffset[PITCH];
+		angles[YAW] += cg.viewModelLagOffset[YAW];
 	}
-	if (cg.viewAnglesDelta[YAW] == 0) {
-		cg.viewModelLagOffset[YAW] -= cg.viewModelLagOffset[YAW] * returnSpeed * cg.frametime;
-	}
-
-	// Apply the lag offset to the weapon angles
-	angles[PITCH] += cg.viewModelLagOffset[PITCH];
-	angles[YAW] += cg.viewModelLagOffset[YAW];
-
-	CG_Printf("Delta PITCH: %.2f, Offset PITCH: %.2f\n", cg.viewAnglesDelta[PITCH], cg.viewModelLagOffset[PITCH]);
-
-	// ====================================================================================================
 
 	// gun angles from bobbing
 	angles[ROLL] += scale * cg.bobfracsin * 0.0075;
@@ -1288,9 +1276,12 @@ void CG_AddViewWeapon( playerState_t *ps )
 		}
 	}
 
-	if (cent->gent && cent->gent->client && cent->gent->client->ps.weaponstate != WEAPON_FIRING) {
-		if (cent->gent->client->ps.weaponShotCount > 0) {
-			if (cent->gent->client->ps.lastShotTime < level.time - 600) {
+	if ( JKG_HUD && cent->gent && cent->gent->client && cent->gent->client->ps.weaponstate != WEAPON_FIRING )
+	{
+		if ( cent->gent->client->ps.weaponShotCount > 0 )
+		{
+			if ( cent->gent->client->ps.lastShotTime < level.time - 600 )
+			{
 				cent->gent->client->ps.weaponShotCount = 0;
 			}
 		}

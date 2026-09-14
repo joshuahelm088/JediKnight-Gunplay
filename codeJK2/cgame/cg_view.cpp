@@ -1493,23 +1493,35 @@ static void CG_DamageBlendBlob( void )
 	VectorMA( ent.origin, cg.damageX * -8, cg.refdef.viewaxis[1], ent.origin );
 	VectorMA( ent.origin, cg.damageY * 8, cg.refdef.viewaxis[2], ent.origin );
 
-	int r = 180;
-	int g = 50;
-	int b = 50;
-	float scale = 3.0f;
+	if ( JKG_HUD )
+	{
+		int r = 180;
+		int g = 50;
+		int b = 50;
+		float scale = 3.0f;
 
-	if (ps->stats[STAT_ARMOR] > 50) {
-		r = 40;
-		g = 220;
-		b = 60;
-		scale = 5.0f;
+		if ( ps->stats[STAT_ARMOR] > 50 )
+		{
+			r = 40;
+			g = 220;
+			b = 60;
+			scale = 5.0f;
+		}
+
+		ent.radius = cg.damageValue * scale * ( 1.0 - ((float)t / maxTime) );
+		ent.customShader = cgs.media.damageBlendBlobShader;
+		ent.shaderRGBA[0] = r * ( 1.0 - ((float)t / maxTime) );
+		ent.shaderRGBA[1] = g * ( 1.0 - ((float)t / maxTime) );
+		ent.shaderRGBA[2] = b * ( 1.0 - ((float)t / maxTime) );
 	}
-
-	ent.radius = cg.damageValue * scale * ( 1.0 - ((float)t / maxTime) );
-	ent.customShader = cgs.media.damageBlendBlobShader;
-	ent.shaderRGBA[0] = r * ( 1.0 - ((float)t / maxTime) );
-	ent.shaderRGBA[1] = g * ( 1.0 - ((float)t / maxTime) );
-	ent.shaderRGBA[2] = b * ( 1.0 - ((float)t / maxTime) );
+	else
+	{
+		ent.radius = cg.damageValue * 3 * ( 1.0 - ((float)t / maxTime) );
+		ent.customShader = cgs.media.damageBlendBlobShader;
+		ent.shaderRGBA[0] = 180 * ( 1.0 - ((float)t / maxTime) );
+		ent.shaderRGBA[1] = 50 * ( 1.0 - ((float)t / maxTime) );
+		ent.shaderRGBA[2] = 50 * ( 1.0 - ((float)t / maxTime) );
+	}
 	ent.shaderRGBA[3] = 255;
 
 	cgi_R_AddRefEntityToScene( &ent );
@@ -2020,10 +2032,14 @@ wasForceSpeed=isForceSpeed;
 	CG_RunEmplacedWeapon();
 
 	// first person blend blobs, done after AnglesToAxis
-	//if ( !cg.renderingThirdPerson ) {
+	if ( !cg.renderingThirdPerson || JKG_HUD )
+	{
 		CG_DamageBlendBlob();
-		CG_PickupFlashBlendBlob();
-	//}
+		if ( JKG_HUD )
+		{
+			CG_PickupFlashBlendBlob();
+		}
+	}
 
 	// build the render lists
 	if ( !cg.hyperspace ) {
