@@ -31,6 +31,11 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "g_functions.h"
 #include "say.h"
 #include "Q3_Interface.h"
+#include "jkg_local.h"
+
+// JKGunplay stormtrooper behavior dispatcher (defined below, routed to via the
+// JKG HOOK in NPC_BehaviorSet_Stormtrooper).
+void NPC_BehaviorSet_Stormtrooper_JKG( int bState );
 
 extern vec3_t playerMins;
 extern vec3_t playerMaxs;
@@ -1434,6 +1439,14 @@ NPC_BehaviorSet_Stormtrooper
 
 void NPC_BehaviorSet_Stormtrooper( int bState )
 {
+	// >>> JKG HOOK: route to the JKGunplay stormtrooper AI when enabled (g_jkgAI).
+	// Set g_jkgAI 0 (or g_jkgplay 0) for stock stormtrooper behavior below.
+	if ( JKG_AI )
+	{
+		NPC_BehaviorSet_Stormtrooper_JKG( bState );
+		return;
+	}
+	// <<< JKG HOOK
 	switch( bState )
 	{
 	case BS_STAND_GUARD:
@@ -1460,11 +1473,15 @@ void NPC_BehaviorSet_Stormtrooper( int bState )
 
 /*
 -------------------------
-NPC_BehaviorSet_Stormtrooper_New
+NPC_BehaviorSet_Stormtrooper_JKG
+
+JKGunplay stormtrooper behavior dispatcher. Reached only via the JKG HOOK in
+NPC_BehaviorSet_Stormtrooper() above. Custom logic lives in
+AI_Stormtrooper_JKG.cpp; investigate/sleep still use the stock behaviors.
 -------------------------
 */
 
-void NPC_BehaviorSet_Stormtrooper_New(int bState)
+void NPC_BehaviorSet_Stormtrooper_JKG(int bState)
 {
 	switch (bState)
 	{
@@ -1473,7 +1490,7 @@ void NPC_BehaviorSet_Stormtrooper_New(int bState)
 	case BS_STAND_AND_SHOOT:
 	case BS_HUNT_AND_KILL:
 	case BS_DEFAULT:
-		NPC_BSST_Default_New();
+		NPC_BSST_Default_JKG();
 		break;
 
 	case BS_INVESTIGATE:
@@ -1754,8 +1771,7 @@ void NPC_RunBehavior( int team, int bState )
 			{
 				return;
 			}
-			//NPC_BehaviorSet_Stormtrooper( bState );
-			NPC_BehaviorSet_Stormtrooper_New(bState);
+			NPC_BehaviorSet_Stormtrooper( bState );
 			break;
 
 		case TEAM_NEUTRAL:

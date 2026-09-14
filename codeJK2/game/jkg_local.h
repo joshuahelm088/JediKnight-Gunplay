@@ -1,0 +1,56 @@
+/*
+===========================================================================
+JKGunplay mod layer
+
+This header is the single entry point for the "JKGunplay" custom gameplay
+layer that sits on top of the stock OpenJK (JK2 single-player) code.
+
+Design rules (see also jkg_tuning.h):
+  1. Stock OpenJK files stay as close to pristine as possible. The only edit
+     to a stock file should be a small, clearly-marked "JKG HOOK" that routes
+     to the custom code when the relevant toggle is on.
+  2. Custom *logic* that can stand alone lives in dedicated *_JKG.cpp files.
+  3. Custom logic that is woven into stock functions is wrapped in a runtime
+     guard: if ( JKG_<SYSTEM> ) { custom } else { stock }.
+  4. Custom numeric tuning lives in jkg_tuning.h.
+
+Every subsystem is gated by the master toggle (g_jkgplay) AND its own
+per-system toggle, so you can A/B test any subsystem independently, or flip
+the whole mod off to get stock behavior. All default to ON.
+===========================================================================
+*/
+
+#ifndef JKG_LOCAL_H
+#define JKG_LOCAL_H
+
+#include "q_shared.h"	// cvar_t
+
+// Master toggle for the entire JKGunplay layer.
+extern cvar_t *g_jkgplay;
+
+// Per-system toggles.
+extern cvar_t *g_jkgAI;			// custom NPC AI (stormtrooper, probe, sentry, reactions, spawn scaling)
+extern cvar_t *g_jkgWeapons;	// custom weapon fire behavior + tuning
+extern cvar_t *g_jkgMovement;	// custom player movement feel + weapon-fire cadence
+extern cvar_t *g_jkgArmor;		// separate MAX_ARMOR system (armor no longer clamped to max health)
+extern cvar_t *g_jkgCombat;		// custom damage tables / pain timing / hit locations
+extern cvar_t *g_jkgCamera;		// weapon-fire camera kickback
+extern cvar_t *g_jkgHUD;		// custom HUD / view / weapon-draw tweaks
+
+// A subsystem is active only if the master toggle AND its own toggle are on.
+// Pointers are null-checked so this is safe to call before G_InitCvars runs
+// (returns false -> stock behavior until the cvars are registered).
+#define JKG_ON(sys)		( g_jkgplay && g_jkgplay->integer && (sys) && (sys)->integer )
+
+#define JKG_AI			JKG_ON( g_jkgAI )
+#define JKG_WEAPONS		JKG_ON( g_jkgWeapons )
+#define JKG_MOVEMENT	JKG_ON( g_jkgMovement )
+#define JKG_ARMOR		JKG_ON( g_jkgArmor )
+#define JKG_COMBAT		JKG_ON( g_jkgCombat )
+#define JKG_CAMERA		JKG_ON( g_jkgCamera )
+#define JKG_HUD			JKG_ON( g_jkgHUD )
+
+// Registers all g_jkg* cvars. Called from G_InitCvars().
+void JKG_RegisterCvars( void );
+
+#endif	// JKG_LOCAL_H

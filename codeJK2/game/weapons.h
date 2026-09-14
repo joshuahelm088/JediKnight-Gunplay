@@ -169,24 +169,22 @@ typedef struct ammoData_s
 
 // Bryar Pistol
 //--------
-#define BRYAR_PISTOL_VEL			3350 // 1800
-#define BRYAR_PISTOL_DAMAGE			16 // 12
+#define BRYAR_PISTOL_VEL			1800
+#define BRYAR_PISTOL_DAMAGE			14
 #define BRYAR_CHARGE_UNIT			200.0f	// bryar charging gives us one more unit every 200ms--if you change this, you'll have to do the same in bg_pmove
-#define BRYAR_BOLT_SIZE				4
 
 // E11 Blaster
 //---------
-#define BLASTER_MAIN_SPREAD			2.25f//0.5f
-#define BLASTER_ALT_SPREAD			2.25f//1.5f
+#define BLASTER_MAIN_SPREAD			0.5f
+#define BLASTER_ALT_SPREAD			1.5f
 #define BLASTER_NPC_SPREAD			0.5f
-#define BLASTER_VELOCITY			3150 // 2300
+#define BLASTER_VELOCITY			2300
 #define BLASTER_NPC_VEL_CUT			0.5f
 #define BLASTER_NPC_HARD_VEL_CUT	0.7f
 #define BLASTER_DAMAGE				20
 #define	BLASTER_NPC_DAMAGE_EASY		6
 #define	BLASTER_NPC_DAMAGE_NORMAL	12 // 14
 #define	BLASTER_NPC_DAMAGE_HARD		16 // 18
-#define BLASTER_BOLT_SIZE			4
 
 // Tenloss Disruptor
 //----------
@@ -204,16 +202,16 @@ typedef struct ammoData_s
 
 // Wookie Bowcaster
 //----------
-#define	BOWCASTER_DAMAGE			60//45
+#define	BOWCASTER_DAMAGE			45
 #define	BOWCASTER_VELOCITY			1300
 #define	BOWCASTER_NPC_DAMAGE_EASY	12
 #define	BOWCASTER_NPC_DAMAGE_NORMAL	24
 #define	BOWCASTER_NPC_DAMAGE_HARD	36
 #define BOWCASTER_SPLASH_DAMAGE		0
 #define BOWCASTER_SPLASH_RADIUS		0
-#define BOWCASTER_SIZE				6//3
+#define BOWCASTER_SIZE				2
 
-#define BOWCASTER_ALT_SPREAD		2.2f//5.0f
+#define BOWCASTER_ALT_SPREAD		5.0f
 #define BOWCASTER_VEL_RANGE			0.3f
 #define BOWCASTER_CHARGE_UNIT		200.0f	// bowcaster charging gives us one more unit every 200ms--if you change this, you'll have to do the same in bg_pmove
 
@@ -221,29 +219,28 @@ typedef struct ammoData_s
 //----------
 #define REPEATER_SPREAD				1.4f
 #define REPEATER_NPC_SPREAD			0.7f
-#define	REPEATER_DAMAGE				10
-#define	REPEATER_VELOCITY			2000
+#define	REPEATER_DAMAGE				8
+#define	REPEATER_VELOCITY			1600
 #define	REPEATER_NPC_DAMAGE_EASY	2
 #define	REPEATER_NPC_DAMAGE_NORMAL	4
 #define	REPEATER_NPC_DAMAGE_HARD	6
-#define	REPEATER_SIZE				3//1
 
-#define REPEATER_ALT_SIZE				4	// half of bbox size
+#define REPEATER_ALT_SIZE				3	// half of bbox size
 #define	REPEATER_ALT_DAMAGE				60
 #define REPEATER_ALT_SPLASH_DAMAGE		60
 #define REPEATER_ALT_SPLASH_RADIUS		128
-#define	REPEATER_ALT_VELOCITY			1800//1100
+#define	REPEATER_ALT_VELOCITY			1100
 #define	REPEATER_ALT_NPC_DAMAGE_EASY	15
 #define	REPEATER_ALT_NPC_DAMAGE_NORMAL	30
 #define	REPEATER_ALT_NPC_DAMAGE_HARD	45
 
 // DEMP2
 //----------
-#define	DEMP2_DAMAGE				1//15
+#define	DEMP2_DAMAGE				15
 #define	DEMP2_VELOCITY				1800
-#define	DEMP2_NPC_DAMAGE_EASY		1//6
-#define	DEMP2_NPC_DAMAGE_NORMAL		1//12
-#define	DEMP2_NPC_DAMAGE_HARD		1//18
+#define	DEMP2_NPC_DAMAGE_EASY		6
+#define	DEMP2_NPC_DAMAGE_NORMAL		12
+#define	DEMP2_NPC_DAMAGE_HARD		18
 #define	DEMP2_SIZE					2		// half of bbox size
 
 #define DEMP2_ALT_DAMAGE			15
@@ -253,11 +250,11 @@ typedef struct ammoData_s
 
 // Golan Arms Flechette
 //---------
-#define FLECHETTE_SHOTS				10
-#define FLECHETTE_SPREAD			2.5f//4.0f
-#define FLECHETTE_DAMAGE			10//15
+#define FLECHETTE_SHOTS				6
+#define FLECHETTE_SPREAD			4.0f
+#define FLECHETTE_DAMAGE			15
 #define FLECHETTE_VEL				3500
-#define FLECHETTE_SIZE				2.1f//1.5f
+#define FLECHETTE_SIZE				1
 
 #define FLECHETTE_ALT_DAMAGE		20
 #define FLECHETTE_ALT_SPLASH_DAM	20
@@ -272,7 +269,7 @@ typedef struct ammoData_s
 
 // Personal Rocket Launcher
 //---------
-#define	ROCKET_VELOCITY				1600//900
+#define	ROCKET_VELOCITY				900
 #define	ROCKET_DAMAGE				100
 #define	ROCKET_SPLASH_DAMAGE		100
 #define	ROCKET_SPLASH_RADIUS		160
@@ -344,22 +341,31 @@ typedef struct ammoData_s
 // Thermal Detonator
 //--------------
 #define TD_DAMAGE			100
-#define TD_NPC_DAMAGE_CUT	0.3f//0.6f	// NPC thrown dets deliver only 60% of the damage that a player thrown one does
-#define TD_SPLASH_RAD		256//128
+#define TD_NPC_DAMAGE_CUT	0.6f	// NPC thrown dets deliver only 60% of the damage that a player thrown one does
+#define TD_SPLASH_RAD		128
 #define TD_SPLASH_DAM		90
 #define TD_VELOCITY			900
 #define TD_MIN_CHARGE		0.15f
-#define TD_TIME				750//4000
+#define TD_TIME				4000
 #define TD_THINK_TIME		300		// don't think too often?
 #define TD_TEST_RAD			(weaponData[WP_THERMAL].splashRadius * 0.8f) // no sense in auto-blowing up if exactly on the radius edge--it would hardly do any damage
 #define TD_ALT_TIME			3000
 
 #define TD_ALT_DAMAGE		100
-#define TD_ALT_SPLASH_RAD	256//128
+#define TD_ALT_SPLASH_RAD	128
 #define TD_ALT_SPLASH_DAM	90
 #define TD_ALT_VELOCITY		600
 #define TD_ALT_MIN_CHARGE	0.15f
 #define TD_ALT_TIME			3000
 
+
+// >>> JKG HOOK: override stock weapon tuning numbers with JKGunplay values.
+// jkg_tuning.h #undef/#redefines the constants above. Compile-time gated by
+// the JKGUNPLAY define (set in codeJK2/game/CMakeLists.txt). Remove that define
+// for a pristine-stock build.
+#ifdef JKGUNPLAY
+#include "jkg_tuning.h"
+#endif
+// <<< JKG HOOK
 
 #endif//#ifndef __WEAPONS_H__

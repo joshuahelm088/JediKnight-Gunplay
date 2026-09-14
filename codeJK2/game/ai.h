@@ -75,10 +75,10 @@ void NPC_BSST_Investigate( void );
 void NPC_BSST_Default( void );
 void NPC_BSST_Sleep( void );
 
-//AI_STORMTROOPER_NEW
-void NPC_BSST_Investigate_New(void);
-void NPC_BSST_Default_New(void);
-void NPC_BSST_Sleep_New(void);
+//AI_STORMTROOPER (JKGunplay layer - see AI_Stormtrooper_JKG.cpp)
+void NPC_BSST_Investigate_JKG( void );
+void NPC_BSST_Default_JKG( void );
+void NPC_BSST_Sleep_JKG( void );
 
 //AI_JEDI
 void NPC_BSJedi_Investigate( void );
