@@ -27,24 +27,16 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "wp_saber.h"
 #include "w_local.h"
 #include "g_functions.h"
-#include "jkg_local.h"
+#include "../cgame/cg_camera.h"
 
 //---------------
 //	Bryar Pistol
 //---------------
 
 //---------------------------------------------------------
-void WP_FireBryarPistol( gentity_t *ent, qboolean alt_fire )
+void WP_FireBryarPistol_JKG( gentity_t *ent, qboolean alt_fire )
 //---------------------------------------------------------
 {
-	// >>> JKG HOOK: route to JKGunplay bryar fire when enabled (g_jkgWeapons).
-	if ( JKG_WEAPONS )
-	{
-		WP_FireBryarPistol_JKG( ent, alt_fire );
-		return;
-	}
-	// <<< JKG HOOK
-
 	vec3_t	start;
 	int		damage = !alt_fire ? weaponData[ent->s.weapon].damage : weaponData[ent->s.weapon].altDamage;
 
@@ -75,6 +67,18 @@ void WP_FireBryarPistol( gentity_t *ent, qboolean alt_fire )
 
 	missile->classname = "bryar_proj";
 	missile->s.weapon = WP_BRYAR_PISTOL;
+
+	VectorSet(missile->maxs, BRYAR_BOLT_SIZE, BRYAR_BOLT_SIZE, BRYAR_BOLT_SIZE);
+	VectorScale(missile->maxs, -1, missile->mins);
+
+	if (!ent->NPC) {
+		float kickIntensity = 0.35f;
+		int kickDuration = 150;
+		vec3_t kickDir = { -1, 0, 0 };
+		VectorSet(kickDir, 1.0f, 0.0f, 0.0f);
+		kickIntensity = 0.85f;
+		CGCam_Kickback(0.35f, 250, kickDir);
+	}
 
 	if ( alt_fire )
 	{

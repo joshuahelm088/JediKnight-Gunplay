@@ -26,14 +26,13 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "wp_saber.h"
 #include "w_local.h"
 #include "g_functions.h"
-#include "jkg_local.h"
 
 //-------------------
 //	Wookiee Bowcaster
 //-------------------
 
 //---------------------------------------------------------
-static void WP_BowcasterMainFire( gentity_t *ent )
+static void WP_BowcasterMainFire_JKG( gentity_t *ent )
 //---------------------------------------------------------
 {
 	int			damage	= weaponData[WP_BOWCASTER].damage, count;
@@ -123,13 +122,16 @@ static void WP_BowcasterMainFire( gentity_t *ent )
 		missile->splashRadius = weaponData[WP_BOWCASTER].splashRadius;
 
 		// we don't want it to bounce
-		missile->bounceCount = 0;
+		//missile->bounceCount = 0;
+
+		missile->s.eFlags |= EF_BOUNCE;
+		missile->bounceCount = 3;
 		ent->client->sess.missionStats.shotsFired++;
 	}
 }
 
 //---------------------------------------------------------
-static void WP_BowcasterAltFire( gentity_t *ent )
+static void WP_BowcasterAltFire_JKG( gentity_t *ent )
 //---------------------------------------------------------
 {
 	vec3_t	start;
@@ -171,7 +173,7 @@ static void WP_BowcasterAltFire( gentity_t *ent )
 //	}
 
 	missile->s.eFlags |= EF_BOUNCE;
-	missile->bounceCount = 3;
+	missile->bounceCount = 6;
 
 	missile->damage = damage;
 	missile->dflags = DAMAGE_DEATH_KNOCKBACK;
@@ -182,23 +184,15 @@ static void WP_BowcasterAltFire( gentity_t *ent )
 }
 
 //---------------------------------------------------------
-void WP_FireBowcaster( gentity_t *ent, qboolean alt_fire )
+void WP_FireBowcaster_JKG( gentity_t *ent, qboolean alt_fire )
 //---------------------------------------------------------
 {
-	// >>> JKG HOOK: route to JKGunplay bowcaster fire when enabled (g_jkgWeapons).
-	if ( JKG_WEAPONS )
-	{
-		WP_FireBowcaster_JKG( ent, alt_fire );
-		return;
-	}
-	// <<< JKG HOOK
-
 	if ( alt_fire )
 	{
-		WP_BowcasterAltFire( ent );
+		WP_BowcasterAltFire_JKG( ent );
 	}
 	else
 	{
-		WP_BowcasterMainFire( ent );
+		WP_BowcasterMainFire_JKG( ent );
 	}
 }

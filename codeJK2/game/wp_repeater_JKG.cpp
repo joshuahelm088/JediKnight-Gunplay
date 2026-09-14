@@ -27,14 +27,13 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "wp_saber.h"
 #include "w_local.h"
 #include "g_functions.h"
-#include "jkg_local.h"
 
 //-------------------
 //	Heavy Repeater
 //-------------------
 
 //---------------------------------------------------------
-static void WP_RepeaterMainFire( gentity_t *ent, vec3_t dir )
+static void WP_RepeaterMainFire_JKG( gentity_t *ent, vec3_t dir )
 //---------------------------------------------------------
 {
 	vec3_t	start;
@@ -47,6 +46,9 @@ static void WP_RepeaterMainFire( gentity_t *ent, vec3_t dir )
 
 	missile->classname = "repeater_proj";
 	missile->s.weapon = WP_REPEATER;
+
+	VectorSet(missile->maxs, REPEATER_SIZE, REPEATER_SIZE, REPEATER_SIZE);
+	VectorScale(missile->maxs, -1, missile->mins);
 
 	// Do the damages
 	if ( ent->s.number != 0 )
@@ -82,7 +84,7 @@ static void WP_RepeaterMainFire( gentity_t *ent, vec3_t dir )
 }
 
 //---------------------------------------------------------
-static void WP_RepeaterAltFire( gentity_t *ent )
+static void WP_RepeaterAltFire_JKG( gentity_t *ent )
 //---------------------------------------------------------
 {
 	vec3_t	start;
@@ -147,24 +149,16 @@ static void WP_RepeaterAltFire( gentity_t *ent )
 }
 
 //---------------------------------------------------------
-void WP_FireRepeater( gentity_t *ent, qboolean alt_fire )
+void WP_FireRepeater_JKG( gentity_t *ent, qboolean alt_fire )
 //---------------------------------------------------------
 {
-	// >>> JKG HOOK: route to JKGunplay repeater fire when enabled (g_jkgWeapons).
-	if ( JKG_WEAPONS )
-	{
-		WP_FireRepeater_JKG( ent, alt_fire );
-		return;
-	}
-	// <<< JKG HOOK
-
 	vec3_t	dir, angs;
 
 	vectoangles( wpFwd, angs );
 
 	if ( alt_fire )
 	{
-		WP_RepeaterAltFire( ent );
+		WP_RepeaterAltFire_JKG( ent );
 	}
 	else
 	{
@@ -180,14 +174,16 @@ void WP_FireRepeater( gentity_t *ent, qboolean alt_fire )
 		}
 		else
 		{
-			// add some slop to the alt-fire direction
-			angs[PITCH] += Q_flrand(-1.0f, 1.0f) * REPEATER_SPREAD;
-			angs[YAW]	+= Q_flrand(-1.0f, 1.0f) * REPEATER_SPREAD;
+			if (ent->client->ps.weaponShotCount > 1) {
+				// add some slop to the alt-fire direction
+				angs[PITCH] += Q_flrand(-1.0f, 1.0f) * REPEATER_SPREAD;
+				angs[YAW] += Q_flrand(-1.0f, 1.0f) * REPEATER_SPREAD;
+			}
 		}
 
 		AngleVectors( angs, dir, NULL, NULL );
 
 		// FIXME: if temp_org does not have clear trace to inside the bbox, don't shoot!
-		WP_RepeaterMainFire( ent, dir );
+		WP_RepeaterMainFire_JKG( ent, dir );
 	}
 }

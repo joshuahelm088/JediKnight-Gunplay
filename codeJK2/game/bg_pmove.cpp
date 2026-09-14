@@ -33,6 +33,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "g_shared.h"
 #include "bg_local.h"
 #include "g_local.h"
+#include "jkg_local.h"
 #include "g_functions.h"
 #include "anims.h"
 #include "../cgame/cg_local.h"	// yeah I know this is naughty, but we're shipping soon...
@@ -7960,10 +7961,16 @@ static void PM_Weapon( void )
 	int			addTime, amount, trueCount = 1;
 	qboolean	delayed_fire = qfalse;
 
-	if (pm->cmd.buttons & (BUTTON_ATTACK | BUTTON_ALT_ATTACK)) {
-		pm_firedLastFrame = true;
-	} else if (!(pm->cmd.buttons & (BUTTON_ATTACK | BUTTON_ALT_ATTACK))) {
-		pm_firedLastFrame = false;
+	if ( JKG_WEAPONS )
+	{
+		if ( pm->cmd.buttons & ( BUTTON_ATTACK | BUTTON_ALT_ATTACK ) )
+		{
+			pm_firedLastFrame = true;
+		}
+		else if ( !( pm->cmd.buttons & ( BUTTON_ATTACK | BUTTON_ALT_ATTACK ) ) )
+		{
+			pm_firedLastFrame = false;
+		}
 	}
 
 	if (pm->ps->weapon == WP_SABER && (cg.zoomMode==3||!cg.zoomMode||pm->ps->clientNum) )		// WP_LIGHTSABER
@@ -8055,12 +8062,16 @@ static void PM_Weapon( void )
 
 	if ( pm->ps->weaponTime > 0 )
 	{
-		if (pm->ps->weapon != WP_BRYAR_PISTOL) {
-			return;
-		} else {
-			if (pm_firedLastFrame) {
+		if ( JKG_WEAPONS && pm->ps->weapon == WP_BRYAR_PISTOL )
+		{
+			if ( pm_firedLastFrame )
+			{
 				return;
 			}
+		}
+		else
+		{
+			return;
 		}
 	}
 
@@ -8095,7 +8106,7 @@ static void PM_Weapon( void )
 			{
 			case WP_BRYAR_PISTOL:
 			case WP_BLASTER_PISTOL:
-				PM_SetAnim(pm,SETANIM_TORSO, BOTH_STAND5TOAIM/*TORSO_WEAPONIDLE2*/,SETANIM_FLAG_NORMAL);
+				PM_SetAnim( pm, SETANIM_TORSO, JKG_WEAPONS ? BOTH_STAND5TOAIM : TORSO_WEAPONIDLE2, SETANIM_FLAG_NORMAL );
 				break;
 			default:
 				PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONIDLE3,SETANIM_FLAG_NORMAL);
@@ -8183,7 +8194,7 @@ static void PM_Weapon( void )
 			break;
 
 		case WP_BLASTER:
-			PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK4, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
+			PM_SetAnim( pm, SETANIM_TORSO, JKG_WEAPONS ? BOTH_ATTACK4 : BOTH_ATTACK3, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
 			break;
 
 		case WP_DISRUPTOR:
@@ -8194,7 +8205,7 @@ static void PM_Weapon( void )
 			}
 			else
 			{//in primary fire mode
-				PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK4, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
+				PM_SetAnim( pm, SETANIM_TORSO, JKG_WEAPONS ? BOTH_ATTACK4 : BOTH_ATTACK3, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
 			}
 			break;
 
@@ -8306,11 +8317,14 @@ static void PM_Weapon( void )
 	{
 		PM_AddEvent( EV_ALT_FIRE );
 		addTime = weaponData[pm->ps->weapon].altFireTime;
-		switch (pm->ps->weapon)
+		if ( JKG_WEAPONS )
 		{
-		case WP_BLASTER:
-			pm->ps->weaponShotCount++;
-			break;
+			switch ( pm->ps->weapon )
+			{
+			case WP_BLASTER:
+				pm->ps->weaponShotCount++;
+				break;
+			}
 		}
 	}
 	else
@@ -8328,6 +8342,11 @@ static void PM_Weapon( void )
 		switch( pm->ps->weapon)
 		{
 		case WP_BLASTER:
+			if ( JKG_WEAPONS )
+			{
+				pm->ps->weaponShotCount++;
+			}
+			break;
 		case WP_REPEATER:
 			// repeater is supposed to do smoke after sustained bursts
 			pm->ps->weaponShotCount++;

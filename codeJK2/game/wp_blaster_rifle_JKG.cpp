@@ -27,14 +27,14 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "wp_saber.h"
 #include "w_local.h"
 #include "g_functions.h"
-#include "jkg_local.h"
+#include "../cgame/cg_camera.h"
 
 //---------------
 //	Blaster
 //---------------
 
 //---------------------------------------------------------
-static void WP_FireBlasterMissile( gentity_t *ent, vec3_t start, vec3_t dir, qboolean altFire )
+static void WP_FireBlaster_JKGMissile_JKG( gentity_t *ent, vec3_t start, vec3_t dir, qboolean altFire )
 //---------------------------------------------------------
 {
 	int velocity	= BLASTER_VELOCITY;
@@ -59,6 +59,9 @@ static void WP_FireBlasterMissile( gentity_t *ent, vec3_t start, vec3_t dir, qbo
 
 	missile->classname = "blaster_proj";
 	missile->s.weapon = WP_BLASTER;
+
+	VectorSet(missile->maxs, BLASTER_BOLT_SIZE, BLASTER_BOLT_SIZE, BLASTER_BOLT_SIZE);
+	VectorScale(missile->maxs, -1, missile->mins);
 
 	// Do the damages
 	if ( ent->s.number != 0 )
@@ -104,48 +107,47 @@ static void WP_FireBlasterMissile( gentity_t *ent, vec3_t start, vec3_t dir, qbo
 }
 
 //---------------------------------------------------------
-void WP_FireBlaster( gentity_t *ent, qboolean alt_fire )
+void WP_FireBlaster_JKG( gentity_t *ent, qboolean alt_fire )
 //---------------------------------------------------------
 {
-	// >>> JKG HOOK: route to JKGunplay blaster fire when enabled (g_jkgWeapons).
-	if ( JKG_WEAPONS )
-	{
-		WP_FireBlaster_JKG( ent, alt_fire );
-		return;
-	}
-	// <<< JKG HOOK
-
 	vec3_t	dir, angs;
 
 	vectoangles( wpFwd, angs );
 
-	if ( alt_fire )
+	if (!ent->NPC) {
+		float kickIntensity = 0.35f;
+		int kickDuration = 150;
+		vec3_t kickDir = { -1, 0, 0 };
+		VectorSet(kickDir, 1.0f, 0.0f, 0.0f);
+		kickIntensity = 0.85f;
+		CGCam_Kickback(0.35f, 250, kickDir);
+	}
+
+	if (ent->client->ps.weaponstate != WEAPON_FIRING)
 	{
-		// add some slop to the alt-fire direction
-		angs[PITCH] += Q_flrand(-1.0f, 1.0f) * BLASTER_ALT_SPREAD;
-		angs[YAW]	+= Q_flrand(-1.0f, 1.0f) * BLASTER_ALT_SPREAD;
+
+	}
+	
+	// Troopers use their aim values as well as the gun's inherent inaccuracy
+	// so check for all classes of stormtroopers and anyone else that has aim error
+	if ( ent->client && ent->NPC &&
+		( ent->client->NPC_class == CLASS_STORMTROOPER ||
+		ent->client->NPC_class == CLASS_SWAMPTROOPER ) )
+	{
+		angs[PITCH] += ( Q_flrand(-1.0f, 1.0f) * (BLASTER_NPC_SPREAD+(6-ent->NPC->currentAim)*0.25f));//was 0.5f
+		angs[YAW]	+= ( Q_flrand(-1.0f, 1.0f) * (BLASTER_NPC_SPREAD+(6-ent->NPC->currentAim)*0.25f));//was 0.5f
 	}
 	else
 	{
-		// Troopers use their aim values as well as the gun's inherent inaccuracy
-		// so check for all classes of stormtroopers and anyone else that has aim error
-		if ( ent->client && ent->NPC &&
-			( ent->client->NPC_class == CLASS_STORMTROOPER ||
-			ent->client->NPC_class == CLASS_SWAMPTROOPER ) )
-		{
-			angs[PITCH] += ( Q_flrand(-1.0f, 1.0f) * (BLASTER_NPC_SPREAD+(6-ent->NPC->currentAim)*0.25f));//was 0.5f
-			angs[YAW]	+= ( Q_flrand(-1.0f, 1.0f) * (BLASTER_NPC_SPREAD+(6-ent->NPC->currentAim)*0.25f));//was 0.5f
-		}
-		else
-		{
+		if (ent->client->ps.weaponShotCount > 1) {
 			// add some slop to the main-fire direction
 			angs[PITCH] += Q_flrand(-1.0f, 1.0f) * BLASTER_MAIN_SPREAD;
-			angs[YAW]	+= Q_flrand(-1.0f, 1.0f) * BLASTER_MAIN_SPREAD;
+			angs[YAW] += Q_flrand(-1.0f, 1.0f) * BLASTER_MAIN_SPREAD;
 		}
 	}
 
 	AngleVectors( angs, dir, NULL, NULL );
 
 	// FIXME: if temp_org does not have clear trace to inside the bbox, don't shoot!
-	WP_FireBlasterMissile( ent, wpMuzzle, dir, alt_fire );
+	WP_FireBlasterMissile_JKG( ent, wpMuzzle, dir, alt_fire );
 }

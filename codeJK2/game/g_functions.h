@@ -83,6 +83,7 @@ typedef enum
 	thinkF_trigger_teleporter_find_closest_portal,
 	thinkF_thermalDetonatorExplode,
 	thinkF_WP_ThermalThink,
+	thinkF_WP_ThermalThink_JKG,
 	thinkF_trigger_hurt_reset,
 	thinkF_turret_base_think,
 	thinkF_turret_head_think,
@@ -182,6 +183,7 @@ extern void ammo_think				( gentity_t *ent );
 extern void trigger_teleporter_find_closest_portal ( gentity_t *self );
 extern void thermalDetonatorExplode	( gentity_t *ent );
 extern void WP_ThermalThink			( gentity_t *ent );
+extern void WP_ThermalThink_JKG		( gentity_t *ent );
 extern void trigger_hurt_reset		( gentity_t *self );
 extern void turret_base_think		( gentity_t *self );
 extern void turret_head_think		( gentity_t *self );

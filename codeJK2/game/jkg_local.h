@@ -53,4 +53,11 @@ extern cvar_t *g_jkgHUD;		// custom HUD / view / weapon-draw tweaks
 // Registers all g_jkg* cvars. Called from G_InitCvars().
 void JKG_RegisterCvars( void );
 
+// Weapon fire dispatch (implemented in wp_*_JKG.cpp).
+void WP_FireBryarPistol_JKG( gentity_t *ent, qboolean alt_fire );
+void WP_FireBlaster_JKG( gentity_t *ent, qboolean alt_fire );
+void WP_FireRepeater_JKG( gentity_t *ent, qboolean alt_fire );
+void WP_FireBowcaster_JKG( gentity_t *ent, qboolean alt_fire );
+gentity_t *WP_FireThermalDetonator_JKG( gentity_t *ent, qboolean alt_fire );
+
 #endif	// JKG_LOCAL_H

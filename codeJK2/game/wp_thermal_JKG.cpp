@@ -27,49 +27,13 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "wp_saber.h"
 #include "w_local.h"
 #include "g_functions.h"
-#include "jkg_local.h"
 
 //---------------------
-//	Thermal Detonator
+//	Thermal Detonator (JKGunplay)
 //---------------------
 
 //---------------------------------------------------------
-void thermalDetonatorExplode( gentity_t *ent )
-//---------------------------------------------------------
-{
-	if ( !ent->count )
-	{
-		G_Sound( ent, G_SoundIndex( "sound/weapons/thermal/warning.wav" ) );
-		ent->count = 1;
-		ent->nextthink = level.time + 800;
-		ent->svFlags |= SVF_BROADCAST;//so everyone hears/sees the explosion?
-	}
-	else
-	{
-		vec3_t	pos;
-
-		VectorSet( pos, ent->currentOrigin[0], ent->currentOrigin[1], ent->currentOrigin[2] + 8 );
-
-		ent->takedamage = qfalse; // don't allow double deaths!
-
-		G_RadiusDamage( ent->currentOrigin, ent->owner, weaponData[WP_THERMAL].splashDamage, weaponData[WP_THERMAL].splashRadius, NULL, MOD_EXPLOSIVE_SPLASH );
-
-		G_PlayEffect( "thermal/explosion", ent->currentOrigin );
-		G_PlayEffect( "thermal/shockwave", ent->currentOrigin );
-
-		G_FreeEntity( ent );
-	}
-}
-
-//-------------------------------------------------------------------------------------------------------------
-void thermal_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod, int dFlags, int hitLoc )
-//-------------------------------------------------------------------------------------------------------------
-{
-	thermalDetonatorExplode( self );
-}
-
-//---------------------------------------------------------
-qboolean WP_LobFire( gentity_t *self, vec3_t start, vec3_t target, vec3_t mins, vec3_t maxs, int clipmask,
+static qboolean WP_LobFire_JKG( gentity_t *self, vec3_t start, vec3_t target, vec3_t mins, vec3_t maxs, int clipmask,
 				vec3_t velocity, qboolean tracePath, int ignoreEntNum, int enemyNum,
 				float minSpeed, float maxSpeed, float idealSpeed, qboolean mustHit )
 //---------------------------------------------------------
@@ -85,7 +49,7 @@ qboolean WP_LobFire( gentity_t *self, vec3_t start, vec3_t target, vec3_t mins, 
 
 	if ( !idealSpeed )
 	{
-		idealSpeed = 300;
+		idealSpeed = 900;// 300;
 	}
 	else if ( idealSpeed < speedInc )
 	{
@@ -95,7 +59,7 @@ qboolean WP_LobFire( gentity_t *self, vec3_t start, vec3_t target, vec3_t mins, 
 	skipNum = (idealSpeed-speedInc)/speedInc;
 	if ( !minSpeed )
 	{
-		minSpeed = 100;
+		minSpeed = 900;//100;
 	}
 	if ( !maxSpeed )
 	{
@@ -216,7 +180,7 @@ qboolean WP_LobFire( gentity_t *self, vec3_t start, vec3_t target, vec3_t mins, 
 }
 
 //---------------------------------------------------------
-void WP_ThermalThink( gentity_t *ent )
+void WP_ThermalThink_JKG( gentity_t *ent )
 //---------------------------------------------------------
 {
 	int			count;
@@ -229,23 +193,23 @@ void WP_ThermalThink( gentity_t *ent )
 		//	Finally, we force it to bounce at least once before doing the special checks, otherwise it's just too easy for the player?
 		if ( ent->has_bounced )
 		{
-			count = G_RadiusList( ent->currentOrigin, TD_TEST_RAD, ent, qtrue, ent_list );
+			//count = G_RadiusList( ent->currentOrigin, TD_TEST_RAD, ent, qtrue, ent_list );
 
-			for ( int i = 0; i < count; i++ )
-			{
-				if ( ent_list[i]->s.number == 0 )
-				{
-					// avoid deliberately blowing up next to the player, no matter how close any enemy is..
-					//	...if the delay time expires though, there is no saving the player...muwhaaa haa ha
-					blow = qfalse;
-					break;
-				}
-				else if ( ent_list[i]->client && ent_list[i]->health > 0 )
-				{
-					// sometimes the ent_list order changes, so we should make sure that the player isn't anywhere in this list
-					blow = qtrue;
-				}
-			}
+			//for ( int i = 0; i < count; i++ )
+			//{
+			//	if ( ent_list[i]->s.number == 0 )
+			//	{
+			//		// avoid deliberately blowing up next to the player, no matter how close any enemy is..
+			//		//	...if the delay time expires though, there is no saving the player...muwhaaa haa ha
+			//		blow = qfalse;
+			//		break;
+			//	}
+			//	else if ( ent_list[i]->client && ent_list[i]->health > 0 )
+			//	{
+			//		// sometimes the ent_list order changes, so we should make sure that the player isn't anywhere in this list
+			//		blow = qtrue;
+			//	}
+			//}
 		}
 	}
 	else
@@ -267,16 +231,9 @@ void WP_ThermalThink( gentity_t *ent )
 }
 
 //---------------------------------------------------------
-gentity_t *WP_FireThermalDetonator( gentity_t *ent, qboolean alt_fire )
+gentity_t *WP_FireThermalDetonator_JKG( gentity_t *ent, qboolean alt_fire )
 //---------------------------------------------------------
 {
-	// >>> JKG HOOK: route to JKGunplay thermal fire when enabled (g_jkgWeapons).
-	if ( JKG_WEAPONS )
-	{
-		return WP_FireThermalDetonator_JKG( ent, alt_fire );
-	}
-	// <<< JKG HOOK
-
 	gentity_t	*bolt;
 	vec3_t		dir, start;
 	float		damageScale = 1.0f;
@@ -297,7 +254,7 @@ gentity_t *WP_FireThermalDetonator( gentity_t *ent, qboolean alt_fire )
 	if ( !alt_fire && ent->s.number == 0 )
 	{
 		// Main fires for the players do a little bit of extra thinking
-		bolt->e_ThinkFunc = thinkF_WP_ThermalThink;
+		bolt->e_ThinkFunc = thinkF_WP_ThermalThink_JKG;
 		bolt->nextthink = level.time + TD_THINK_TIME;
 		bolt->delay = level.time + TD_TIME; // How long 'til she blows
 	}
@@ -325,19 +282,23 @@ gentity_t *WP_FireThermalDetonator( gentity_t *ent, qboolean alt_fire )
 
 	if ( ent->client )
 	{
-		chargeAmount = level.time - ent->client->ps.weaponChargeTime;
+		if (alt_fire) {
+			chargeAmount = level.time - ent->client->ps.weaponChargeTime;
+		}
 	}
 
-	// get charge amount
-	chargeAmount = chargeAmount / (float)TD_VELOCITY;
+	if (alt_fire) {
+		// get charge amount
+		chargeAmount = chargeAmount / (float)TD_VELOCITY;
 
-	if ( chargeAmount > 1.0f )
-	{
-		chargeAmount = 1.0f;
-	}
-	else if ( chargeAmount < TD_MIN_CHARGE )
-	{
-		chargeAmount = TD_MIN_CHARGE;
+		if (chargeAmount > 1.0f)
+		{
+			chargeAmount = 1.0f;
+		}
+		else if (chargeAmount < TD_MIN_CHARGE)
+		{
+			chargeAmount = TD_MIN_CHARGE;
+		}
 	}
 
 	// normal ones bounce, alt ones explode on impact
@@ -366,7 +327,7 @@ gentity_t *WP_FireThermalDetonator( gentity_t *ent, qboolean alt_fire )
 			target[1] += Q_flrand( -5, 5 )+(Q_flrand(-1.0f, 1.0f)*(6-ent->NPC->currentAim)*2);
 			target[2] += Q_flrand( -5, 5 )+(Q_flrand(-1.0f, 1.0f)*(6-ent->NPC->currentAim)*2);
 
-			WP_LobFire( ent, start, target, bolt->mins, bolt->maxs, bolt->clipmask, bolt->s.pos.trDelta, qtrue, ent->s.number, ent->enemy->s.number );
+			WP_LobFire_JKG( ent, start, target, bolt->mins, bolt->maxs, bolt->clipmask, bolt->s.pos.trDelta, qtrue, ent->s.number, ent->enemy->s.number );
 		}
 	}
 
@@ -410,13 +371,4 @@ gentity_t *WP_FireThermalDetonator( gentity_t *ent, qboolean alt_fire )
 	VectorCopy( start, bolt->pos2 );
 
 	return bolt;
-}
-
-//---------------------------------------------------------
-gentity_t *WP_DropThermal( gentity_t *ent )
-//---------------------------------------------------------
-{
-	AngleVectors( ent->client->ps.viewangles, wpFwd, wpVright, wpUp );
-	CalcEntitySpot( ent, SPOT_WEAPON, wpMuzzle );
-	return (WP_FireThermalDetonator( ent, qfalse ));
 }
