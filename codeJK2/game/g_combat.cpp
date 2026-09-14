@@ -26,6 +26,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "g_headers.h"
 
 #include "g_local.h"
+#include "jkg_local.h"
 #include "b_local.h"
 #include "g_functions.h"
 #include "anims.h"
@@ -4234,9 +4235,10 @@ void PlayerPain( gentity_t *self, gentity_t *inflictor, gentity_t *other, vec3_t
 				if ( self->client->damage_blood )
 				{//took damage myself, not just armor
 					G_AddEvent( self, EV_PAIN, self->health );
-				} else if (self->client->damage_armor)
+				}
+				else if ( JKG_COMBAT && self->client->damage_armor )
 				{
-					G_AddEvent(self, EV_PAIN_ARMOR, self->health);
+					G_AddEvent( self, EV_PAIN_ARMOR, self->health );
 				}
 			}
 		}
@@ -4290,7 +4292,7 @@ void PlayerPain( gentity_t *self, gentity_t *inflictor, gentity_t *other, vec3_t
 	}
 	if ( self->painDebounceTime <= level.time )
 	{
-		self->painDebounceTime = level.time + 70;//700;
+		self->painDebounceTime = level.time + ( JKG_COMBAT ? 70 : 700 );
 	}
 }
 /*
@@ -4635,10 +4637,10 @@ static void G_FriendlyFireReaction( gentity_t *self, gentity_t *other, int dflag
 float damageModifier[HL_MAX] =
 {
 	1.0f,	//HL_NONE,
-	1.0f,//0.25f,	//HL_FOOT_RT,
-	1.0f,//0.25f,	//HL_FOOT_LT,
-	1.0f,//0.75f,	//HL_LEG_RT,
-	1.0f,//0.75f,	//HL_LEG_LT,
+	0.25f,	//HL_FOOT_RT,
+	0.25f,	//HL_FOOT_LT,
+	0.75f,	//HL_LEG_RT,
+	0.75f,	//HL_LEG_LT,
 	1.0f,	//HL_WAIST,
 	1.0f,	//HL_BACK_RT,
 	1.0f,	//HL_BACK_LT,
@@ -4646,10 +4648,37 @@ float damageModifier[HL_MAX] =
 	1.0f,	//HL_CHEST_RT,
 	1.0f,	//HL_CHEST_LT,
 	1.0f,	//HL_CHEST,
-	1.0f,//0.5f,	//HL_ARM_RT,
-	1.0f,//0.5f,	//HL_ARM_LT,
-	1.0f,//0.25f,	//HL_HAND_RT,
-	1.0f,//0.25f,	//HL_HAND_LT,
+	0.5f,	//HL_ARM_RT,
+	0.5f,	//HL_ARM_LT,
+	0.25f,	//HL_HAND_RT,
+	0.25f,	//HL_HAND_LT,
+	2.0f,	//HL_HEAD,
+	1.0f,	//HL_GENERIC1,
+	1.0f,	//HL_GENERIC2,
+	1.0f,	//HL_GENERIC3,
+	1.0f,	//HL_GENERIC4,
+	1.0f,	//HL_GENERIC5,
+	1.0f,	//HL_GENERIC6,
+};
+
+static float jkg_damageModifier[HL_MAX] =
+{
+	1.0f,	//HL_NONE,
+	1.0f,	//HL_FOOT_RT,
+	1.0f,	//HL_FOOT_LT,
+	1.0f,	//HL_LEG_RT,
+	1.0f,	//HL_LEG_LT,
+	1.0f,	//HL_WAIST,
+	1.0f,	//HL_BACK_RT,
+	1.0f,	//HL_BACK_LT,
+	1.0f,	//HL_BACK,
+	1.0f,	//HL_CHEST_RT,
+	1.0f,	//HL_CHEST_LT,
+	1.0f,	//HL_CHEST,
+	1.0f,	//HL_ARM_RT,
+	1.0f,	//HL_ARM_LT,
+	1.0f,	//HL_HAND_RT,
+	1.0f,	//HL_HAND_LT,
 	2.0f,	//HL_HEAD,
 	1.0f,	//HL_GENERIC1,
 	1.0f,	//HL_GENERIC2,
@@ -5089,7 +5118,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_
 	{
 		if ( !G_NonLocationSpecificDamage( mod ) )
 		{//certain kinds of damage don't care about hitlocation
-			take = ceil( (float)take*damageModifier[hitLoc] );
+			take = ceil( (float)take * ( JKG_COMBAT ? jkg_damageModifier[hitLoc] : damageModifier[hitLoc] ) );
 		}
 	}
 
@@ -5384,8 +5413,10 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_
 				}
 			}
 		}
-	} else {
-		GEntity_PainFunc(targ, inflictor, attacker, point, take, mod, hitLoc);
+	}
+	else if ( JKG_COMBAT )
+	{
+		GEntity_PainFunc( targ, inflictor, attacker, point, take, mod, hitLoc );
 	}
 }
 
