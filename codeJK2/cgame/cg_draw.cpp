@@ -761,8 +761,6 @@ static void CG_DrawWeaponCharge(int x, int y, centity_t* cent) {
 		charge = 0.0f;
 	}
 
-	gi.Printf(S_COLOR_RED "charge: %f\n", charge);
-
 	if (cent->gent->client->ps.weapon == WP_BOWCASTER) {
 		// Draw individual circles for Bowcaster charge
 		int numCircles = 5;

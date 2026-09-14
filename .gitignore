@@ -181,9 +181,9 @@ pip-log.txt
 *.so
 
 #############
-## clangd
+## OpenJK build output (local VS/cmake artifacts)
 #############
-.clangd
+build/
 
 #############
 ## CLion
