@@ -76,9 +76,9 @@ void NPC_BSST_Default( void );
 void NPC_BSST_Sleep( void );
 
 //AI_STORMTROOPER_NEW
-//void NPC_BSST_Investigate(void);
+void NPC_BSST_Investigate_New(void);
 void NPC_BSST_Default_New(void);
-//void NPC_BSST_Sleep(void);
+void NPC_BSST_Sleep_New(void);
 
 //AI_JEDI
 void NPC_BSJedi_Investigate( void );

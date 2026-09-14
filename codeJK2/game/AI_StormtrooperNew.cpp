@@ -26,6 +26,8 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "anims.h"
 #include "g_navigator.h"
 
+#include "ai_new.h"
+
 extern void CG_DrawAlert(vec3_t origin, float rating);
 extern void G_AddVoiceEvent(gentity_t* self, int event, int speakDebounceTime);
 extern void AI_GroupUpdateSquadstates(AIGroupInfo_t* group, gentity_t* member, int newSquadState);
