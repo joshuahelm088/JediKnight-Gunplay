@@ -750,27 +750,31 @@ void CG_CalculateWeaponPosition( vec3_t origin, vec3_t angles )
 
 	if ( JKG_HUD )
 	{
-		float lagFactor = 0.03f*3;
-		float returnSpeed = 0.003f;
-		float maxLag = 20.0f;
+		const float swayAmount = g_jkgGunSwayAmount ? g_jkgGunSwayAmount->value : 3.5f;
+		const float returnSpeed = g_jkgGunSwayReturn ? g_jkgGunSwayReturn->value : 15.0f;
+		const float maxLag = 15.0f;
+		const float rollTilt = 0.15f;
+		float targetPitch;
+		float targetYaw;
+		float frac;
 
-		cg.viewModelLagOffset[PITCH] -= cg.viewAnglesDelta[PITCH] * lagFactor;
-		cg.viewModelLagOffset[YAW] -= cg.viewAnglesDelta[YAW] * lagFactor;
+		targetPitch = -cg.viewAnglesDelta[PITCH] * swayAmount;
+		targetYaw = -cg.viewAnglesDelta[YAW] * swayAmount;
+		targetPitch = Com_Clamp( -maxLag, maxLag, targetPitch );
+		targetYaw = Com_Clamp( -maxLag, maxLag, targetYaw );
 
-		cg.viewModelLagOffset[PITCH] = Com_Clamp( -maxLag, maxLag, cg.viewModelLagOffset[PITCH] );
-		cg.viewModelLagOffset[YAW] = Com_Clamp( -maxLag, maxLag, cg.viewModelLagOffset[YAW] );
-
-		if ( cg.viewAnglesDelta[PITCH] == 0 )
+		frac = returnSpeed * cg.frametime * 0.001f;
+		if ( frac > 1.0f )
 		{
-			cg.viewModelLagOffset[PITCH] -= cg.viewModelLagOffset[PITCH] * returnSpeed * cg.frametime;
+			frac = 1.0f;
 		}
-		if ( cg.viewAnglesDelta[YAW] == 0 )
-		{
-			cg.viewModelLagOffset[YAW] -= cg.viewModelLagOffset[YAW] * returnSpeed * cg.frametime;
-		}
+
+		cg.viewModelLagOffset[PITCH] += ( targetPitch - cg.viewModelLagOffset[PITCH] ) * frac;
+		cg.viewModelLagOffset[YAW] += ( targetYaw - cg.viewModelLagOffset[YAW] ) * frac;
 
 		angles[PITCH] += cg.viewModelLagOffset[PITCH];
 		angles[YAW] += cg.viewModelLagOffset[YAW];
+		angles[ROLL] += cg.viewModelLagOffset[YAW] * rollTilt;
 	}
 
 	// gun angles from bobbing

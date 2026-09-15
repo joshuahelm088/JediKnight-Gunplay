@@ -1705,6 +1705,9 @@ static qboolean CG_CalcViewValues( void ) {
 			VectorCopy( cg_entities[cg.snap->ps.viewEntity].lerpOrigin, cg.refdef.vieworg );
 		}
 		VectorCopy( cg_entities[cg.snap->ps.viewEntity].lerpAngles, cg.refdefViewAngles );
+		VectorClear( cg.viewAnglesDelta );
+		VectorCopy( cg.refdefViewAngles, cg.prevRefViewAngles );
+		cg.viewAnglesDeltaValid = qfalse;
 		if ( !Q_stricmp( "misc_camera", g_entities[cg.snap->ps.viewEntity].classname ) || g_entities[cg.snap->ps.viewEntity].s.weapon == WP_TURRET )
 		{
 			viewEntIsCam = qtrue;
@@ -1714,25 +1717,38 @@ static qboolean CG_CalcViewValues( void ) {
 	{//different center, same angle
 		VectorCopy( cg_entities[cg.overrides.thirdPersonEntity].lerpOrigin, cg.refdef.vieworg );
 		VectorCopy( ps->viewangles, cg.refdefViewAngles );
+		VectorClear( cg.viewAnglesDelta );
+		VectorCopy( cg.refdefViewAngles, cg.prevRefViewAngles );
+		cg.viewAnglesDeltaValid = qfalse;
 	}
 	else
 	{//player's center and angles
 		if ( JKG_CAMERA )
 		{
-			vec3_t previousViewAngles;
-			VectorCopy( cg.refdefViewAngles, previousViewAngles );
-
 			VectorCopy( ps->origin, cg.refdef.vieworg );
 			VectorCopy( ps->viewangles, cg.refdefViewAngles );
 
-			cg.viewAnglesDelta[PITCH] = AngleSubtract( cg.refdefViewAngles[PITCH], previousViewAngles[PITCH] );
-			cg.viewAnglesDelta[YAW] = AngleSubtract( cg.refdefViewAngles[YAW], previousViewAngles[YAW] );
-			cg.viewAnglesDelta[ROLL] = AngleSubtract( cg.refdefViewAngles[ROLL], previousViewAngles[ROLL] );
+			if ( !cg.viewAnglesDeltaValid )
+			{
+				VectorCopy( cg.refdefViewAngles, cg.prevRefViewAngles );
+				VectorClear( cg.viewAnglesDelta );
+				cg.viewAnglesDeltaValid = qtrue;
+			}
+			else
+			{
+				cg.viewAnglesDelta[PITCH] = AngleSubtract( cg.refdefViewAngles[PITCH], cg.prevRefViewAngles[PITCH] );
+				cg.viewAnglesDelta[YAW] = AngleSubtract( cg.refdefViewAngles[YAW], cg.prevRefViewAngles[YAW] );
+				cg.viewAnglesDelta[ROLL] = AngleSubtract( cg.refdefViewAngles[ROLL], cg.prevRefViewAngles[ROLL] );
+				VectorCopy( cg.refdefViewAngles, cg.prevRefViewAngles );
+			}
 		}
 		else
 		{
 			VectorCopy( ps->origin, cg.refdef.vieworg );
 			VectorCopy( ps->viewangles, cg.refdefViewAngles );
+			VectorClear( cg.viewAnglesDelta );
+			VectorCopy( cg.refdefViewAngles, cg.prevRefViewAngles );
+			cg.viewAnglesDeltaValid = qfalse;
 		}
 	}
 
