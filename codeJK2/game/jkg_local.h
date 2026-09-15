@@ -36,6 +36,9 @@ extern cvar_t *g_jkgArmor;		// separate MAX_ARMOR system (armor no longer clampe
 extern cvar_t *g_jkgCombat;		// custom damage tables / pain timing / hit locations
 extern cvar_t *g_jkgCamera;		// weapon-fire camera kickback
 extern cvar_t *g_jkgHUD;		// custom HUD / view / weapon-draw tweaks
+extern cvar_t *g_jkgDebugProjectile;	// projectile spawn debug (0=off, 1=server, 2=+client, 3=+NPC)
+
+struct centity_s;
 
 // A subsystem is active only if the master toggle AND its own toggle are on.
 // Pointers are null-checked so this is safe to call before G_InitCvars runs
@@ -62,5 +65,12 @@ void WP_FireBlaster_JKG( gentity_t *ent, qboolean alt_fire );
 void WP_FireRepeater_JKG( gentity_t *ent, qboolean alt_fire );
 void WP_FireBowcaster_JKG( gentity_t *ent, qboolean alt_fire );
 gentity_t *WP_FireThermalDetonator_JKG( gentity_t *ent, qboolean alt_fire );
+
+// Projectile spawn debug logging (jkg_debug_projectile.cpp).
+void JKG_DebugProjectile_MuzzlePoint( gentity_t *ent, const char *source, const vec3_t muzzlePoint, int cacheAge );
+void JKG_DebugProjectile_TraceSetStart( gentity_t *ent, const vec3_t before, const vec3_t after, float traceFraction );
+void JKG_DebugProjectile_CreateMissile( gentity_t *owner, gentity_t *missile, const vec3_t org, float vel );
+void JKG_DebugProjectile_ClientMuzzle( gentity_t *ent, const char *source, const vec3_t muzzlePoint, const vec3_t viewOrg );
+void JKG_DebugProjectile_ClientRender( struct centity_s *cent );
 
 #endif	// JKG_LOCAL_H

@@ -1,0 +1,49 @@
+---
+description: JK2 SP + JKGunplay code navigation — where to look for AI, weapons, combat, hooks
+globs: codeJK2/**/*
+alwaysApply: false
+---
+
+# JK2 / JKGunplay investigation shortcut
+
+Full map: `docs/jk2-jkgunplay-architecture.md`
+
+## Module
+
+Single DLL: `codeJK2/game/` (server) + `codeJK2/cgame/` (client). JKG cvars in `jkg_main.cpp`; macros `JKG_*` in `jkg_local.h`.
+
+## Entry points
+
+| Topic | Start file → symbol |
+|-------|---------------------|
+| Game tick | `g_main.cpp` → `G_RunFrame` |
+| NPC AI | `NPC.cpp` → `NPC_Think` → `NPC_RunBehavior` → `NPC_BehaviorSet_*` |
+| AI implementation | `AI_<class>.cpp` or `AI_Stormtrooper_JKG.cpp` |
+| Player weapons | `bg_pmove.cpp` → `PM_Weapon` → `g_weapon.cpp` → `FireWeapon` → `wp_*.cpp` |
+| Damage / pain | `g_combat.cpp`; NPC pain → `NPC_reactions.cpp` |
+| Movement | `bg_pmove.cpp`, `g_active.cpp` |
+| HUD / view | `cg_draw.cpp`, `cg_view.cpp`, `cg_camera.cpp` |
+
+## NPC AI dispatch (stock)
+
+`NPC_RunBehavior` switches on `NPC_class` → `NPC_BehaviorSet_<Class>(bState)` → `NPC_BS*` in `AI_*.cpp`. Globals: `NPC`, `NPCInfo`, `ucmd`.
+
+Stormtrooper: `NPC_BSST_Default` → patrol or `NPC_BSST_Attack` + squad `ST_Commander`.
+
+## JKG layer patterns
+
+- **Good:** `if (JKG_*) { Foo_JKG(); return; }` at top of stock function + logic in `*_JKG.cpp`
+- **Bad (merge pain):** inline `JKG_* ? a : b` in stock files (~55 sites)
+- **Compile-time always on:** `jkg_tuning.h` via `weapons.h`
+
+## JKG files
+
+`jkg_main.cpp`, `AI_Stormtrooper_JKG.cpp`, `wp_*_JKG.cpp` — must be in `codeJK2/game/CMakeLists.txt`.
+
+## Planned AI refactor
+
+One hook in `NPC_RunBehavior`; all custom AI in future `jkg_ai/` — revert inline `JKG_AI` from `AI_Sentry`, `AI_ImperialProbe`, `NPC_reactions`, `NPC_spawn`.
+
+## Upstream merges
+
+Prefer pristine stock + hooks. High conflict: files with inline `JKG_*` guards. Low conflict: `*_JKG.cpp`.

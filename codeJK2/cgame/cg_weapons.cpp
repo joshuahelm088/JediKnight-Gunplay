@@ -993,6 +993,7 @@ void CG_AddViewWeapon( playerState_t *ps )
 		VectorCopy( cg.refdef.viewaxis[0], cent->gent->client->renderInfo.muzzleDir );
 
 		cent->gent->client->renderInfo.mPCalcTime = cg.time;
+		JKG_DebugProjectile_ClientMuzzle( cent->gent, "hiddenGun", origin, cg.refdef.vieworg );
 		return;
 	}
 
@@ -1194,6 +1195,7 @@ void CG_AddViewWeapon( playerState_t *ps )
 		VectorCopy(flash.axis[0], cent->gent->client->renderInfo.muzzleDir);
 //		VectorNormalize( cent->gent->client->renderInfo.muzzleDir );
 		cent->gent->client->renderInfo.mPCalcTime = cg.time;
+		JKG_DebugProjectile_ClientMuzzle( cent->gent, "tag_flash", flash.origin, cg.refdef.vieworg );
 
 		CG_LightningBolt( cent, flash.origin );
 	}

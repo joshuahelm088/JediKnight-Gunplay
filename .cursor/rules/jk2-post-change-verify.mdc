@@ -1,0 +1,41 @@
+---
+description: After JK2/JKG C++ edits, verify build and avoid common compile pitfalls (MIN/MAX, CMakeLists)
+globs: codeJK2/**/*
+alwaysApply: true
+---
+
+# Post-change verification (JK2 SP)
+
+After **any** C++ edit under `codeJK2/`, before marking work done:
+
+1. **Build** the affected target (usually **JK2 SP Game Library**). Fix compile errors before finishing.
+2. **Scan new/edited code** for symbols this codebase does not provide.
+
+## No `MIN` / `MAX` macros
+
+OpenJK JK2 does **not** define `MIN()` or `MAX()`. Do not introduce them.
+
+```cpp
+// BAD — C3861 'MIN': identifier not found
+return posData->trTime + MIN( elapsed, prestep );
+
+// GOOD — ternary (preferred for simple min)
+const int capped = ( elapsed < prestep ) ? elapsed : prestep;
+
+// GOOD — existing project helpers for clamped ranges
+value = Com_Clampi( low, high, value );
+```
+
+## New `.cpp` files
+
+If you add a file under `codeJK2/game/`, add it to `codeJK2/game/CMakeLists.txt` or it will not link.
+
+## JKG cvars / headers
+
+Game-side cvars: register in `jkg_main.cpp`, declare in `jkg_local.h`. Client reads via the same `extern cvar_t *` pattern — no duplicate registration in cgame.
+
+Missile muzzle render fix lives in `cg_ents.cpp` only (no cvars).
+
+## When build cannot run here
+
+At minimum, grep the diff for `MIN(`, `MAX(`, and new `.cpp` paths missing from CMakeLists.txt, and call out anything the user should rebuild locally.

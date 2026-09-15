@@ -31,6 +31,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "anims.h"
 #include "b_local.h"
 #include "w_local.h"
+#include "jkg_local.h"
 
 vec3_t	wpFwd, wpVright, wpUp;
 vec3_t	wpMuzzle;
@@ -74,7 +75,15 @@ void WP_TraceSetStart( const gentity_t *ent, vec3_t start, const vec3_t mins, co
 
 	if ( tr.fraction < 1.0f )
 	{
+		vec3_t before;
+
+		VectorCopy( start, before );
 		VectorCopy( tr.endpos, start );
+		JKG_DebugProjectile_TraceSetStart( (gentity_t *)ent, before, start, tr.fraction );
+	}
+	else
+	{
+		JKG_DebugProjectile_TraceSetStart( (gentity_t *)ent, start, start, tr.fraction );
 	}
 }
 
@@ -99,6 +108,8 @@ gentity_t *CreateMissile( vec3_t org, vec3_t dir, float vel, int life, gentity_t
 	VectorScale( dir, vel, missile->s.pos.trDelta );
 	VectorCopy( org, missile->currentOrigin);
 	gi.linkentity( missile );
+
+	JKG_DebugProjectile_CreateMissile( owner, missile, org, vel );
 
 	return missile;
 }
@@ -373,6 +384,7 @@ void CalcMuzzlePoint( gentity_t *const ent, vec3_t wpFwd, vec3_t right, vec3_t w
 			if ( ent->client->renderInfo.mPCalcTime >= level.time - FRAMETIME*2 )
 			{//Our muzz point was calced no more than 2 frames ago
 				VectorCopy(ent->client->renderInfo.muzzlePoint, muzzlePoint);
+				JKG_DebugProjectile_MuzzlePoint( ent, "clientCache", muzzlePoint, level.time - ent->client->renderInfo.mPCalcTime );
 				return;
 			}
 		}
@@ -455,6 +467,7 @@ void CalcMuzzlePoint( gentity_t *const ent, vec3_t wpFwd, vec3_t right, vec3_t w
 	}
 
 	AddLeanOfs(ent, muzzlePoint);
+	JKG_DebugProjectile_MuzzlePoint( ent, "serverFallback", muzzlePoint, -1 );
 }
 
 //---------------------------------------------------------

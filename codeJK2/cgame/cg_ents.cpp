@@ -29,6 +29,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "../../code/ghoul2/G2.h"
 #include "FxScheduler.h"
 #include "../game/wp_saber.h"
+#include "../game/jkg_local.h"
 
 extern void CG_AddSaberBlade( centity_t *cent, centity_t *scent, refEntity_t *saber, int renderfx, int modelIndex, vec3_t origin, vec3_t angles);
 extern void CG_CheckSaberInWater( centity_t *cent, centity_t *scent, int modelIndex, vec3_t origin, vec3_t angles );
@@ -1036,6 +1037,8 @@ static void CG_Missile( centity_t *cent ) {
 	if ( !cent->gent->inuse )
 		return;
 
+	JKG_DebugProjectile_ClientRender( cent );
+
 	s1 = &cent->currentState;
 	if ( s1->weapon >= WP_NUM_WEAPONS ) {
 		s1->weapon = 0;
@@ -1482,6 +1485,47 @@ void CG_AdjustPositionForMover( const vec3_t in, int moverNum, int atTime, vec3_
 }
 /*
 ===============
+CG_MissileRenderEvalTime
+
+Fresh missiles often aren't drawn until tens of ms after spawn; evaluating at
+cg.time on the first visible frames places the bolt far downrange. Hold at spawn
+for a short window, then blend eval time up to cg.time so the bolt leaves the
+muzzle before catching up to normal flight.
+===============
+*/
+static int CG_MissileRenderEvalTime( const trajectory_t *posData )
+{
+	const int holdMs = 50;
+	const int blendMs = 50;
+	int age;
+
+	if ( !posData )
+	{
+		return cg.time;
+	}
+
+	age = cg.time - posData->trTime;
+	if ( age <= 0 )
+	{
+		return posData->trTime;
+	}
+
+	if ( age < holdMs )
+	{
+		return posData->trTime;
+	}
+
+	if ( age < holdMs + blendMs )
+	{
+		const float blend = ( age - holdMs ) / (float)blendMs;
+		return posData->trTime + (int)( blend * ( cg.time - posData->trTime ) );
+	}
+
+	return cg.time;
+}
+
+/*
+===============
 CG_CalcEntityLerpPositions
 
 ===============
@@ -1613,7 +1657,12 @@ Ghoul2 Insert End
 
 	if ( posData )
 	{
-		EvaluateTrajectory( posData, cg.time, cent->lerpOrigin );
+		int evalTime = cg.time;
+		if ( cent->currentState.eType == ET_MISSILE )
+		{
+			evalTime = CG_MissileRenderEvalTime( posData );
+		}
+		EvaluateTrajectory( posData, evalTime, cent->lerpOrigin );
 	}
 
 	// FIXME: this will stomp an apos trType of TR_INTERPOLATE!!

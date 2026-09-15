@@ -28,6 +28,7 @@ cvar_t *g_jkgArmor;
 cvar_t *g_jkgCombat;
 cvar_t *g_jkgCamera;
 cvar_t *g_jkgHUD;
+cvar_t *g_jkgDebugProjectile;
 
 void JKG_RegisterCvars( void )
 {
@@ -40,4 +41,5 @@ void JKG_RegisterCvars( void )
 	g_jkgCombat  = gi.cvar( "g_jkgCombat",  "1", CVAR_ARCHIVE );
 	g_jkgCamera  = gi.cvar( "g_jkgCamera",  "1", CVAR_ARCHIVE );
 	g_jkgHUD     = gi.cvar( "g_jkgHUD",     "1", CVAR_ARCHIVE );
+	g_jkgDebugProjectile = gi.cvar( "g_jkgDebugProjectile", "0", CVAR_CHEAT );
 }

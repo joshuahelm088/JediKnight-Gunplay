@@ -200,7 +200,7 @@ void QDECL Com_Printf( const char *fmt, ... ) {
 					FS_ForceFlush(logfile);
 				}
 			}
-			if ( logfile ) {
+			if ( logfile && FS_Initialized() ) {
 				FS_Write(line, strlen(line), logfile);
 			}
 		}
@@ -1599,11 +1599,17 @@ void Com_Shutdown (void) {
 		FS_FCloseFile (logfile);
 		logfile = 0;
 	}
+	if ( com_logfile ) {
+		com_logfile->integer = 0;//don't open up the log file again!!
+	}
 
 	if (speedslog) {
 		FS_Write("\n};", strlen("\n};"), speedslog);
 		FS_FCloseFile (speedslog);
 		speedslog = 0;
+	}
+	if ( com_speedslog ) {
+		com_speedslog->integer = 0;
 	}
 
 	if (camerafile) {

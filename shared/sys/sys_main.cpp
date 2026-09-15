@@ -169,7 +169,14 @@ void Sys_Init( void ) {
 	com_unpackLibraries = Cvar_Get( "com_unpackLibraries", "0", CVAR_INIT|CVAR_PROTECTED );
 }
 
+static qboolean sys_exiting = qfalse;
+
 static void NORETURN Sys_Exit( int ex ) {
+	if ( sys_exiting ) {
+		exit( ex );
+	}
+	sys_exiting = qtrue;
+
 	IN_Shutdown();
 #ifndef DEDICATED
 	SDL_Quit();
@@ -245,8 +252,13 @@ void NORETURN QDECL Sys_Error( const char *error, ... )
 	// Only print Sys_ErrorDialog for client binary. The dedicated
 	// server binary is meant to be a command line program so you would
 	// expect to see the error printed.
+	// If we are already exiting (e.g. a filesystem error after quit
+	// tore down FS), do not open another crash dialog — that loops
+	// every time the user clicks OK.
 #if !defined(DEDICATED)
-	Sys_ErrorDialog( string );
+	if ( !sys_exiting ) {
+		Sys_ErrorDialog( string );
+	}
 #endif
 
 	Sys_Exit( 3 );
