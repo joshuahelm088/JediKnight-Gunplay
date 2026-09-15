@@ -761,7 +761,7 @@ CL_Frame
 extern cvar_t	*cl_newClock;
 static unsigned int frameCount;
 float avgFrametime=0.0;
-void CL_Frame ( int msec,float fractionMsec ) {
+void CL_Frame ( int msec, float fractionMsec, int wallMsec ) {
 
 	if ( !com_cl_running->integer ) {
 		return;
@@ -798,8 +798,8 @@ void CL_Frame ( int msec,float fractionMsec ) {
 		}
 	}
 
-	// save the msec before checking pause
-	cls.realFrametime = msec;
+	// wall-clock delta for console/UI; ignores pause and timescale
+	cls.realFrametime = wallMsec;
 
 	// decide the simulation time
 	cls.frametime = msec;

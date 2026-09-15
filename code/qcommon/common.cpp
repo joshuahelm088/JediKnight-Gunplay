@@ -1294,6 +1294,34 @@ void Com_WriteConfig_f( void ) {
 
 /*
 ================
+Com_ClampMsec
+
+Clamp frame delta to limit hitch damage (wall-clock and scaled paths).
+================
+*/
+static int Com_ClampMsec( int msec )
+{
+	int		clampTime;
+
+	if ( com_skippingcin->integer ) {
+		// we're skipping ahead so let it go a bit faster
+		clampTime = 500;
+	} else {
+		// for local single player gaming
+		// we may want to clamp the time to prevent players from
+		// flying off edges when something hitches.
+		clampTime = 200;
+	}
+
+	if ( msec > clampTime ) {
+		return clampTime;
+	}
+
+	return msec;
+}
+
+/*
+================
 Com_ModifyMsec
 ================
 */
@@ -1301,8 +1329,6 @@ Com_ModifyMsec
 
 int Com_ModifyMsec( int msec, float &fraction )
 {
-	int		clampTime;
-
 	fraction=0.0f;
 
 	//
@@ -1327,19 +1353,12 @@ int Com_ModifyMsec( int msec, float &fraction )
 		fraction=0.0f;
 	}
 
-	if ( com_skippingcin->integer ) {
-		// we're skipping ahead so let it go a bit faster
-		clampTime = 500;
-	} else {
-		// for local single player gaming
-		// we may want to clamp the time to prevent players from
-		// flying off edges when something hitches.
-		clampTime = 200;
-	}
-
-	if ( msec > clampTime ) {
-		msec = clampTime;
-		fraction=0.0f;
+	{
+		const int clamped = Com_ClampMsec( msec );
+		if ( msec != clamped ) {
+			msec = clamped;
+			fraction=0.0f;
+		}
 	}
 
 	return msec;
@@ -1441,6 +1460,7 @@ void Com_Frame( void ) {
 
 		// mess with msec if needed
 		float fractionMsec=0.0f;
+		const int wallMsec = Com_ClampMsec( msec );
 		msec = Com_ModifyMsec( msec, fractionMsec);
 
 		//
@@ -1478,7 +1498,7 @@ void Com_Frame( void ) {
 				timeBeforeClient = Sys_Milliseconds ();
 			}
 
-			CL_Frame (msec, fractionMsec);
+			CL_Frame (msec, fractionMsec, wallMsec);
 
 			if ( com_speeds->integer ) {
 				timeAfter = Sys_Milliseconds ();
