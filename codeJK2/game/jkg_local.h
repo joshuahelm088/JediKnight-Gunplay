@@ -36,6 +36,8 @@ extern cvar_t *g_jkgArmor;		// separate MAX_ARMOR system (armor no longer clampe
 extern cvar_t *g_jkgCombat;		// custom damage tables / pain timing / hit locations
 extern cvar_t *g_jkgCamera;		// weapon-fire camera kickback
 extern cvar_t *g_jkgHUD;		// custom HUD / view / weapon-draw tweaks
+extern cvar_t *g_jkgGunSwayAmount;	// first-person weapon sway strength (degrees per degree turned)
+extern cvar_t *g_jkgGunSwayReturn;	// weapon sway return speed (lower = slower recenter)
 extern cvar_t *g_jkgDebugProjectile;	// projectile spawn debug (0=off, 1=server, 2=+client, 3=+NPC)
 
 struct centity_s;

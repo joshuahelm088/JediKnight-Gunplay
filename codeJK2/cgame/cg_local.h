@@ -357,8 +357,10 @@ typedef struct {
 	// view rendering
 	refdef_t	refdef;
 	vec3_t		refdefViewAngles;		// will be converted to refdef.viewaxis
+	vec3_t		prevRefViewAngles;
 	vec3_t		viewAnglesDelta;
 	vec3_t		viewModelLagOffset = {0, 0, 0};
+	qboolean	viewAnglesDeltaValid;
 
 	// zoom key
 	int			zoomMode;		// 0 - not zoomed, 1 - binoculars, 2 - disruptor weapon
