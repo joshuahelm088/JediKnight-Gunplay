@@ -240,6 +240,10 @@ vmCvar_t	cg_bobup;
 vmCvar_t	cg_bobpitch;
 vmCvar_t	cg_bobroll;
 vmCvar_t	cg_swingSpeed;
+vmCvar_t	cg_torsoYawMax;
+vmCvar_t	cg_torsoYawSnapSpeed;
+vmCvar_t	cg_atstYawMax;
+vmCvar_t	cg_atstYawSnapSpeed;
 vmCvar_t	cg_shadows;
 vmCvar_t	cg_paused;
 vmCvar_t	cg_drawTimer;
@@ -384,6 +388,10 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_bobroll, "cg_bobroll", "0.002", CVAR_ARCHIVE },
 
 	{ &cg_swingSpeed, "cg_swingSpeed", "0.3", CVAR_CHEAT },
+	{ &cg_torsoYawMax, "cg_torsoYawMax", "80", CVAR_ARCHIVE },
+	{ &cg_torsoYawSnapSpeed, "cg_torsoYawSnapSpeed", "6", CVAR_ARCHIVE },
+	{ &cg_atstYawMax, "cg_atstYawMax", "60", CVAR_ARCHIVE },
+	{ &cg_atstYawSnapSpeed, "cg_atstYawSnapSpeed", "10", CVAR_ARCHIVE },
 	{ &cg_animSpeed, "cg_animspeed", "1", CVAR_CHEAT },
 	{ &cg_debugAnim, "cg_debuganim", "0", CVAR_CHEAT },
 	{ &cg_debugSaber, "cg_debugsaber", "0", CVAR_CHEAT },

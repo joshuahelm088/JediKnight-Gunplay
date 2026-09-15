@@ -162,7 +162,22 @@ flowchart LR
 | Pmove core | `bg_pmove.cpp` | `Pmove`, `PM_*` |
 | Movement constants | `bg_public.h`, cvars | `JUMP_VELOCITY`, `pm_friction`, `g_speed` |
 | Applied speed | `g_active.cpp` | sets `client->ps.speed` |
-| Torso / leg yaw (visual) | `cgame/cg_players.cpp` | `CG_PlayerLegsYawFromMovement` |
+| Torso / leg yaw (visual) | `cgame/cg_players.cpp` | `CG_G2PlayerAngles`, `CG_PlayerLegsYawFromMovement` |
+
+### Third-person torso / legs yaw (cgame)
+
+Client-only presentation: upper body follows the camera while legs lag, then catch up when the offset exceeds a threshold.
+
+**G2 path (humanoid player, third person):** `CG_G2PlayerAngles` → `CG_PlayerLegsYawFromMovement` (leg lag + snap) + `CG_G2ClientSpineAngles` (splits view-vs-legs delta across spine bones). This is what you see on the local player.
+
+**MD3 path (legacy segmented models / some NPCs):** `CG_PlayerAngles` → `CG_SwingAngles` with tolerances from `renderInfo` (head/torso yaw ranges in `NPC_stats.cpp` / `.npc` files).
+
+| Knob | Mechanism | Tunable via |
+|------|-----------|-------------|
+| Turn amount before snap | `swingTolMin` / `swingTolMax` clamp in `CG_PlayerLegsYawFromMovement` | `cg_torsoYawMax` (default 80°), `cg_atstYawMax` (default 60°) |
+| Snap speed | `maxTurnRate` caps per-frame leg rotation (half rate while moving) | `cg_torsoYawSnapSpeed` (default 6), `cg_atstYawSnapSpeed` (default 10) |
+
+Cvars registered in `cgame/cg_main.cpp` (`CVAR_ARCHIVE`). NPC callers keep default `maxTurnRate`; only player G2 and `CG_ATSTLegsYaw` pass the cvars. Related but separate: `cg_swingSpeed` (MD3/NPC turn speed), `cg_turnAnims` (G2 hips turn anims).
 
 ---
 
@@ -266,6 +281,8 @@ Listed in `codeJK2/game/CMakeLists.txt`.
 | Weapon fire behavior | `wp_*_JKG.cpp` + hook in `wp_*.cpp` |
 | Fire rate / weapon anims | `bg_pmove.cpp` `PM_Weapon` |
 | Player run speed / jump | `g_active.cpp`, `bg_pmove.cpp`, `g_main.cpp` (`g_speed`) |
+| Third-person torso/legs turn | `cg_players.cpp` — `CG_G2PlayerAngles`, `CG_PlayerLegsYawFromMovement`; cvars `cg_torsoYawMax`, `cg_torsoYawSnapSpeed` |
+| ATST leg turn (piloting) | `cg_players.cpp` — `CG_ATSTLegsYaw`; cvars `cg_atstYawMax`, `cg_atstYawSnapSpeed` |
 | Armor cap | `g_client.cpp`, `JKG_PS_MAX_ARMOR` in `jkg_local.h` |
 | Damage / headshots | `g_combat.cpp` `damageModifier` / `jkg_damageModifier` |
 | Camera recoil | `cg_camera.cpp` `CGCam_Kickback`, `wp_*_JKG.cpp` callers |
