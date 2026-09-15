@@ -1717,9 +1717,9 @@ static qboolean CG_AddHeadBob( centity_t *cent, vec3_t addTo )
 }
 
 extern float vectoyaw( const vec3_t vec );
-qboolean CG_PlayerLegsYawFromMovement( centity_t *cent, const vec3_t velocity, float *yaw, float fwdAngle, float swingTolMin, float swingTolMax, qboolean alwaysFace )
+qboolean CG_PlayerLegsYawFromMovement( centity_t *cent, const vec3_t velocity, float *yaw, float fwdAngle, float swingTolMin, float swingTolMax, qboolean alwaysFace, float maxTurnRate = 10.0f )
 {
-	float newAddAngle, angleDiff, turnRate = 10, addAngle = 0;
+	float newAddAngle, angleDiff, turnRate = maxTurnRate, addAngle = 0;
 
 	//figure out what the offset, if any, should be
 	if ( velocity[0] || velocity[1] )
@@ -1754,13 +1754,13 @@ qboolean CG_PlayerLegsYawFromMovement( centity_t *cent, const vec3_t velocity, f
 			{
 				addAngle *= -1;
 			}
-			turnRate = 5;
+			turnRate = maxTurnRate * 0.5f;
 		}
 	}
 	else if ( JKG_MOVEMENT )
 	{
 		addAngle = AngleDelta(cent->lerpAngles[YAW], cent->moveYaw) * -1;
-		if (addAngle > 75 || addAngle < -75)
+		if ( addAngle > swingTolMax || addAngle < swingTolMin )
 		{
 			cent->moveYaw = cent->lerpAngles[YAW];
 			addAngle = 0;
@@ -1780,7 +1780,7 @@ qboolean CG_PlayerLegsYawFromMovement( centity_t *cent, const vec3_t velocity, f
 			{
 				addAngle *= -1;
 			}
-			turnRate = 5;
+			turnRate = maxTurnRate * 0.5f;
 		}
 	}
 	else if ( !alwaysFace )
@@ -1826,7 +1826,7 @@ void CG_ATSTLegsYaw( centity_t *cent, vec3_t trailingLegsAngles )
 
 	float ATSTLegsYaw = cent->lerpAngles[YAW];
 
-	CG_PlayerLegsYawFromMovement( cent, cent->gent->client->ps.velocity, &ATSTLegsYaw, cent->lerpAngles[YAW], -60, 60, qtrue );
+	CG_PlayerLegsYawFromMovement( cent, cent->gent->client->ps.velocity, &ATSTLegsYaw, cent->lerpAngles[YAW], -cg_atstYawMax.value, cg_atstYawMax.value, qtrue, cg_atstYawSnapSpeed.value );
 
 	float legAngleDiff = AngleNormalize180(ATSTLegsYaw) - AngleNormalize180(cent->pe.legs.yawAngle);
 	int legsAnim = cent->currentState.legsAnim;
@@ -2175,11 +2175,11 @@ void CG_G2PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t angles )
 				//FIXME: use actual swing/clamp tolerances?
 				if ( cent->gent->client->ps.groundEntityNum != ENTITYNUM_NONE && !PM_InRoll( &cent->gent->client->ps ) )
 				{//on the ground
-					CG_PlayerLegsYawFromMovement( cent, cent->gent->client->ps.velocity, &angles[YAW], cent->lerpAngles[YAW], -60, 60, qtrue );
+					CG_PlayerLegsYawFromMovement( cent, cent->gent->client->ps.velocity, &angles[YAW], cent->lerpAngles[YAW], -cg_torsoYawMax.value, cg_torsoYawMax.value, qtrue, cg_torsoYawSnapSpeed.value );
 				}
 				else
 				{//face legs to front
-					CG_PlayerLegsYawFromMovement( cent, vec3_origin, &angles[YAW], cent->lerpAngles[YAW], -60, 60, qtrue );
+					CG_PlayerLegsYawFromMovement( cent, vec3_origin, &angles[YAW], cent->lerpAngles[YAW], -cg_torsoYawMax.value, cg_torsoYawMax.value, qtrue, cg_torsoYawSnapSpeed.value );
 				}
 			}
 		}

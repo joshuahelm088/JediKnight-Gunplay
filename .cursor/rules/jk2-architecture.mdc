@@ -22,6 +22,7 @@ Single DLL: `codeJK2/game/` (server) + `codeJK2/cgame/` (client). JKG cvars in `
 | Player weapons | `bg_pmove.cpp` → `PM_Weapon` → `g_weapon.cpp` → `FireWeapon` → `wp_*.cpp` |
 | Damage / pain | `g_combat.cpp`; NPC pain → `NPC_reactions.cpp` |
 | Movement | `bg_pmove.cpp`, `g_active.cpp` |
+| Third-person torso/legs yaw | `cg_players.cpp` → `CG_G2PlayerAngles`, `CG_PlayerLegsYawFromMovement`; cvars `cg_torsoYawMax`, `cg_torsoYawSnapSpeed` |
 | HUD / view | `cg_draw.cpp`, `cg_view.cpp`, `cg_camera.cpp` |
 
 ## NPC AI dispatch (stock)
