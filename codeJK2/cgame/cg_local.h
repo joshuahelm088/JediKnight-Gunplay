@@ -819,6 +819,8 @@ void CG_DPPrevForcePower_f( void );
 
 
 void CG_RegisterWeapon( int weaponNum );
+float CG_WeaponChargeMaxTime( int weapon );
+float CG_WeaponChargeFraction( const playerState_t *ps );
 void CG_RegisterItemVisuals( int itemNum );
 void CG_RegisterItemSounds( int itemNum );
 

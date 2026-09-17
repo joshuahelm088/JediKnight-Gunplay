@@ -31,6 +31,44 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 extern void CG_LightningBolt( centity_t *cent, vec3_t origin );
 
+float CG_WeaponChargeMaxTime( int weapon )
+{
+	switch ( weapon )
+	{
+	case WP_BRYAR_PISTOL:
+		return 5.0f * BRYAR_CHARGE_UNIT;
+	case WP_BOWCASTER:
+		return 5.0f * BOWCASTER_CHARGE_UNIT;
+	case WP_DEMP2:
+		return 3.0f * DEMP2_CHARGE_UNIT;
+	default:
+		return 1000.0f;
+	}
+}
+
+float CG_WeaponChargeFraction( const playerState_t *ps )
+{
+	const float maxChargeTime = CG_WeaponChargeMaxTime( ps->weapon );
+
+	if ( maxChargeTime <= 0.0f )
+	{
+		return 0.0f;
+	}
+
+	float val = ( cg.time - ps->weaponChargeTime ) / maxChargeTime;
+
+	if ( val < 0.0f )
+	{
+		val = 0.0f;
+	}
+	else if ( val > 1.0f )
+	{
+		val = 1.0f;
+	}
+
+	return val;
+}
+
 #define	PHASER_HOLDFRAME	2
 int cgi_UI_GetMenuInfo(char *menuFile,int *x,int *y);
 extern void G_SoundOnEnt( gentity_t *ent, soundChannel_t channel, const char *soundPath );
@@ -1211,36 +1249,25 @@ void CG_AddViewWeapon( playerState_t *ps )
 			|| ( ps->weapon == WP_DEMP2 && ps->weaponstate == WEAPON_CHARGING_ALT ))
 	{
 		int		shader = 0;
-		float	val = 0.0f, scale = 1.0f;
+		float	val = CG_WeaponChargeFraction( ps );
+		float	scale = 1.0f;
 		vec3_t	WHITE	= {1.0f,1.0f,1.0f};
-
 		if ( ps->weapon == WP_BRYAR_PISTOL )
 		{
-			// Hardcoded max charge time of 1 second
-			val = ( cg.time - ps->weaponChargeTime ) * 0.001f;
 			shader = cgi_R_RegisterShader( "gfx/effects/bryarFrontFlash" );
 		}
 		else if ( ps->weapon == WP_BOWCASTER )
 		{
-			// Hardcoded max charge time of 1 second
-			val = ( cg.time - ps->weaponChargeTime ) * 0.001f;
 			shader = cgi_R_RegisterShader( "gfx/effects/greenFrontFlash" );
 		}
 		else if ( ps->weapon == WP_DEMP2 )
 		{
-			// Hardcoded max charge time of 1 second
-			val = ( cg.time - ps->weaponChargeTime ) * 0.001f;
 			shader = cgi_R_RegisterShader( "gfx/misc/lightningFlash" );
 			scale = 1.75f;
 		}
 
-		if ( val < 0.0f )
+		if ( val >= 1.0f )
 		{
-			val = 0.0f;
-		}
-		else if ( val > 1.0f )
-		{
-			val = 1.0f;
 			CGCam_Shake( 0.1f, 100 );
 		}
 		else
