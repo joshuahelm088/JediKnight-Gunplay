@@ -26,6 +26,18 @@ const int capped = ( elapsed < prestep ) ? elapsed : prestep;
 value = Com_Clampi( low, high, value );
 ```
 
+## Use `qboolean`, not `bool`
+
+JK2/OpenJK game and cgame code use `qboolean` / `qtrue` / `qfalse`. Do not return or assign C++ `bool` (e.g. from `&&` / `||`) where `qboolean` is expected — MSVC reports C2440.
+
+```cpp
+// BAD
+return ( a && b );
+
+// GOOD
+return ( a && b ) ? qtrue : qfalse;
+```
+
 ## New `.cpp` files
 
 If you add a file under `codeJK2/game/`, add it to `codeJK2/game/CMakeLists.txt` or it will not link.

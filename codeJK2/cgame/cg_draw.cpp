@@ -712,6 +712,43 @@ static qboolean CG_DrawCustomHealthHud( centity_t *cent )
 	return qtrue;
 }//-----------------------------------------------------
 
+static float CG_BowcasterBoltSlotAlpha( int slotIndex, int elapsedMs, int chargeUnitMs )
+{
+	const int centerSlot = 2;
+	const int tierRawUnits = 1 + 2 * ( ( slotIndex > centerSlot ) ? ( slotIndex - centerSlot ) : ( centerSlot - slotIndex ) );
+	int fadeStartMs;
+	int fadeEndMs;
+	float alpha;
+
+	if ( slotIndex < 0 || slotIndex > 4 || chargeUnitMs <= 0 )
+	{
+		return 0.0f;
+	}
+
+	// Minimum charge always fires one bolt — center stays fully visible for the whole hold.
+	if ( slotIndex == centerSlot )
+	{
+		return 1.0f;
+	}
+
+	// Each outer tier ramps during the charge unit before that odd bolt count is reached
+	// (inner pair: 400–600 ms, outer pair: 800–1000 ms with 200 ms units).
+	fadeStartMs = ( tierRawUnits - 1 ) * chargeUnitMs;
+	fadeEndMs = tierRawUnits * chargeUnitMs;
+
+	if ( elapsedMs <= fadeStartMs )
+	{
+		return 0.0f;
+	}
+	if ( elapsedMs >= fadeEndMs )
+	{
+		return 1.0f;
+	}
+
+	alpha = (float)( elapsedMs - fadeStartMs ) / (float)( fadeEndMs - fadeStartMs );
+	return alpha;
+}
+
 static void CG_DrawWeaponCharge( void )
 {
 	const playerState_t *ps = &cg.predicted_player_state;
@@ -769,39 +806,37 @@ static void CG_DrawWeaponCharge( void )
 
 	if ( ps->weapon == WP_BOWCASTER )
 	{
-		// Draw individual circles for Bowcaster charge
-		int numCircles = 5;
-		float radius = 15.0f; // Radius of each circle
-		float circleSpacing = 30.0f; // Spacing between each circle
-		float rowWidth = ( numCircles - 1 ) * circleSpacing + radius;
-		float startX = cx - rowWidth * 0.5f;
+		const int numSlots = 5;
+		const float radius = 15.0f;
+		const float circleSpacing = 30.0f;
+		const int chargeUnitMs = (int)BOWCASTER_CHARGE_UNIT;
+		const int elapsedMs = cg.time - ps->weaponChargeTime;
+		const qhandle_t circleShader = cgi_R_RegisterShaderNoMip( "gfx/2d/bincircle" );
+		vec4_t boltColor;
 		int i;
 
+		for ( i = 0; i < numSlots; i++ )
 		{
-			int boltCount = ( cg.time - ps->weaponChargeTime ) / (int)BOWCASTER_CHARGE_UNIT;
+			const float slotCenterX = cx + ( (float)i - 2.0f ) * circleSpacing;
+			const float drawX = slotCenterX - radius * 0.5f;
+			float alpha;
 
-			if ( boltCount > numCircles )
+			alpha = CG_BowcasterBoltSlotAlpha( i, elapsedMs, chargeUnitMs );
+			if ( alpha <= 0.0f )
 			{
-				boltCount = numCircles;
-			}
-			if ( boltCount < 0 )
-			{
-				boltCount = 0;
-			}
-
-			color1[0] = 0.0f;
-			color1[1] = 1.0f;
-			color1[2] = 0.0f;
-			color1[3] = 1.0f;
-			cgi_R_SetColor( color1 );
-
-			for ( i = 0; i < boltCount; i++ )
-			{
-				CG_DrawPic2( startX + i * circleSpacing, cy, radius, radius, 0, 0, 1, 1, cgi_R_RegisterShaderNoMip( "gfx/2d/bincircle" ) );
+				continue;
 			}
 
-			cgi_R_SetColor( NULL );
+			memcpy( boltColor, colorTable[CT_HUD_GREEN], sizeof( boltColor ) );
+			boltColor[0] *= alpha;
+			boltColor[1] *= alpha;
+			boltColor[2] *= alpha;
+			boltColor[3] = alpha;
+			cgi_R_SetColor( boltColor );
+			CG_DrawPic( drawX, cy, radius, radius, circleShader );
 		}
+
+		cgi_R_SetColor( NULL );
 	}
 	else
 	{
