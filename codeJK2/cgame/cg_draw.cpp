@@ -712,11 +712,54 @@ static qboolean CG_DrawCustomHealthHud( centity_t *cent )
 	return qtrue;
 }//-----------------------------------------------------
 
-static void CG_DrawWeaponCharge(int x, int y, centity_t* cent) {
-	x = 50;
-	// Check if the weapon is in a charging state
-	if (cg_entities[0].gent->client->ps.weaponstate != WEAPON_CHARGING_ALT &&
-		cg_entities[0].gent->client->ps.weaponstate != WEAPON_CHARGING) {
+static float CG_BowcasterBoltSlotAlpha( int slotIndex, int elapsedMs, int chargeUnitMs )
+{
+	const int centerSlot = 2;
+	const int tierRawUnits = 1 + 2 * ( ( slotIndex > centerSlot ) ? ( slotIndex - centerSlot ) : ( centerSlot - slotIndex ) );
+	int fadeStartMs;
+	int fadeEndMs;
+	float alpha;
+
+	if ( slotIndex < 0 || slotIndex > 4 || chargeUnitMs <= 0 )
+	{
+		return 0.0f;
+	}
+
+	// Minimum charge always fires one bolt — center stays fully visible for the whole hold.
+	if ( slotIndex == centerSlot )
+	{
+		return 1.0f;
+	}
+
+	// Each outer tier ramps during the charge unit before that odd bolt count is reached
+	// (inner pair: 400–600 ms, outer pair: 800–1000 ms with 200 ms units).
+	fadeStartMs = ( tierRawUnits - 1 ) * chargeUnitMs;
+	fadeEndMs = tierRawUnits * chargeUnitMs;
+
+	if ( elapsedMs <= fadeStartMs )
+	{
+		return 0.0f;
+	}
+	if ( elapsedMs >= fadeEndMs )
+	{
+		return 1.0f;
+	}
+
+	alpha = (float)( elapsedMs - fadeStartMs ) / (float)( fadeEndMs - fadeStartMs );
+	return alpha;
+}
+
+static void CG_DrawWeaponCharge( void )
+{
+	const playerState_t *ps = &cg.predicted_player_state;
+	const float cx = 320.0f + (float)cg_crosshairX.integer;
+	const float cy = 240.0f + (float)cg_crosshairY.integer + 24.0f;
+	const float barFullWidth = 134.0f;
+	const float barHeight = 34.0f;
+
+	if ( ps->weaponstate != WEAPON_CHARGING_ALT &&
+		ps->weaponstate != WEAPON_CHARGING )
+	{
 		return;
 	}
 
@@ -726,7 +769,7 @@ static void CG_DrawWeaponCharge(int x, int y, centity_t* cent) {
 	float charge_unit = 0.0f;
 
 	// Determine weapon-specific charge settings
-	switch (cent->gent->client->ps.weapon) {
+	switch ( ps->weapon ) {
 	case WP_BRYAR_PISTOL:
 		charge_unit = BRYAR_CHARGE_UNIT;
 		charge_max = 5;
@@ -736,7 +779,7 @@ static void CG_DrawWeaponCharge(int x, int y, centity_t* cent) {
 		charge_max = 10;
 		break;
 	case WP_BOWCASTER:
-		charge_unit = BOWCASTER_CHARGE_UNIT * 3;
+		charge_unit = BOWCASTER_CHARGE_UNIT;
 		charge_max = 5; // Bowcaster shoots up to 5 projectiles
 		break;
 	case WP_DEMP2:
@@ -750,8 +793,8 @@ static void CG_DrawWeaponCharge(int x, int y, centity_t* cent) {
 	// Calculate the maximum charge in seconds
 	float max_charge_time = charge_max * charge_unit;
 
-	// Calculate the current charge percentage based on time
-	charge = (cg.time - cg.snap->ps.weaponChargeTime) / max_charge_time;
+	// Calculate the current charge percentage based on time (predicted, matches charge FX)
+	charge = ( cg.time - ps->weaponChargeTime ) / max_charge_time;
 
 	// Clamp the charge between 0.0 and 1.0
 	if (charge > 1.0f) {
@@ -761,33 +804,44 @@ static void CG_DrawWeaponCharge(int x, int y, centity_t* cent) {
 		charge = 0.0f;
 	}
 
-	if (cent->gent->client->ps.weapon == WP_BOWCASTER) {
-		// Draw individual circles for Bowcaster charge
-		int numCircles = 5;
-		float chargeStep = 1.0f / numCircles; // Charge step for each projectile
-		float radius = 15.0f; // Radius of each circle
-		float circleSpacing = 30.0f; // Spacing between each circle
+	if ( ps->weapon == WP_BOWCASTER )
+	{
+		const int numSlots = 5;
+		const float radius = 15.0f;
+		const float circleSpacing = 30.0f;
+		const int chargeUnitMs = (int)BOWCASTER_CHARGE_UNIT;
+		const int elapsedMs = cg.time - ps->weaponChargeTime;
+		const qhandle_t circleShader = cgi_R_RegisterShaderNoMip( "gfx/2d/bincircle" );
+		vec4_t boltColor;
 		int i;
 
-		// Only draw the circles when the charge is met
-		for (i = 0; i < numCircles; i++) {
-			int circleCount = charge >= (i + 1) * chargeStep;
-			if (!(circleCount & 1)) {
-				circleCount--;
-			}
-			if (circleCount > 1) {
-				// Circle is fully charged, set to full color
-				color1[0] = 0.0f; // Fully green
-				color1[1] = 1.0f;
-				color1[2] = 0.0f;
-				color1[3] = 1.0f; // Full opacity
+		for ( i = 0; i < numSlots; i++ )
+		{
+			const float slotCenterX = cx + ( (float)i - 2.0f ) * circleSpacing;
+			const float drawX = slotCenterX - radius * 0.5f;
+			float alpha;
 
-				// Draw each circle UI element if the charge threshold is met
-				CG_DrawPic2(x + i * circleSpacing, y, radius, radius, 0, 0, 1, 1, cgi_R_RegisterShaderNoMip("gfx/2d/bincircle"));
+			alpha = CG_BowcasterBoltSlotAlpha( i, elapsedMs, chargeUnitMs );
+			if ( alpha <= 0.0f )
+			{
+				continue;
 			}
+
+			memcpy( boltColor, colorTable[CT_HUD_GREEN], sizeof( boltColor ) );
+			boltColor[0] *= alpha;
+			boltColor[1] *= alpha;
+			boltColor[2] *= alpha;
+			boltColor[3] = alpha;
+			cgi_R_SetColor( boltColor );
+			CG_DrawPic( drawX, cy, radius, radius, circleShader );
 		}
+
+		cgi_R_SetColor( NULL );
 	}
-	else {
+	else
+	{
+		const float x = cx - barFullWidth * 0.5f;
+		const float y = cy;
 		// For other weapons, show the normal charge bar
 		color1[0] = (1.0f - charge) * 2.0f; // Red decreases with charge
 		color1[1] = charge * 1.5f;          // Green increases with charge
@@ -803,8 +857,8 @@ static void CG_DrawWeaponCharge(int x, int y, centity_t* cent) {
 		if (color1[0] > 1.0f) color1[0] = 1.0f;
 		if (color1[1] > 1.0f) color1[1] = 1.0f;
 
-		// Draw the charge bar for other weapons
-		CG_DrawPic2(x, y, 134 * charge, 34, 0, 0, charge, 1, cgi_R_RegisterShaderNoMip("gfx/2d/crop_charge"));
+		// Draw the charge bar for other weapons (left edge fixed so fill grows toward center-right)
+		CG_DrawPic2( x, y, barFullWidth * charge, barHeight, 0, 0, charge, 1, cgi_R_RegisterShaderNoMip( "gfx/2d/crop_charge" ) );
 	}
 }
 
@@ -866,7 +920,7 @@ static void CG_DrawHUD( centity_t *cent )
 		CG_DrawHealth(x,y);
 		if ( JKG_HUD )
 		{
-			CG_DrawWeaponCharge( 50, 50, cent );
+			CG_DrawWeaponCharge();
 		}
 		CG_DrawHUDLeftFrame2(x,y);
 	}
