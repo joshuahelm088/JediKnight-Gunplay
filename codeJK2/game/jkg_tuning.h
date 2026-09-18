@@ -26,9 +26,8 @@ Each override keeps the stock value in a trailing comment for easy diffing.
 // --- Bryar Pistol ---
 #undef  BRYAR_PISTOL_VEL
 #define BRYAR_PISTOL_VEL			3350	// stock 1800
-#undef  BRYAR_PISTOL_DAMAGE
-#define BRYAR_PISTOL_DAMAGE			16		// stock 14
-#define BRYAR_BOLT_SIZE				4		// new (no stock value)
+#define BRYAR_PLAYER_DAMAGE			20		// player-only; NPCs/bot laser keep stock BRYAR_PISTOL_DAMAGE 14
+#define BRYAR_BOLT_SIZE				2		// new (no stock value)
 
 // --- E11 Blaster ---
 #undef  BLASTER_MAIN_SPREAD
@@ -37,13 +36,13 @@ Each override keeps the stock value in a trailing comment for easy diffing.
 #define BLASTER_ALT_SPREAD			2.25f	// stock 1.5f
 #undef  BLASTER_VELOCITY
 #define BLASTER_VELOCITY			3150	// stock 2300
-#define BLASTER_BOLT_SIZE			4		// new (no stock value)
+#define BLASTER_BOLT_SIZE			2		// new (no stock value)
 
 // --- Wookiee Bowcaster ---
 #undef  BOWCASTER_DAMAGE
 #define BOWCASTER_DAMAGE			60		// stock 45
 #undef  BOWCASTER_SIZE
-#define BOWCASTER_SIZE				6		// stock 2
+#define BOWCASTER_SIZE				4		// stock 2
 #undef  BOWCASTER_ALT_SPREAD
 #define BOWCASTER_ALT_SPREAD		2.2f	// stock 5.0f
 
@@ -52,9 +51,9 @@ Each override keeps the stock value in a trailing comment for easy diffing.
 #define REPEATER_DAMAGE				10		// stock 8
 #undef  REPEATER_VELOCITY
 #define REPEATER_VELOCITY			2000	// stock 1600
-#define REPEATER_SIZE				3		// new (no stock value)
+#define REPEATER_SIZE				1		// new (no stock value)
 #undef  REPEATER_ALT_SIZE
-#define REPEATER_ALT_SIZE			4		// stock 3
+#define REPEATER_ALT_SIZE			3		// stock 3
 #undef  REPEATER_ALT_VELOCITY
 #define REPEATER_ALT_VELOCITY		1800	// stock 1100
 
