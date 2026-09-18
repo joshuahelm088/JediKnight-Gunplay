@@ -39,6 +39,7 @@ extern cvar_t *g_jkgHUD;		// custom HUD / view / weapon-draw tweaks
 extern cvar_t *g_jkgGunSwayAmount;	// first-person weapon sway strength (degrees per degree turned)
 extern cvar_t *g_jkgGunSwayReturn;	// weapon sway return speed (lower = slower recenter)
 extern cvar_t *g_jkgDebugProjectile;	// projectile spawn debug (0=off, 1=server, 2=+client, 3=+NPC)
+extern cvar_t *g_jkgDebugHitboxes;	// draw NPC entity AABBs used for shot collision (requires cheats)
 
 struct centity_s;
 

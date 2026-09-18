@@ -857,7 +857,7 @@ extern void CG_Line( vec3_t start, vec3_t end, vec3_t color, float alpha );
 
 void NPC_ShowDebugInfo (void)
 {
-	if ( showBBoxes )
+	if ( showBBoxes || ( g_jkgDebugHitboxes && g_jkgDebugHitboxes->integer ) )
 	{
 		gentity_t	*found = NULL;
 		vec3_t		mins, maxs;
