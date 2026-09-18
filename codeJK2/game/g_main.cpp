@@ -1442,6 +1442,7 @@ void G_RunFrame( int levelTime ) {
 	//DEBUG STUFF
 	NAV_ShowDebugInfo();
 	NPC_ShowDebugInfo();
+	JKG_UpdateNpcHitboxes();
 
 	G_DynamicMusicUpdate();
 

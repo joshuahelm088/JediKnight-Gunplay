@@ -802,6 +802,7 @@ public:
 	vec3_t		pushVec;
 	int			pushVecTime;
 
+	float		jkgHitboxScale;	// 0 = use g_jkgNpcHitboxScale; else horizontal XY bbox scale for this NPC
 
 	void sg_export(
 		ojk::SavedGameHelper& saved_game) const
@@ -863,6 +864,7 @@ public:
 		saved_game.write<int32_t>(slopeRecalcTime);
 		saved_game.write<float>(pushVec);
 		saved_game.write<int32_t>(pushVecTime);
+		saved_game.write<float>(jkgHitboxScale);
 	}
 
 	void sg_import(
@@ -925,6 +927,7 @@ public:
 		saved_game.read<int32_t>(slopeRecalcTime);
 		saved_game.read<float>(pushVec);
 		saved_game.read<int32_t>(pushVecTime);
+		saved_game.read<float>(jkgHitboxScale);
 	}
 }; // gclient_t
 
@@ -1213,6 +1216,7 @@ Ghoul2 Insert End
 	char		*NPC_type;
 	char		*NPC_targetname;
 	char		*NPC_target;
+	float		jkgHitboxScale;	// optional spawner override (copied to spawned NPC client); 0 = use NPC def / global
 
 //Variables used by movers (most likely exclusively by them)
 	moverState_t moverState;

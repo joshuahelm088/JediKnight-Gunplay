@@ -1169,6 +1169,8 @@ qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 	NPC->client->dismemberProbWaist = 100;
 	NPC->client->dismemberProbLegs = 100;
 
+	NPC->client->jkgHitboxScale = 0.0f;
+
 
 	if ( !Q_stricmp( "random", NPCName ) )
 	{//Randomly assemble a starfleet guy
@@ -1559,6 +1561,23 @@ qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 				{
 					NPC->s.modelScale[2] = n/100.0f;
 				}
+				continue;
+			}
+
+			// horizontal hitbox scale (percent, like scale); 0 in file omitted; 100 = 1.0
+			if ( !Q_stricmp( token, "hitboxScale" ) )
+			{
+				if ( COM_ParseInt( &p, &n ) )
+				{
+					SkipRestOfLine( &p );
+					continue;
+				}
+				if ( n < 100 )
+				{
+					gi.Printf( S_COLOR_YELLOW"WARNING: bad %s in NPC '%s' (use 100+ for wider hitboxes)\n", token, NPCName );
+					continue;
+				}
+				NPC->client->jkgHitboxScale = n / 100.0f;
 				continue;
 			}
 
