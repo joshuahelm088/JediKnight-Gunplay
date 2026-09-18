@@ -294,6 +294,7 @@ field_t fields[] = {
 	{"NPC_target2", FOFS(target2), F_LSTRING},//NPC_spawner only
 	{"NPC_target4", FOFS(target4), F_LSTRING},//NPC_spawner only
 	{"NPC_type", FOFS(NPC_type), F_LSTRING},
+	{"jkgHitboxScale", FOFS(jkgHitboxScale), F_FLOAT},
 	{"ownername", FOFS(ownername), F_LSTRING},
 	//freaky camera shit
 	{"startRGBA", FOFS(startRGBA), F_VECTOR4},

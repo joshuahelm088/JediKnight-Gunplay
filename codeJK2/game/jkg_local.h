@@ -39,6 +39,12 @@ extern cvar_t *g_jkgHUD;		// custom HUD / view / weapon-draw tweaks
 extern cvar_t *g_jkgGunSwayAmount;	// first-person weapon sway strength (degrees per degree turned)
 extern cvar_t *g_jkgGunSwayReturn;	// weapon sway return speed (lower = slower recenter)
 extern cvar_t *g_jkgDebugProjectile;	// projectile spawn debug (0=off, 1=server, 2=+client, 3=+NPC)
+extern cvar_t *g_jkgProjectileAabbHits;	// 1=missiles use entity AABB only (G2_NOCOLLIDE), 0=stock Ghoul2 mesh (G2_COLLIDE)
+extern cvar_t *g_jkgNpcHitboxScale;	// default horizontal XY bbox scale for NPCs (1.0 = stock)
+
+float JKG_GetNpcHitboxScale( const gentity_t *ent );	// per-NPC override when client->jkgHitboxScale > 0
+
+void JKG_UpdateNpcHitboxes( void );
 
 struct centity_s;
 

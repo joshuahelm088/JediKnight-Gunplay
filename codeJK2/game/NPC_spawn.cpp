@@ -1290,6 +1290,11 @@ void NPC_Spawn_Go( gentity_t *ent )
 		return;
 	}
 
+	if ( ent->jkgHitboxScale > 0.0f )
+	{
+		newent->client->jkgHitboxScale = ent->jkgHitboxScale;
+	}
+
 	if ( ent->NPC_type )
 	{
 		if ( !Q_stricmp( ent->NPC_type, "kyle" ) )

@@ -31,6 +31,8 @@ cvar_t *g_jkgHUD;
 cvar_t *g_jkgGunSwayAmount;
 cvar_t *g_jkgGunSwayReturn;
 cvar_t *g_jkgDebugProjectile;
+cvar_t *g_jkgProjectileAabbHits;
+cvar_t *g_jkgNpcHitboxScale;
 
 void JKG_RegisterCvars( void )
 {
@@ -46,4 +48,6 @@ void JKG_RegisterCvars( void )
 	g_jkgGunSwayAmount = gi.cvar( "g_jkgGunSwayAmount", "3.5", CVAR_ARCHIVE );
 	g_jkgGunSwayReturn = gi.cvar( "g_jkgGunSwayReturn", "15", CVAR_ARCHIVE );
 	g_jkgDebugProjectile = gi.cvar( "g_jkgDebugProjectile", "0", CVAR_CHEAT );
+	g_jkgProjectileAabbHits = gi.cvar( "g_jkgProjectileAabbHits", "1", CVAR_ARCHIVE );
+	g_jkgNpcHitboxScale = gi.cvar( "g_jkgNpcHitboxScale", "1", CVAR_ARCHIVE );
 }

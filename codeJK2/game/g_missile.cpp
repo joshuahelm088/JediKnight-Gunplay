@@ -27,10 +27,27 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "g_functions.h"
 #include "wp_saber.h"
 #include "bg_local.h"
+#include "jkg_local.h"
 
 extern qboolean InFront( vec3_t spot, vec3_t from, vec3_t fromAngles, float threshHold = 0.0f );
+
+static EG2_Collision JKG_MissileEntityTraceG2Type( void )
+{
+	if ( JKG_WEAPONS && g_jkgProjectileAabbHits && g_jkgProjectileAabbHits->integer )
+	{
+		return G2_NOCOLLIDE;
+	}
+
+	return G2_COLLIDE;
+}
+
+static qboolean JKG_MissileUsesAabbHits( void )
+{
+	return ( JKG_WEAPONS && g_jkgProjectileAabbHits && g_jkgProjectileAabbHits->integer ) ? qtrue : qfalse;
+}
 qboolean LogAccuracyHit( gentity_t *target, gentity_t *attacker );
 extern qboolean G_GetHitLocFromSurfName( gentity_t *ent, const char *surfName, int *hitLoc, vec3_t point, vec3_t dir, vec3_t bladeDir, int mod );
+extern int G_GetHitLocation( gentity_t *target, vec3_t ppoint );
 extern qboolean PM_SaberInParry( int move );
 extern qboolean PM_SaberInReflect( int move );
 extern qboolean PM_SaberInIdle( int move );
@@ -1220,7 +1237,7 @@ void G_RunMissile( gentity_t *ent )
 			ent->owner ? ent->owner->s.number : ENTITYNUM_NONE, ent->clipmask, G2_RETURNONHIT, 10 );
 		*/
 		gi.trace( &tr, ent->currentOrigin, ent->mins, ent->maxs, origin,
-			ent->owner ? ent->owner->s.number : ent->s.number, ent->clipmask, G2_COLLIDE, 10 );
+			ent->owner ? ent->owner->s.number : ent->s.number, ent->clipmask, JKG_MissileEntityTraceG2Type(), 10 );
 		/*
 		if ( !VectorCompare( ent->mins, vec3_origin ) || !VectorCompare( ent->maxs, vec3_origin ) )
 		{//don't do ghoul trace if ent has size because g2 just ignores that anyway
@@ -1426,6 +1443,19 @@ void G_RunMissile( gentity_t *ent )
 	{
 		G_FreeEntity( ent );
 		return;
+	}
+
+	if ( JKG_MissileUsesAabbHits()
+		&& trHitLoc == HL_NONE
+		&& tr.entityNum >= 0
+		&& tr.entityNum < ENTITYNUM_WORLD )
+	{
+		gentity_t *hitEnt = &g_entities[tr.entityNum];
+
+		if ( hitEnt->client )
+		{
+			trHitLoc = G_GetHitLocation( hitEnt, tr.endpos );
+		}
 	}
 
 	G_MissileImpact( ent, &tr, trHitLoc );
