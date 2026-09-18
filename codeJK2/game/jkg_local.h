@@ -31,7 +31,7 @@ extern cvar_t *g_jkgplay;
 // Per-system toggles.
 extern cvar_t *g_jkgAI;			// custom NPC AI (stormtrooper, probe, sentry, reactions, spawn scaling)
 extern cvar_t *g_jkgWeapons;	// custom weapon fire behavior + tuning
-extern cvar_t *g_jkgMovement;	// custom player movement feel + weapon-fire cadence
+extern cvar_t *g_jkgMovement;	// kept for configs; player movement is stock JK2
 extern cvar_t *g_jkgArmor;		// separate MAX_ARMOR system (armor no longer clamped to max health)
 extern cvar_t *g_jkgCombat;		// custom damage tables / pain timing / hit locations
 extern cvar_t *g_jkgCamera;		// weapon-fire camera kickback

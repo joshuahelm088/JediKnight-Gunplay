@@ -26,7 +26,6 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "g_local.h"
 #include "g_functions.h"
 #include "../cgame/cg_local.h"
-#include "../game/jkg_local.h"
 #include "Q3_Interface.h"
 #include "wp_saber.h"
 #include "g_icarus.h"
@@ -2551,7 +2550,7 @@ extern cvar_t	*g_skippingcin;
 		}
 		else
 		{
-			client->ps.speed = JKG_MOVEMENT ? 325 : g_speed->value;//default is 320
+			client->ps.speed = g_speed->value;//default is 320
 			/*if ( !ent->s.number && ent->painDebounceTime>level.time )
 			{
 				client->ps.speed *= 0.25f;
@@ -2624,7 +2623,7 @@ extern cvar_t	*g_skippingcin;
 			}
 			else
 			{
-				client->ps.speed = JKG_MOVEMENT ? 325 : g_speed->value;//default is 320
+				client->ps.speed = g_speed->value;//default is 320
 			}
 		}
 	}
@@ -2640,7 +2639,7 @@ extern cvar_t	*g_skippingcin;
 			}
 			else
 			{
-				client->ps.speed = JKG_MOVEMENT ? 325 : g_speed->value;//default is 320
+				client->ps.speed = g_speed->value;//default is 320
 			}
 		}
 	}
