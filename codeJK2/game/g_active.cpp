@@ -2497,6 +2497,15 @@ extern cvar_t	*g_skippingcin;
 				ent->NPC->desiredSpeed = JKG_NpcScaleDesiredSpeed( ent->NPC->desiredSpeed );
 				JKG_NPCRampSpeed( ent, msec );
 				client->ps.speed = ent->NPC->currentSpeed;
+
+				if ( ent->NPC->currentSpeed <= ent->NPC->stats.walkSpeed )
+				{
+					ucmd->buttons |= BUTTON_WALKING;
+				}
+				else
+				{
+					ucmd->buttons &= ~BUTTON_WALKING;
+				}
 			}
 			else
 			{

@@ -10,6 +10,9 @@ JKGunplay mod layer - NPC locomotion (speed ramp + move direction blend)
 #include "g_local.h"
 #include "jkg_local.h"
 
+extern qboolean PM_WalkingAnim( int anim );
+extern qboolean PM_RunningAnim( int anim );
+
 static int JKG_CvarIntegerNonNegative( cvar_t *cv )
 {
 	int value;
@@ -215,4 +218,56 @@ void JKG_NpcApplyMoveDir( gentity_t *self, usercmd_t *cmd, vec3_t dir )
 
 	cmd->forwardmove = floor( fDot );
 	cmd->rightmove = floor( rDot );
+}
+
+float JKG_NpcLocomotionAnimScale( gentity_t *ent, int anim )
+{
+	int walkNominal;
+	int runNominal;
+	float scale;
+	float minScale;
+
+	if ( !JKG_MOVEMENT || !ent || !ent->NPC || !ent->client )
+	{
+		return 1.0f;
+	}
+
+	if ( !PM_WalkingAnim( anim ) && !PM_RunningAnim( anim ) )
+	{
+		return 1.0f;
+	}
+
+	walkNominal = ent->NPC->stats.walkSpeed;
+	runNominal = ent->NPC->stats.runSpeed;
+	walkNominal = JKG_NpcScaleDesiredSpeed( walkNominal );
+	runNominal = JKG_NpcScaleDesiredSpeed( runNominal );
+
+	if ( PM_WalkingAnim( anim ) )
+	{
+		if ( walkNominal <= 0 )
+		{
+			return 1.0f;
+		}
+		scale = (float)ent->NPC->currentSpeed / (float)walkNominal;
+	}
+	else
+	{
+		if ( runNominal <= 0 )
+		{
+			return 1.0f;
+		}
+		scale = (float)ent->NPC->currentSpeed / (float)runNominal;
+	}
+
+	minScale = JKG_CvarFloatPositive( g_jkgNpcAnimMinScale );
+	if ( minScale > 0.0f && scale < minScale )
+	{
+		scale = minScale;
+	}
+	if ( scale > 1.0f )
+	{
+		scale = 1.0f;
+	}
+
+	return scale;
 }

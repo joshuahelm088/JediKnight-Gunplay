@@ -42,6 +42,7 @@ cvar_t *g_jkgNpcAccel;
 cvar_t *g_jkgNpcDecel;
 cvar_t *g_jkgNpcTurnRate;
 cvar_t *g_jkgNpcSpeedScale;
+cvar_t *g_jkgNpcAnimMinScale;
 
 void JKG_RegisterCvars( void )
 {
@@ -68,4 +69,5 @@ void JKG_RegisterCvars( void )
 	g_jkgNpcDecel = gi.cvar( "g_jkgNpcDecel", "200", CVAR_ARCHIVE );
 	g_jkgNpcTurnRate = gi.cvar( "g_jkgNpcTurnRate", "180", CVAR_ARCHIVE );
 	g_jkgNpcSpeedScale = gi.cvar( "g_jkgNpcSpeedScale", "1", CVAR_ARCHIVE );
+	g_jkgNpcAnimMinScale = gi.cvar( "g_jkgNpcAnimMinScale", "0.25", CVAR_ARCHIVE );
 }

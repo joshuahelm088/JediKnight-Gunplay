@@ -36,6 +36,7 @@ extern cvar_t *g_jkgNpcAccel;	// NPC speed-up rate (units/sec)
 extern cvar_t *g_jkgNpcDecel;	// NPC slow/stop rate (units/sec)
 extern cvar_t *g_jkgNpcTurnRate;	// max NPC moveDir heading change (deg/sec)
 extern cvar_t *g_jkgNpcSpeedScale;	// multiplier on NPC desired walk/run speed
+extern cvar_t *g_jkgNpcAnimMinScale;	// floor on NPC walk/run anim playback scale
 extern cvar_t *g_jkgArmor;		// separate MAX_ARMOR system (armor no longer clamped to max health)
 extern cvar_t *g_jkgCombat;		// custom damage tables / pain timing / hit locations
 extern cvar_t *g_jkgCamera;		// weapon-fire camera kickback
@@ -67,6 +68,7 @@ qboolean JKG_NpcBurstShootThink( void );
 int JKG_NpcScaleDesiredSpeed( int speed );
 void JKG_NPCRampSpeed( gentity_t *ent, int msec );
 void JKG_NpcApplyMoveDir( gentity_t *self, usercmd_t *cmd, vec3_t dir );
+float JKG_NpcLocomotionAnimScale( gentity_t *ent, int anim );
 
 struct centity_s;
 
