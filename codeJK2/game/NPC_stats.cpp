@@ -1582,7 +1582,7 @@ qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 				continue;
 			}
 
-			// JKGunplay fire cadence (burst | single); omitted = weapon default in JKG_ApplyBlasterFireMode
+			// JKGunplay fire cadence (burst | single); omitted = weapon default in JKG_ApplyNpcBurstFireMode
 			if ( !Q_stricmp( token, "fireMode" ) )
 			{
 				if ( COM_ParseString( &p, &value ) )

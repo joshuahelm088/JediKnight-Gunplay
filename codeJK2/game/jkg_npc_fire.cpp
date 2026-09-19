@@ -1,6 +1,6 @@
 /*
 ===========================================================================
-JKGunplay mod layer - NPC blaster fire cadence (burst vs single)
+JKGunplay mod layer - NPC blaster / pistol burst fire cadence
 ===========================================================================
 */
 
@@ -26,11 +26,32 @@ static int JKG_CvarIntegerNonNegative( cvar_t *cv )
 	return value;
 }
 
-static int JKG_BurstShotsPerBurst( void )
+static qboolean JKG_IsJkgBurstWeapon( int weapon )
+{
+	if ( weapon == WP_BLASTER || weapon == WP_BLASTER_PISTOL )
+	{
+		return qtrue;
+	}
+	return qfalse;
+}
+
+static int JKG_BurstShotsForWeapon( int weapon )
 {
 	int shots;
 
-	shots = JKG_CvarIntegerNonNegative( g_jkgBurstShots );
+	if ( weapon == WP_BLASTER_PISTOL )
+	{
+		shots = JKG_CvarIntegerNonNegative( g_jkgBurstPistolShots );
+	}
+	else if ( weapon == WP_BLASTER )
+	{
+		shots = JKG_CvarIntegerNonNegative( g_jkgBurstShots );
+	}
+	else
+	{
+		shots = 0;
+	}
+
 	if ( shots < 1 )
 	{
 		shots = 1;
@@ -38,9 +59,17 @@ static int JKG_BurstShotsPerBurst( void )
 	return shots;
 }
 
-static qboolean JKG_NPCUsesBlasterBurstCadence( const gentity_t *ent )
+static qboolean JKG_NPCUsesBurstCadence( const gentity_t *ent )
 {
-	if ( !ent || !ent->NPC )
+	int weapon;
+
+	if ( !ent || !ent->NPC || !ent->client )
+	{
+		return qfalse;
+	}
+
+	weapon = ent->client->ps.weapon;
+	if ( !JKG_IsJkgBurstWeapon( weapon ) )
 	{
 		return qfalse;
 	}
@@ -55,12 +84,13 @@ static qboolean JKG_NPCUsesBlasterBurstCadence( const gentity_t *ent )
 		return qtrue;
 	}
 
-	// DEFAULT: burst for E-11 blaster only
-	return ( ent->client && ent->client->ps.weapon == WP_BLASTER ) ? qtrue : qfalse;
+	// DEFAULT: burst for E-11 and officer blaster pistol
+	return qtrue;
 }
 
-void JKG_ApplyBlasterFireMode( gentity_t *ent )
+void JKG_ApplyNpcBurstFireMode( gentity_t *ent )
 {
+	int weapon;
 	int shots;
 
 	if ( !ent || !ent->NPC || !ent->client )
@@ -68,19 +98,20 @@ void JKG_ApplyBlasterFireMode( gentity_t *ent )
 		return;
 	}
 
-	if ( ent->client->ps.weapon != WP_BLASTER )
+	weapon = ent->client->ps.weapon;
+	if ( !JKG_IsJkgBurstWeapon( weapon ) )
 	{
 		return;
 	}
 
-	if ( !JKG_NPCUsesBlasterBurstCadence( ent ) )
+	if ( !JKG_NPCUsesBurstCadence( ent ) )
 	{
 		ent->NPC->aiFlags &= ~NPCAI_BURST_WEAPON;
 		ent->NPC->burstCount = 0;
 		return;
 	}
 
-	shots = JKG_BurstShotsPerBurst();
+	shots = JKG_BurstShotsForWeapon( weapon );
 
 	ent->NPC->aiFlags |= NPCAI_BURST_WEAPON;
 	ent->NPC->burstMin = shots;
@@ -88,22 +119,24 @@ void JKG_ApplyBlasterFireMode( gentity_t *ent )
 	ent->NPC->burstCount = 0;
 }
 
-qboolean JKG_BlasterBurstShootThink( void )
+qboolean JKG_NpcBurstShootThink( void )
 {
 	int delay;
 	int shots;
+	int weapon;
 
 	if ( !NPC || !NPC->NPC || !NPC->client )
 	{
 		return qfalse;
 	}
 
-	if ( NPC->client->ps.weapon != WP_BLASTER )
+	weapon = NPC->client->ps.weapon;
+	if ( !JKG_IsJkgBurstWeapon( weapon ) )
 	{
 		return qfalse;
 	}
 
-	if ( !JKG_NPCUsesBlasterBurstCadence( NPC ) )
+	if ( !JKG_NPCUsesBurstCadence( NPC ) )
 	{
 		return qfalse;
 	}
@@ -114,7 +147,7 @@ qboolean JKG_BlasterBurstShootThink( void )
 
 	NPC_ApplyWeaponFireDelay();
 
-	shots = JKG_BurstShotsPerBurst();
+	shots = JKG_BurstShotsForWeapon( weapon );
 
 	if ( NPCInfo->burstCount <= 0 )
 	{
@@ -126,6 +159,10 @@ qboolean JKG_BlasterBurstShootThink( void )
 	if ( NPCInfo->burstCount > 0 )
 	{
 		delay = JKG_CvarIntegerNonNegative( g_jkgBurstShotDelay );
+	}
+	else if ( weapon == WP_BLASTER_PISTOL )
+	{
+		delay = JKG_CvarIntegerNonNegative( g_jkgBurstPistolPause );
 	}
 	else
 	{

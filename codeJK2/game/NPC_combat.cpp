@@ -814,10 +814,10 @@ void ChangeWeapon( gentity_t *ent, int newWeapon )
 		break;
 	}
 
-	// >>> JKG HOOK: apply selectable blaster burst cadence when enabled (g_jkgAI).
+	// >>> JKG HOOK: apply selectable burst cadence (E-11 + officer pistol) when enabled (g_jkgAI).
 	if ( JKG_AI )
 	{
-		JKG_ApplyBlasterFireMode( ent );
+		JKG_ApplyNpcBurstFireMode( ent );
 	}
 	// <<< JKG HOOK
 }
@@ -902,8 +902,8 @@ void ShootThink( void )
 		return;
 */
 
-	// >>> JKG HOOK: 3-shot primary blaster burst (g_jkgAI).
-	if ( JKG_AI && JKG_BlasterBurstShootThink() )
+	// >>> JKG HOOK: JKG burst fire (g_jkgAI).
+	if ( JKG_AI && JKG_NpcBurstShootThink() )
 	{
 		return;
 	}

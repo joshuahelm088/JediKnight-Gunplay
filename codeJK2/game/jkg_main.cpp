@@ -34,8 +34,10 @@ cvar_t *g_jkgDebugProjectile;
 cvar_t *g_jkgProjectileAabbHits;
 cvar_t *g_jkgNpcHitboxScale;
 cvar_t *g_jkgBurstShots;
+cvar_t *g_jkgBurstPistolShots;
 cvar_t *g_jkgBurstShotDelay;
 cvar_t *g_jkgBurstPause;
+cvar_t *g_jkgBurstPistolPause;
 
 void JKG_RegisterCvars( void )
 {
@@ -54,6 +56,8 @@ void JKG_RegisterCvars( void )
 	g_jkgProjectileAabbHits = gi.cvar( "g_jkgProjectileAabbHits", "1", CVAR_ARCHIVE );
 	g_jkgNpcHitboxScale = gi.cvar( "g_jkgNpcHitboxScale", "1", CVAR_ARCHIVE );
 	g_jkgBurstShots = gi.cvar( "g_jkgBurstShots", "3", CVAR_ARCHIVE );
+	g_jkgBurstPistolShots = gi.cvar( "g_jkgBurstPistolShots", "2", CVAR_ARCHIVE );
 	g_jkgBurstShotDelay = gi.cvar( "g_jkgBurstShotDelay", "500", CVAR_ARCHIVE );
 	g_jkgBurstPause = gi.cvar( "g_jkgBurstPause", "3000", CVAR_ARCHIVE );
+	g_jkgBurstPistolPause = gi.cvar( "g_jkgBurstPistolPause", "2000", CVAR_ARCHIVE );
 }

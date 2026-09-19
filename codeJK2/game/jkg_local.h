@@ -41,9 +41,11 @@ extern cvar_t *g_jkgGunSwayReturn;	// weapon sway return speed (lower = slower r
 extern cvar_t *g_jkgDebugProjectile;	// projectile spawn debug (0=off, 1=server, 2=+client, 3=+NPC)
 extern cvar_t *g_jkgProjectileAabbHits;	// 1=missiles use entity AABB only (G2_NOCOLLIDE), 0=stock Ghoul2 mesh (G2_COLLIDE)
 extern cvar_t *g_jkgNpcHitboxScale;	// default horizontal XY bbox scale for NPCs (1.0 = stock)
-extern cvar_t *g_jkgBurstShots;		// shots per JKG blaster burst
-extern cvar_t *g_jkgBurstShotDelay;	// ms between shots in a JKG blaster burst
-extern cvar_t *g_jkgBurstPause;		// ms after a burst before the next burst starts
+extern cvar_t *g_jkgBurstShots;		// shots per JKG E-11 (WP_BLASTER) burst
+extern cvar_t *g_jkgBurstPistolShots;	// shots per JKG officer pistol (WP_BLASTER_PISTOL) burst
+extern cvar_t *g_jkgBurstShotDelay;	// ms between shots within a burst (blaster and pistol)
+extern cvar_t *g_jkgBurstPause;		// ms after an E-11 burst before the next burst starts
+extern cvar_t *g_jkgBurstPistolPause;	// ms after a pistol burst before the next burst starts
 
 typedef enum {
 	JKG_FIREMODE_DEFAULT = 0,
@@ -55,8 +57,8 @@ float JKG_GetNpcHitboxScale( const gentity_t *ent );	// per-NPC override when cl
 
 void JKG_UpdateNpcHitboxes( void );
 
-void JKG_ApplyBlasterFireMode( gentity_t *ent );
-qboolean JKG_BlasterBurstShootThink( void );
+void JKG_ApplyNpcBurstFireMode( gentity_t *ent );
+qboolean JKG_NpcBurstShootThink( void );
 
 struct centity_s;
 
