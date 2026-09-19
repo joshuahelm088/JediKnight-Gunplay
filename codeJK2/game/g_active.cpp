@@ -29,6 +29,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "Q3_Interface.h"
 #include "wp_saber.h"
 #include "g_icarus.h"
+#include "jkg_local.h"
 
 #ifdef _DEBUG
 	#include <float.h>
@@ -2411,7 +2412,17 @@ extern cvar_t	*g_skippingcin;
 					ent->NPC->desiredSpeed = 0;
 				}
 
-				NPC_Accelerate( ent, qfalse, qfalse );
+				// >>> JKG HOOK: time-based NPC speed ramp when enabled (g_jkgMovement).
+				if ( JKG_MOVEMENT )
+				{
+					ent->NPC->desiredSpeed = JKG_NpcScaleDesiredSpeed( ent->NPC->desiredSpeed );
+					JKG_NPCRampSpeed( ent, msec );
+				}
+				else
+				{
+					NPC_Accelerate( ent, qfalse, qfalse );
+				}
+				// <<< JKG HOOK
 
 				if ( ent->NPC->currentSpeed <= 24 && ent->NPC->desiredSpeed < ent->NPC->currentSpeed )
 				{//No-one walks this slow
@@ -2480,7 +2491,18 @@ extern cvar_t	*g_skippingcin;
 		{
 			ent->NPC->desiredSpeed = ( ucmd->buttons & BUTTON_WALKING ) ? NPC_GetWalkSpeed( ent ) : NPC_GetRunSpeed( ent );
 
-			client->ps.speed = ent->NPC->desiredSpeed;
+			// >>> JKG HOOK: combat NPC speed ramp when enabled (g_jkgMovement).
+			if ( JKG_MOVEMENT )
+			{
+				ent->NPC->desiredSpeed = JKG_NpcScaleDesiredSpeed( ent->NPC->desiredSpeed );
+				JKG_NPCRampSpeed( ent, msec );
+				client->ps.speed = ent->NPC->currentSpeed;
+			}
+			else
+			{
+				client->ps.speed = ent->NPC->desiredSpeed;
+			}
+			// <<< JKG HOOK
 		}
 	}
 	else

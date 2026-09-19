@@ -28,6 +28,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "b_local.h"
 #include "g_nav.h"
+#include "jkg_local.h"
 #include "anims.h"
 
 extern	cvar_t		*d_altRoutes;
@@ -344,6 +345,14 @@ qboolean NPC_GetMoveDirectionAltRoute( vec3_t out, float *distance, qboolean try
 
 void G_UcmdMoveForDir( gentity_t *self, usercmd_t *cmd, vec3_t dir )
 {
+	// >>> JKG HOOK: blend NPC move direction when enabled (g_jkgMovement).
+	if ( JKG_MOVEMENT )
+	{
+		JKG_NpcApplyMoveDir( self, cmd, dir );
+		return;
+	}
+	// <<< JKG HOOK
+
 	vec3_t	forward, right;
 
 	AngleVectors( self->currentAngles, forward, right, NULL );
