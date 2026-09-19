@@ -27,6 +27,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "b_local.h"
 #include "b_public.h"
 #include "anims.h"
+#include "jkg_local.h"
 
 extern qboolean NPCsPrecached;
 extern vec3_t playerMins;
@@ -1578,6 +1579,31 @@ qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 					continue;
 				}
 				NPC->client->jkgHitboxScale = n / 100.0f;
+				continue;
+			}
+
+			// JKGunplay fire cadence (burst | single); omitted = weapon default in JKG_ApplyBlasterFireMode
+			if ( !Q_stricmp( token, "fireMode" ) )
+			{
+				if ( COM_ParseString( &p, &value ) )
+				{
+					continue;
+				}
+				if ( NPC->NPC )
+				{
+					if ( !Q_stricmp( value, "burst" ) )
+					{
+						NPC->NPC->jkgFireMode = JKG_FIREMODE_BURST;
+					}
+					else if ( !Q_stricmp( value, "single" ) )
+					{
+						NPC->NPC->jkgFireMode = JKG_FIREMODE_SINGLE;
+					}
+					else
+					{
+						gi.Printf( S_COLOR_YELLOW"WARNING: bad fireMode '%s' in NPC '%s' (use burst or single)\n", value, NPCName );
+					}
+				}
 				continue;
 			}
 

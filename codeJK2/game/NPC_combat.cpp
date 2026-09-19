@@ -29,6 +29,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "b_local.h"
 #include "g_nav.h"
 #include "g_navigator.h"
+#include "jkg_local.h"
 
 extern void G_AddVoiceEvent( gentity_t *self, int event, int speakDebounceTime );
 extern void G_SetEnemy( gentity_t *self, gentity_t *enemy );
@@ -812,6 +813,13 @@ void ChangeWeapon( gentity_t *ent, int newWeapon )
 		ent->NPC->aiFlags &= ~NPCAI_BURST_WEAPON;
 		break;
 	}
+
+	// >>> JKG HOOK: apply selectable blaster burst cadence when enabled (g_jkgAI).
+	if ( JKG_AI )
+	{
+		JKG_ApplyBlasterFireMode( ent );
+	}
+	// <<< JKG HOOK
 }
 
 void NPC_ChangeWeapon( int newWeapon )
@@ -893,6 +901,13 @@ void ShootThink( void )
 	if ( enemyVisibility != VIS_SHOOT)
 		return;
 */
+
+	// >>> JKG HOOK: 3-shot primary blaster burst (g_jkgAI).
+	if ( JKG_AI && JKG_BlasterBurstShootThink() )
+	{
+		return;
+	}
+	// <<< JKG HOOK
 
 	ucmd.buttons |= BUTTON_ATTACK;
 

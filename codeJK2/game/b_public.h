@@ -344,6 +344,7 @@ public:
 	int			ffireDebounce;
 	int			ffireFadeDebounce;
 
+	int			jkgFireMode;	// JKGunplay NPC fire cadence (see jkgFireMode_t in jkg_local.h)
 
 	void sg_export(
 		ojk::SavedGameHelper& saved_game) const
@@ -448,6 +449,7 @@ public:
 		saved_game.write<int32_t>(ffireCount);
 		saved_game.write<int32_t>(ffireDebounce);
 		saved_game.write<int32_t>(ffireFadeDebounce);
+		saved_game.write<int32_t>(jkgFireMode);
 	}
 
 	void sg_import(
@@ -553,6 +555,7 @@ public:
 		saved_game.read<int32_t>(ffireCount);
 		saved_game.read<int32_t>(ffireDebounce);
 		saved_game.read<int32_t>(ffireFadeDebounce);
+		saved_game.read<int32_t>(jkgFireMode);
 	}
 }; // gNPC_t
 

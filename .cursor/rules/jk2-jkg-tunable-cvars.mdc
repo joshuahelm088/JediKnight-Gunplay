@@ -1,0 +1,36 @@
+---
+description: JKGunplay tunable numbers must be cvars (defaults only in JKG_RegisterCvars)
+globs: codeJK2/**/*
+alwaysApply: true
+---
+
+# JKG tunable numbers → cvars
+
+When adding or changing **gameplay-tunable numbers** in the JKG layer (delays, counts, rates, distances, damage multipliers, AI thresholds, etc.):
+
+1. **Expose a `g_jkg*` cvar** — register in [`codeJK2/game/jkg_main.cpp`](codeJK2/game/jkg_main.cpp) (`JKG_RegisterCvars`), declare `extern cvar_t *` in [`codeJK2/game/jkg_local.h`](codeJK2/game/jkg_local.h).
+2. **Default literals live only in registration** — the second argument to `gi.cvar( "name", "default", ... )` is the sole source of default values. Do not duplicate `500`, `1500`, `3`, etc. in gameplay logic as fallbacks.
+3. **Read at use time** — `cv->integer` / `cv->value` when the behavior runs so console and `seta` work without rebuild. Null-check the pointer; clamp invalid values if needed (e.g. non-negative ms), but do not substitute a second hardcoded default.
+4. **Logic in `*_JKG.cpp` / `jkg_*.cpp`** — keep stock files to small JKG HOOKs; tunable behavior belongs in the JKG modules.
+5. **Per-NPC overrides** — use NPCs.cfg (or future data) when designers need per-type values; cvars remain global tuning.
+
+**Naming:** `g_jkg` + subsystem + quantity, e.g. `g_jkgBurstPause`, `g_jkgBurstShotDelay`.
+
+**Exceptions (not cvars):**
+
+- **Weapon bolt constants** that intentionally override stock `weapons.h` via [`jkg_tuning.h`](codeJK2/game/jkg_tuning.h) (compile-time, included from `weapons.h`).
+- **Fixed engine limits** or one-off sanity clamps (not designer-facing defaults).
+
+```cpp
+// BAD — literal default in fire logic
+delay = g_jkgBurstPause ? g_jkgBurstPause->integer : 1500;
+
+// BAD — magic number for a tunable delay
+NPCInfo->shotTime = level.time + 3000;
+
+// GOOD — default only in jkg_main.cpp: gi.cvar( "g_jkgBurstPause", "1500", CVAR_ARCHIVE );
+delay = JKG_CvarIntegerNonNegative( g_jkgBurstPause );
+NPCInfo->shotTime = level.time + delay;
+```
+
+After adding cvars, document them on the JKGunplay Console Variables Notion page when the feature is finalized.
