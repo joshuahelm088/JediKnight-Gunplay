@@ -39,9 +39,15 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 
 extern void CG_DrawAlert(vec3_t origin, float rating);
+extern void G_AddVoiceEvent(gentity_t* self, int event, int speakDebounceTime);
+extern void AI_GroupUpdateSquadstates(AIGroupInfo_t* group, gentity_t* member, int newSquadState);
 
-static qboolean JKG_NoCombatPoints_JKG( void )
+static qboolean JKG_SkipCombatPointPicks_JKG( void )
 {
+	if ( JKG_ST_CombatMoveEnabled() )
+	{
+		return qtrue;
+	}
 	return ( g_jkgNoCombatPoints && g_jkgNoCombatPoints->integer ) ? qtrue : qfalse;
 }
 
@@ -52,13 +58,13 @@ static void JKG_ClearCombatPointMove_JKG( void )
 		NPC_FreeCombatPoint( NPCInfo->combatPoint );
 		NPCInfo->combatPoint = -1;
 	}
-	if ( NPCInfo->goalEntity == NPCInfo->tempGoal )
+	if ( NPCInfo->squadState == SQUAD_TRANSITION
+		|| NPCInfo->squadState == SQUAD_POINT
+		|| NPCInfo->squadState == SQUAD_COVER )
 	{
-		NPC_ClearGoal();
+		AI_GroupUpdateSquadstates( NPCInfo->group, NPC, SQUAD_STAND_AND_SHOOT );
 	}
 }
-extern void G_AddVoiceEvent(gentity_t* self, int event, int speakDebounceTime);
-extern void AI_GroupUpdateSquadstates(AIGroupInfo_t* group, gentity_t* member, int newSquadState);
 extern qboolean AI_GroupContainsEntNum(AIGroupInfo_t* group, int entNum);
 extern void AI_GroupUpdateEnemyLastSeen(AIGroupInfo_t* group, vec3_t spot);
 extern void AI_GroupUpdateClearShotTime(AIGroupInfo_t* group);
@@ -871,7 +877,7 @@ static qboolean NPC_ST_InvestigateEvent_JKG(int eventID, bool extraSuspicious)
 				NPCInfo->localState = LSTATE_INVESTIGATE;
 			}
 		}
-		else if ( !JKG_NoCombatPoints_JKG() )
+		else if ( !JKG_SkipCombatPointPicks_JKG() )
 		{
 			int id = NPC_FindCombatPoint(NPCInfo->investigateGoal, NPCInfo->investigateGoal, NPCInfo->investigateGoal, CP_INVESTIGATE | CP_HAS_ROUTE, 0);
 
@@ -1239,28 +1245,32 @@ static void ST_CheckMoveState_JKG(void)
 	//See if we're a scout
 	else if (NPCInfo->squadState == SQUAD_SCOUT)
 	{
-		//If we're supposed to stay put, then stand there and fire
-		if (TIMER_Done(NPC, "stick") == qfalse)
+		if ( !JKG_ST_CombatMoveEnabled() )
 		{
-			AImove = qfalse;
-			return;
-		}
-
-		//Otherwise, if we can see our target, just shoot
-		if (enemyLOS)
-		{
-			if (enemyCS)
+			//If we're supposed to stay put, then stand there and fire
+			if (TIMER_Done(NPC, "stick") == qfalse)
 			{
-				//if we're going after our enemy, we can stop now
-				if (NPCInfo->goalEntity == NPC->enemy)
+				AImove = qfalse;
+				return;
+			}
+
+			//Otherwise, if we can see our target, just shoot
+			if (enemyLOS)
+			{
+				if (enemyCS)
 				{
-					AI_GroupUpdateSquadstates(NPCInfo->group, NPC, SQUAD_STAND_AND_SHOOT);
-					AImove = qfalse;
-					return;
+					//if we're going after our enemy, we can stop now
+					if (NPCInfo->goalEntity == NPC->enemy)
+					{
+						AI_GroupUpdateSquadstates(NPCInfo->group, NPC, SQUAD_STAND_AND_SHOOT);
+						AImove = qfalse;
+						return;
+					}
 				}
 			}
 		}
-		else
+
+		if (!enemyLOS)
 		{
 			//Move to find our target
 			faceEnemy = qfalse;
@@ -1314,6 +1324,10 @@ static void ST_CheckMoveState_JKG(void)
 	//see if we're just standing around
 	else if (NPCInfo->squadState == SQUAD_STAND_AND_SHOOT)
 	{//from this squadState we can transition to others?
+		if ( JKG_ST_CombatMoveEnabled() )
+		{
+			return;
+		}
 		AImove = qfalse;
 		return;
 	}
@@ -1934,13 +1948,9 @@ void ST_Commander_JKG(void)
 			continue;
 		}
 
-		if ( JKG_NoCombatPoints_JKG() )
+		if ( JKG_SkipCombatPointPicks_JKG() )
 		{
 			JKG_ClearCombatPointMove_JKG();
-			if ( NPCInfo->squadState == SQUAD_TRANSITION )
-			{
-				AI_GroupUpdateSquadstates( group, NPC, SQUAD_STAND_AND_SHOOT );
-			}
 		}
 
 		//check the local state
@@ -2230,7 +2240,7 @@ void ST_Commander_JKG(void)
 			cpFlags |= CP_NEAREST;
 		}
 		//Assign combat points
-		if ( JKG_NoCombatPoints_JKG() && cpFlags )
+		if ( JKG_SkipCombatPointPicks_JKG() && cpFlags )
 		{
 			const int cpIntent = cpFlags;
 			const qboolean fleeOrRetreat = ( ( cpIntent & CP_FLEE ) || ( cpIntent & CP_RETREAT ) ) ? qtrue : qfalse;
@@ -2247,8 +2257,18 @@ void ST_Commander_JKG(void)
 			}
 			else if ( group->enemy && ( NPCInfo->scriptFlags & SCF_CHASE_ENEMIES ) )
 			{
-				ST_HuntEnemy_JKG( NPC );
-				AI_GroupUpdateSquadstates( group, NPC, SQUAD_SCOUT );
+				if ( JKG_ST_CombatMoveEnabled() )
+				{
+					if ( NPCInfo->squadState == SQUAD_TRANSITION )
+					{
+						AI_GroupUpdateSquadstates( group, NPC, SQUAD_STAND_AND_SHOOT );
+					}
+				}
+				else
+				{
+					ST_HuntEnemy_JKG( NPC );
+					AI_GroupUpdateSquadstates( group, NPC, SQUAD_SCOUT );
+				}
 			}
 		}
 		if (cpFlags)
@@ -2653,6 +2673,19 @@ void NPC_BSST_Attack_JKG(void)
 	//Check for movement to take care of
 	ST_CheckMoveState_JKG();
 
+	if ( JKG_ST_CombatMoveThink( enemyLOS, enemyDist ) )
+	{
+		AImove = qtrue;
+		if ( enemyLOS )
+		{
+			faceEnemy = qtrue;
+		}
+		else
+		{
+			faceEnemy = qfalse;
+		}
+	}
+
 	//See if we should override shooting decision with any special considerations
 	ST_CheckFireState_JKG();
 
@@ -2679,6 +2712,10 @@ void NPC_BSST_Attack_JKG(void)
 		if (NPCInfo->goalEntity)//&& ( NPCInfo->goalEntity != NPC->enemy || enemyDist > 10000 ) )//100 squared
 		{
 			AImove = ST_Move();
+			if ( AImove )
+			{
+				JKG_ST_ApplyCombatWalk();
+			}
 		}
 		else
 		{

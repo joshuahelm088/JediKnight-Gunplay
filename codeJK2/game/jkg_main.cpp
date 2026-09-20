@@ -51,6 +51,14 @@ cvar_t *g_jkgDebugNpcMove;
 cvar_t *g_jkgDebugAimCone;
 cvar_t *g_jkgDebugNpcState;
 cvar_t *g_jkgNoCombatPoints;
+cvar_t *g_jkgCombatMove;
+cvar_t *g_jkgCombatIdealRange;
+cvar_t *g_jkgCombatRangeBand;
+cvar_t *g_jkgCombatStepDist;
+cvar_t *g_jkgCombatStrafeDist;
+cvar_t *g_jkgCombatStrafeTime;
+cvar_t *g_jkgCombatStrafePause;
+cvar_t *g_jkgCombatHuntCheatMs;
 
 static int JKG_CvarIntegerNonNegative( cvar_t *cv )
 {
@@ -135,5 +143,13 @@ void JKG_RegisterCvars( void )
 	g_jkgDebugNpcMove = gi.cvar( "g_jkgDebugNpcMove", "0", CVAR_CHEAT );
 	g_jkgDebugAimCone = gi.cvar( "g_jkgDebugAimCone", "0", CVAR_CHEAT );
 	g_jkgDebugNpcState = gi.cvar( "g_jkgDebugNpcState", "0", CVAR_CHEAT );
-	g_jkgNoCombatPoints = gi.cvar( "g_jkgNoCombatPoints", "0", CVAR_CHEAT );
+	g_jkgNoCombatPoints = gi.cvar( "g_jkgNoCombatPoints", "1", CVAR_CHEAT );
+	g_jkgCombatMove = gi.cvar( "g_jkgCombatMove", "1", CVAR_ARCHIVE );
+	g_jkgCombatIdealRange = gi.cvar( "g_jkgCombatIdealRange", "256", CVAR_ARCHIVE );
+	g_jkgCombatRangeBand = gi.cvar( "g_jkgCombatRangeBand", "32", CVAR_ARCHIVE );
+	g_jkgCombatStepDist = gi.cvar( "g_jkgCombatStepDist", "80", CVAR_ARCHIVE );
+	g_jkgCombatStrafeDist = gi.cvar( "g_jkgCombatStrafeDist", "64", CVAR_ARCHIVE );
+	g_jkgCombatStrafeTime = gi.cvar( "g_jkgCombatStrafeTime", "900", CVAR_ARCHIVE );
+	g_jkgCombatStrafePause = gi.cvar( "g_jkgCombatStrafePause", "700", CVAR_ARCHIVE );
+	g_jkgCombatHuntCheatMs = gi.cvar( "g_jkgCombatHuntCheatMs", "2500", CVAR_ARCHIVE );
 }
