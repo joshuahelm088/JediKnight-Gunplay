@@ -10,6 +10,10 @@ JKGunplay mod layer - NPC locomotion (speed ramp + move direction blend)
 #include "g_local.h"
 #include "jkg_local.h"
 
+extern qboolean PM_WalkingAnim( int anim );
+extern qboolean PM_RunningAnim( int anim );
+extern void G_UcmdMoveForDir( gentity_t *self, usercmd_t *cmd, vec3_t dir );
+
 static int JKG_CvarIntegerNonNegative( cvar_t *cv )
 {
 	int value;
@@ -60,6 +64,211 @@ int JKG_NpcScaleDesiredSpeed( int speed )
 	}
 
 	return (int)( (float)speed * scale );
+}
+
+#define JKG_MOVE_DBG_PREFIX "^3[JKG move]^7"
+
+static void JKG_NpcRefreshDistToGoal( gentity_t *ent )
+{
+	vec3_t delta;
+
+	if ( !ent || !ent->NPC || !ent->NPC->goalEntity || !ent->NPC->goalEntity->inuse )
+	{
+		return;
+	}
+
+	VectorSubtract( ent->NPC->goalEntity->currentOrigin, ent->currentOrigin, delta );
+	ent->NPC->distToGoal = VectorLength( delta );
+}
+
+static float JKG_NpcStopRemainingDist( gentity_t *ent )
+{
+	float dist;
+	float stopRadius;
+	float remaining;
+
+	if ( !ent || !ent->NPC )
+	{
+		return 0.0f;
+	}
+
+	JKG_NpcRefreshDistToGoal( ent );
+	dist = ent->NPC->distToGoal;
+	stopRadius = (float)ent->NPC->goalRadius;
+	if ( stopRadius > 64.0f )
+	{
+		stopRadius = 64.0f;
+	}
+	if ( stopRadius > dist )
+	{
+		stopRadius = dist;
+	}
+
+	remaining = dist - stopRadius;
+	if ( remaining < 0.0f )
+	{
+		remaining = 0.0f;
+	}
+
+	return remaining;
+}
+
+static void JKG_NpcMoveDebug( gentity_t *ent, int logLevel, const char *event, int desiredBefore, int cap, float remaining )
+{
+	static int s_lastLogTime[256];
+	int idx;
+	int throttleMs;
+
+	if ( !g_jkgDebugNpcMove || g_jkgDebugNpcMove->integer < logLevel || !ent || !ent->NPC )
+	{
+		return;
+	}
+
+	throttleMs = ( g_jkgDebugNpcMove->integer >= 2 ) ? 100 : 400;
+	idx = ent->s.number & 255;
+	if ( logLevel < 2 )
+	{
+		if ( level.time - s_lastLogTime[idx] < throttleMs )
+		{
+			return;
+		}
+	}
+	s_lastLogTime[idx] = level.time;
+
+	gi.Printf( "%s #%d %s combat=%d dist=%.0f goalR=%d rem=%.0f want=%d->%d cur=%d ps=%d ucmd=(%d,%d) decel=%d stopDec=%d\n",
+		JKG_MOVE_DBG_PREFIX,
+		ent->s.number,
+		event,
+		ent->NPC->combatMove,
+		ent->NPC->distToGoal,
+		ent->NPC->goalRadius,
+		remaining,
+		desiredBefore,
+		ent->NPC->desiredSpeed,
+		ent->NPC->currentSpeed,
+		ent->client ? ent->client->ps.speed : 0,
+		ent->NPC->last_ucmd.forwardmove,
+		ent->NPC->last_ucmd.rightmove,
+		JKG_CvarIntegerNonNegative( g_jkgNpcDecel ),
+		JKG_CvarIntegerNonNegative( g_jkgNpcStopDecel ) );
+}
+
+void JKG_NPCApplyStopSlowdown( gentity_t *ent )
+{
+	float remaining;
+	float maxSpeed;
+	int decel;
+	int cap;
+	int desiredBefore;
+
+	if ( !JKG_MOVEMENT || !ent || !ent->NPC )
+	{
+		return;
+	}
+
+	if ( ent->NPC->aiFlags & NPCAI_NO_SLOWDOWN )
+	{
+		return;
+	}
+
+	remaining = JKG_NpcStopRemainingDist( ent );
+
+	decel = JKG_CvarIntegerNonNegative( g_jkgNpcStopDecel );
+	if ( decel <= 0 )
+	{
+		return;
+	}
+
+	maxSpeed = sqrt( 2.0f * (float)decel * remaining );
+	cap = (int)ceil( maxSpeed );
+	if ( cap < 0 )
+	{
+		cap = 0;
+	}
+
+	desiredBefore = ent->NPC->desiredSpeed;
+	if ( ent->NPC->desiredSpeed > cap )
+	{
+		ent->NPC->desiredSpeed = cap;
+		JKG_NpcMoveDebug( ent, 1, "approach_cap", desiredBefore, cap, remaining );
+	}
+	else if ( g_jkgDebugNpcMove && g_jkgDebugNpcMove->integer >= 2 )
+	{
+		JKG_NpcMoveDebug( ent, 2, "approach_ok", desiredBefore, cap, remaining );
+	}
+}
+
+void JKG_NpcCombatDesiredSpeed( gentity_t *ent, usercmd_t *ucmd )
+{
+	qboolean moving;
+
+	if ( !ent || !ent->NPC || !ucmd )
+	{
+		return;
+	}
+
+	moving = ( ucmd->forwardmove || ucmd->rightmove ) ? qtrue : qfalse;
+	if ( !moving )
+	{
+		ent->NPC->desiredSpeed = 0;
+	}
+	else
+	{
+		ent->NPC->desiredSpeed = ( ucmd->buttons & BUTTON_WALKING ) ? ent->NPC->stats.walkSpeed : ent->NPC->stats.runSpeed;
+	}
+}
+
+void JKG_NpcApplyMovementCoast( gentity_t *ent, usercmd_t *ucmd )
+{
+	float remaining;
+
+	if ( !JKG_MOVEMENT || !ent || !ent->NPC || !ucmd )
+	{
+		return;
+	}
+
+	if ( ent->NPC->currentSpeed <= 0 )
+	{
+		return;
+	}
+
+	if ( ucmd->forwardmove || ucmd->rightmove )
+	{
+		return;
+	}
+
+	remaining = JKG_NpcStopRemainingDist( ent );
+	if ( ent->NPC->desiredSpeed == 0 && remaining <= 0.0f )
+	{
+		return;
+	}
+
+	ucmd->forwardmove = ent->NPC->last_ucmd.forwardmove;
+	ucmd->rightmove = ent->NPC->last_ucmd.rightmove;
+
+	if ( !ucmd->forwardmove && !ucmd->rightmove && ent->client )
+	{
+		vec3_t vel;
+		vec3_t dir;
+
+		VectorCopy( ent->client->ps.velocity, vel );
+		vel[2] = 0.0f;
+		if ( VectorLengthSquared( vel ) > 256.0f )
+		{
+			VectorNormalize( vel );
+			G_UcmdMoveForDir( ent, ucmd, vel );
+		}
+		else if ( !VectorCompare( ent->client->ps.moveDir, vec3_origin ) )
+		{
+			VectorCopy( ent->client->ps.moveDir, dir );
+			G_UcmdMoveForDir( ent, ucmd, dir );
+		}
+	}
+
+	if ( g_jkgDebugNpcMove && g_jkgDebugNpcMove->integer >= 2 )
+	{
+		JKG_NpcMoveDebug( ent, 2, "coast_ucmd", ent->NPC->desiredSpeed, 0, remaining );
+	}
 }
 
 void JKG_NPCRampSpeed( gentity_t *ent, int msec )
@@ -117,6 +326,12 @@ void JKG_NPCRampSpeed( gentity_t *ent, int msec )
 		if ( ent->NPC->currentSpeed < ent->NPC->desiredSpeed )
 		{
 			ent->NPC->currentSpeed = ent->NPC->desiredSpeed;
+		}
+
+		if ( g_jkgDebugNpcMove && g_jkgDebugNpcMove->integer >= 1 )
+		{
+			JKG_NpcMoveDebug( ent, 1, "ramp_decel", ent->NPC->desiredSpeed, ent->NPC->currentSpeed,
+				JKG_NpcStopRemainingDist( ent ) );
 		}
 	}
 	else
@@ -215,4 +430,56 @@ void JKG_NpcApplyMoveDir( gentity_t *self, usercmd_t *cmd, vec3_t dir )
 
 	cmd->forwardmove = floor( fDot );
 	cmd->rightmove = floor( rDot );
+}
+
+float JKG_NpcLocomotionAnimScale( gentity_t *ent, int anim )
+{
+	int walkNominal;
+	int runNominal;
+	float scale;
+	float minScale;
+
+	if ( !JKG_MOVEMENT || !ent || !ent->NPC || !ent->client )
+	{
+		return 1.0f;
+	}
+
+	if ( !PM_WalkingAnim( anim ) && !PM_RunningAnim( anim ) )
+	{
+		return 1.0f;
+	}
+
+	walkNominal = ent->NPC->stats.walkSpeed;
+	runNominal = ent->NPC->stats.runSpeed;
+	walkNominal = JKG_NpcScaleDesiredSpeed( walkNominal );
+	runNominal = JKG_NpcScaleDesiredSpeed( runNominal );
+
+	if ( PM_WalkingAnim( anim ) )
+	{
+		if ( walkNominal <= 0 )
+		{
+			return 1.0f;
+		}
+		scale = (float)ent->NPC->currentSpeed / (float)walkNominal;
+	}
+	else
+	{
+		if ( runNominal <= 0 )
+		{
+			return 1.0f;
+		}
+		scale = (float)ent->NPC->currentSpeed / (float)runNominal;
+	}
+
+	minScale = JKG_CvarFloatPositive( g_jkgNpcAnimMinScale );
+	if ( minScale > 0.0f && scale < minScale )
+	{
+		scale = minScale;
+	}
+	if ( scale > 1.0f )
+	{
+		scale = 1.0f;
+	}
+
+	return scale;
 }

@@ -2384,7 +2384,7 @@ extern cvar_t	*g_skippingcin;
 							ent->NPC->desiredSpeed = NPC_GetRunSpeed( ent );//ent->NPC->stats.runSpeed;
 						}
 
-						if ( ent->NPC->currentSpeed >= 80 && !controlledByPlayer )
+						if ( !JKG_MOVEMENT && ent->NPC->currentSpeed >= 80 && !controlledByPlayer )
 						{//At higher speeds, need to slow down close to stuff
 							//Slow down as you approach your goal
 							if ( ent->NPC->distToGoal < SLOWDOWN_DIST && !(ent->NPC->aiFlags&NPCAI_NO_SLOWDOWN) )//128
@@ -2416,6 +2416,7 @@ extern cvar_t	*g_skippingcin;
 				if ( JKG_MOVEMENT )
 				{
 					ent->NPC->desiredSpeed = JKG_NpcScaleDesiredSpeed( ent->NPC->desiredSpeed );
+					JKG_NPCApplyStopSlowdown( ent );
 					JKG_NPCRampSpeed( ent, msec );
 				}
 				else
@@ -2424,9 +2425,15 @@ extern cvar_t	*g_skippingcin;
 				}
 				// <<< JKG HOOK
 
-				if ( ent->NPC->currentSpeed <= 24 && ent->NPC->desiredSpeed < ent->NPC->currentSpeed )
+				if ( !JKG_MOVEMENT && ent->NPC->currentSpeed <= 24 && ent->NPC->desiredSpeed < ent->NPC->currentSpeed )
 				{//No-one walks this slow
 					client->ps.speed = ent->NPC->currentSpeed = 0;//Full stop
+					ucmd->forwardmove = 0;
+					ucmd->rightmove = 0;
+				}
+				else if ( JKG_MOVEMENT && ent->NPC->desiredSpeed == 0 && ent->NPC->currentSpeed == 0 )
+				{
+					client->ps.speed = 0;
 					ucmd->forwardmove = 0;
 					ucmd->rightmove = 0;
 				}
@@ -2452,8 +2459,15 @@ extern cvar_t	*g_skippingcin;
 						}
 						else if ( !ucmd->forwardmove && !ucmd->rightmove )
 						{//We need to force them to take a couple more steps until stopped
-							ucmd->forwardmove = ent->NPC->last_ucmd.forwardmove;//was last_forwardmove;
-							ucmd->rightmove = ent->NPC->last_ucmd.rightmove;//was last_rightmove;
+							if ( JKG_MOVEMENT )
+							{
+								JKG_NpcApplyMovementCoast( ent, ucmd );
+							}
+							else
+							{
+								ucmd->forwardmove = ent->NPC->last_ucmd.forwardmove;//was last_forwardmove;
+								ucmd->rightmove = ent->NPC->last_ucmd.rightmove;//was last_rightmove;
+							}
 						}
 					}
 
@@ -2475,7 +2489,18 @@ extern cvar_t	*g_skippingcin;
 							turndelta = (180 - fabs( AngleDelta( ent->currentAngles[YAW], ent->NPC->desiredYaw ) ))/180;
 						}
 
-						if ( turndelta < 0.75f )
+						if ( JKG_MOVEMENT )
+						{
+							if ( turndelta < 0.75f )
+							{
+								client->ps.speed = (int)floor( (float)client->ps.speed * turndelta );
+							}
+							else if ( ent->NPC->distToGoal < 100 && turndelta < 1.0 )
+							{
+								client->ps.speed = (int)floor( (float)client->ps.speed * turndelta );
+							}
+						}
+						else if ( turndelta < 0.75f )
 						{
 							client->ps.speed = 0;
 						}
@@ -2489,14 +2514,33 @@ extern cvar_t	*g_skippingcin;
 		}
 		else
 		{
-			ent->NPC->desiredSpeed = ( ucmd->buttons & BUTTON_WALKING ) ? NPC_GetWalkSpeed( ent ) : NPC_GetRunSpeed( ent );
+			if ( JKG_MOVEMENT )
+			{
+				JKG_NpcCombatDesiredSpeed( ent, ucmd );
+			}
+			else
+			{
+				ent->NPC->desiredSpeed = ( ucmd->buttons & BUTTON_WALKING ) ? NPC_GetWalkSpeed( ent ) : NPC_GetRunSpeed( ent );
+			}
 
 			// >>> JKG HOOK: combat NPC speed ramp when enabled (g_jkgMovement).
 			if ( JKG_MOVEMENT )
 			{
 				ent->NPC->desiredSpeed = JKG_NpcScaleDesiredSpeed( ent->NPC->desiredSpeed );
+				JKG_NPCApplyStopSlowdown( ent );
 				JKG_NPCRampSpeed( ent, msec );
 				client->ps.speed = ent->NPC->currentSpeed;
+
+				if ( ent->NPC->currentSpeed <= ent->NPC->stats.walkSpeed )
+				{
+					ucmd->buttons |= BUTTON_WALKING;
+				}
+				else
+				{
+					ucmd->buttons &= ~BUTTON_WALKING;
+				}
+
+				JKG_NpcApplyMovementCoast( ent, ucmd );
 			}
 			else
 			{

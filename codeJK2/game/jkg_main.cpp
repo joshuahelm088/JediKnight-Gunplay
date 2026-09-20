@@ -40,8 +40,11 @@ cvar_t *g_jkgBurstPause;
 cvar_t *g_jkgBurstPistolPause;
 cvar_t *g_jkgNpcAccel;
 cvar_t *g_jkgNpcDecel;
+cvar_t *g_jkgNpcStopDecel;
 cvar_t *g_jkgNpcTurnRate;
 cvar_t *g_jkgNpcSpeedScale;
+cvar_t *g_jkgNpcAnimMinScale;
+cvar_t *g_jkgDebugNpcMove;
 
 void JKG_RegisterCvars( void )
 {
@@ -66,6 +69,9 @@ void JKG_RegisterCvars( void )
 	g_jkgBurstPistolPause = gi.cvar( "g_jkgBurstPistolPause", "2000", CVAR_ARCHIVE );
 	g_jkgNpcAccel = gi.cvar( "g_jkgNpcAccel", "150", CVAR_ARCHIVE );
 	g_jkgNpcDecel = gi.cvar( "g_jkgNpcDecel", "200", CVAR_ARCHIVE );
+	g_jkgNpcStopDecel = gi.cvar( "g_jkgNpcStopDecel", "200", CVAR_ARCHIVE );
 	g_jkgNpcTurnRate = gi.cvar( "g_jkgNpcTurnRate", "180", CVAR_ARCHIVE );
 	g_jkgNpcSpeedScale = gi.cvar( "g_jkgNpcSpeedScale", "1", CVAR_ARCHIVE );
+	g_jkgNpcAnimMinScale = gi.cvar( "g_jkgNpcAnimMinScale", "0.25", CVAR_ARCHIVE );
+	g_jkgDebugNpcMove = gi.cvar( "g_jkgDebugNpcMove", "0", CVAR_CHEAT );
 }
