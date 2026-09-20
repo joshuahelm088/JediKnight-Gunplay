@@ -156,6 +156,13 @@ void JKG_MissileClipToNpcShotHitboxes( gentity_t *missile, const vec3_t start, c
 		return;
 	}
 
+	// Shot hulls are only for the player's bolts vs NPCs. Enemy bolts still use Ghoul2 mesh
+	// (including vs the player), so NPCs do not get a wider aim target.
+	if ( !missile || !missile->owner || missile->owner->s.number != 0 )
+	{
+		return;
+	}
+
 	bestFrac = tr->fraction;
 
 	for ( i = 1; i < ENTITYNUM_WORLD; i++ )
@@ -179,10 +186,6 @@ void JKG_MissileClipToNpcShotHitboxes( gentity_t *missile, const vec3_t start, c
 			continue;
 		}
 		if ( !( npc->contents & contentmask ) )
-		{
-			continue;
-		}
-		if ( JKG_GetNpcHitboxScale( npc ) <= 1.0f )
 		{
 			continue;
 		}

@@ -31,19 +31,14 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 extern qboolean InFront( vec3_t spot, vec3_t from, vec3_t fromAngles, float threshHold = 0.0f );
 
-static EG2_Collision JKG_MissileEntityTraceG2Type( void )
-{
-	if ( JKG_WEAPONS && g_jkgProjectileAabbHits && g_jkgProjectileAabbHits->integer )
-	{
-		return G2_NOCOLLIDE;
-	}
-
-	return G2_COLLIDE;
-}
-
 static qboolean JKG_MissileUsesAabbHits( void )
 {
 	return ( JKG_WEAPONS && g_jkgProjectileAabbHits && g_jkgProjectileAabbHits->integer ) ? qtrue : qfalse;
+}
+
+static qboolean JKG_MissileIsPlayerOwned( const gentity_t *missile )
+{
+	return ( missile && missile->owner && missile->owner->s.number == 0 ) ? qtrue : qfalse;
 }
 qboolean LogAccuracyHit( gentity_t *target, gentity_t *attacker );
 extern qboolean G_GetHitLocFromSurfName( gentity_t *ent, const char *surfName, int *hitLoc, vec3_t point, vec3_t dir, vec3_t bladeDir, int mod );
@@ -1237,8 +1232,8 @@ void G_RunMissile( gentity_t *ent )
 			ent->owner ? ent->owner->s.number : ENTITYNUM_NONE, ent->clipmask, G2_RETURNONHIT, 10 );
 		*/
 		gi.trace( &tr, ent->currentOrigin, ent->mins, ent->maxs, origin,
-			ent->owner ? ent->owner->s.number : ent->s.number, ent->clipmask, JKG_MissileEntityTraceG2Type(), 10 );
-		if ( JKG_MissileUsesAabbHits() )
+			ent->owner ? ent->owner->s.number : ent->s.number, ent->clipmask, G2_COLLIDE, 10 );
+		if ( JKG_MissileUsesAabbHits() && JKG_MissileIsPlayerOwned( ent ) )
 		{
 			JKG_MissileClipToNpcShotHitboxes( ent, ent->currentOrigin, origin,
 				ent->owner ? ent->owner->s.number : ent->s.number, ent->clipmask, &tr );
@@ -1451,13 +1446,14 @@ void G_RunMissile( gentity_t *ent )
 	}
 
 	if ( JKG_MissileUsesAabbHits()
+		&& JKG_MissileIsPlayerOwned( ent )
 		&& trHitLoc == HL_NONE
 		&& tr.entityNum >= 0
 		&& tr.entityNum < ENTITYNUM_WORLD )
 	{
 		gentity_t *hitEnt = &g_entities[tr.entityNum];
 
-		if ( hitEnt->client )
+		if ( hitEnt->client && hitEnt->NPC )
 		{
 			trHitLoc = G_GetHitLocation( hitEnt, tr.endpos );
 		}
