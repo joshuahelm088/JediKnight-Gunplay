@@ -130,6 +130,7 @@ void GEntity_ThinkFunc(gentity_t *self)
 	THINKCASE( welder_think )
 	THINKCASE( gas_random_jet )
 	THINKCASE( poll_converter ) // dumb loop sound handling
+	THINKCASE( shield_converter_think )
 	THINKCASE( spawn_rack_goods ) // delay spawn of goods to help on ents
 
 	default:

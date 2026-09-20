@@ -41,6 +41,9 @@ extern cvar_t *g_jkgNpcAnimMinScale;	// floor on NPC walk/run anim playback scal
 extern cvar_t *g_jkgDebugNpcMove;	// NPC locomotion debug (0=off, 1=brake events, 2=verbose)
 extern cvar_t *g_jkgDebugAimCone;	// NPC weapon spread cone (0=off, 1=draw, 2=+throttled print)
 extern cvar_t *g_jkgArmor;		// separate MAX_ARMOR system (armor no longer clamped to max health)
+extern cvar_t *g_jkgMaxArmor;	// player shield cap when g_jkgArmor is on (STAT_MAX_ARMOR)
+extern cvar_t *g_jkgShieldStationGive;	// shield points per tick (stock 4; default 12 = 3x)
+extern cvar_t *g_jkgShieldStationTickMs;	// ms between ticks (stock 100; default 33 = 3x faster)
 extern cvar_t *g_jkgCombat;		// custom damage tables / pain timing / hit locations
 extern cvar_t *g_jkgCamera;		// weapon-fire camera kickback
 extern cvar_t *g_jkgHUD;		// custom HUD / view / weapon-draw tweaks
@@ -96,6 +99,16 @@ struct centity_s;
 
 // Registers all g_jkg* cvars. Called from G_InitCvars().
 void JKG_RegisterCvars( void );
+
+// Sets ps.stats[STAT_MAX_ARMOR] from g_jkgMaxArmor when JKG_ARMOR is on.
+void JKG_ApplyMaxArmor( gclient_t *client );
+
+// g_jkgMaxArmor value clamped to non-negative (0 if cvar not registered).
+int JKG_MaxArmorCap( void );
+
+// Shield power converter recharge timing (stock: 4 points every 100 ms).
+int JKG_ShieldStationGivePerTick( void );
+int JKG_ShieldStationTickMs( void );
 
 // Weapon fire dispatch (implemented in wp_*_JKG.cpp).
 void WP_FireBryarPistol_JKG( gentity_t *ent, qboolean alt_fire );

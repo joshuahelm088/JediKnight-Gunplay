@@ -471,7 +471,7 @@ if desired.
 void ClientUserinfoChanged( int clientNum ) {
 	gentity_t	*ent = g_entities + clientNum;
 	gclient_t	*client = ent->client;
-	int			health=100, maxHealth=100, armor=100, maxArmor=200;
+	int			health=100, maxHealth=100, armor=100;
 	const char	*s=NULL, *sex=NULL;
 	char		userinfo[MAX_INFO_STRING]={0},	buf[MAX_INFO_STRING]={0},
 				oldname[34]={0};
@@ -488,16 +488,15 @@ void ClientUserinfoChanged( int clientNum ) {
 	health = Com_Clampi( 1, 100, atoi( Info_ValueForKey( userinfo, "handicap" ) ) );
 	if ( JKG_ARMOR )
 	{
-		armor = Com_Clampi( 1, maxArmor, atoi( Info_ValueForKey( userinfo, "handicap" ) ) );
+		const int maxArmorCap = JKG_MaxArmorCap();
+
+		armor = Com_Clampi( 1, maxArmorCap, atoi( Info_ValueForKey( userinfo, "handicap" ) ) );
 	}
 	client->pers.maxHealth = health;
 	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > maxHealth )
 		client->pers.maxHealth = 100;
 	client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
-	if ( JKG_ARMOR )
-	{
-		client->ps.stats[STAT_MAX_ARMOR] = maxArmor;
-	}
+	JKG_ApplyMaxArmor( client );
 
 	// sex
 	sex = Info_ValueForKey( userinfo, "sex" );
@@ -1560,6 +1559,8 @@ qboolean ClientSpawn(gentity_t *ent, SavedGameJustLoaded_e eSavedGameJustLoaded 
 
 		SetClientViewAngle( ent, ent->client->ps.viewangles);//spawn_angles );
 
+		JKG_ApplyMaxArmor( client );
+
 		gi.linkentity (ent);
 
 		// run the presend to set anything else
@@ -1619,6 +1620,7 @@ qboolean ClientSpawn(gentity_t *ent, SavedGameJustLoaded_e eSavedGameJustLoaded 
 
 		// clear entity values
 		client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
+		JKG_ApplyMaxArmor( client );
 		ent->s.groundEntityNum = ENTITYNUM_NONE;
 		ent->client = &level.clients[index];
 		ent->mass = 10;

@@ -1840,12 +1840,145 @@ void EnergyShieldStationSettings(gentity_t *ent)
 
 /*
 ================
+shield_power_converter_use / shield_converter_think
+
+Stock recharge only runs when PM_Use fires TryUse every USE_DELAY (250 ms).
+JKG uses shield_converter_think at g_jkgShieldStationTickMs while +use is held.
+================
+*/
+static void ShieldConverter_ApplyTick( gentity_t *self, gentity_t *activator, int maxGive, int tickMs )
+{
+	int dif, add;
+
+	if ( self->setTime >= level.time )
+	{
+		return;
+	}
+
+	self->setTime = level.time + tickMs;
+
+	dif = JKG_PS_MAX_ARMOR( &activator->client->ps ) - activator->client->ps.stats[STAT_ARMOR];
+
+	if ( dif > 0 && self->count )
+	{
+		if ( dif > maxGive )
+		{
+			add = maxGive;
+		}
+		else
+		{
+			add = dif;
+		}
+
+		if ( self->count < add )
+		{
+			add = self->count;
+		}
+
+		self->count -= add;
+
+		activator->client->ps.stats[STAT_ARMOR] += add;
+
+		self->s.loopSound = G_SoundIndex( "sound/interface/shieldcon_run.wav" );
+	}
+
+	if ( self->count <= 0 )
+	{
+		self->setTime = level.time + 1000;
+		G_Sound( self, G_SoundIndex( "sound/interface/shieldcon_empty.mp3" ));
+		self->s.loopSound = 0;
+
+		if ( self->s.eFlags & EF_SHADER_ANIM )
+		{
+			self->s.frame = 1;
+		}
+	}
+	else if ( activator->client->ps.stats[STAT_ARMOR] >= JKG_PS_MAX_ARMOR( &activator->client->ps ) )
+	{
+		G_Sound( self, G_SoundIndex( "sound/interface/shieldcon_done.mp3" ));
+		self->setTime = level.time + 1000;
+		self->s.loopSound = 0;
+	}
+}
+
+static void ShieldConverter_ScheduleSoundPoll( gentity_t *self )
+{
+	if ( self->s.loopSound )
+	{
+		self->e_ThinkFunc = thinkF_poll_converter;
+		self->nextthink = level.time + 500;
+	}
+	else
+	{
+		self->e_ThinkFunc = thinkF_NULL;
+		self->nextthink = 0;
+	}
+}
+
+void shield_converter_think( gentity_t *self )
+{
+	gentity_t *activator;
+	int maxGive, tickMs;
+
+	if ( !JKG_ARMOR )
+	{
+		self->e_ThinkFunc = thinkF_NULL;
+		self->nextthink = 0;
+		return;
+	}
+
+	activator = self->enemy;
+
+	if ( !activator || !activator->client || activator->s.number != 0
+		|| activator->client->ps.stats[STAT_HEALTH] < 1
+		|| !( activator->client->usercmd.buttons & BUTTON_USE ) )
+	{
+		self->s.loopSound = 0;
+		self->e_ThinkFunc = thinkF_NULL;
+		self->nextthink = 0;
+		return;
+	}
+
+	if ( DistanceSquared( self->currentOrigin, activator->currentOrigin ) > ( 128.0f * 128.0f ) )
+	{
+		self->s.loopSound = 0;
+		self->e_ThinkFunc = thinkF_NULL;
+		self->nextthink = 0;
+		return;
+	}
+
+	maxGive = JKG_ShieldStationGivePerTick();
+	tickMs = JKG_ShieldStationTickMs();
+
+	ShieldConverter_ApplyTick( self, activator, maxGive, tickMs );
+
+	if ( activator->client->ps.stats[STAT_ARMOR] > 0 )
+	{
+		activator->client->ps.powerups[PW_BATTLESUIT] = Q3_INFINITE;
+	}
+
+	if ( self->count <= 0
+		|| activator->client->ps.stats[STAT_ARMOR] >= JKG_PS_MAX_ARMOR( &activator->client->ps ) )
+	{
+		self->e_ThinkFunc = thinkF_NULL;
+		self->nextthink = 0;
+		return;
+	}
+
+	self->e_ThinkFunc = thinkF_shield_converter_think;
+	self->nextthink = level.time + tickMs;
+}
+
+/*
+================
 shield_power_converter_use
 ================
 */
 void shield_power_converter_use( gentity_t *self, gentity_t *other, gentity_t *activator)
 {
 	int dif,add;
+	int maxGive;
+	int tickMs;
 
 	if ( !activator || activator->s.number != 0 )
 	{
@@ -1855,17 +1988,28 @@ void shield_power_converter_use( gentity_t *self, gentity_t *other, gentity_t *a
 
 	G_ActivateBehavior( self,BSET_USE );
 
+	if ( JKG_ARMOR )
+	{
+		G_SetEnemy( self, activator );
+		self->e_ThinkFunc = thinkF_shield_converter_think;
+		self->nextthink = level.time;
+		return;
+	}
+
+	maxGive = MAX_AMMO_GIVE;
+	tickMs = 100;
+
 	if ( self->setTime < level.time )
 	{
-		self->setTime = level.time + 100;
+		self->setTime = level.time + tickMs;
 
 		dif = JKG_PS_MAX_ARMOR( &activator->client->ps ) - activator->client->ps.stats[STAT_ARMOR];
 
 		if ( dif > 0 && self->count )	// Already at full armor?..and do I even have anything to give
 		{
-			if ( dif > MAX_AMMO_GIVE )
+			if ( dif > maxGive )
 			{
-				add = MAX_AMMO_GIVE;
+				add = maxGive;
 			}
 			else
 			{
@@ -1905,19 +2049,7 @@ void shield_power_converter_use( gentity_t *self, gentity_t *other, gentity_t *a
 		}
 	}
 
-	if ( self->s.loopSound )
-	{
-		// we will have to shut of the loop sound, so I guess try and do it intelligently...NOTE: this could get completely stomped every time through the loop
-		//	this is fine, since it just controls shutting off the sound when there are situations that could start the sound but not shut it off
-		self->e_ThinkFunc = thinkF_poll_converter;
-		self->nextthink = level.time + 500;
-	}
-	else
-	{
-		// sound is already off, so we don't need to "think" about it.
-		self->e_ThinkFunc = thinkF_NULL;
-		self->nextthink = 0;
-	}
+	ShieldConverter_ScheduleSoundPoll( self );
 
 	if ( activator->client->ps.stats[STAT_ARMOR] > 0 )
 	{

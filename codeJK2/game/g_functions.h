@@ -132,6 +132,7 @@ typedef enum
 	thinkF_welder_think,
 	thinkF_gas_random_jet,
 	thinkF_poll_converter,
+	thinkF_shield_converter_think,
 	thinkF_spawn_rack_goods,
 
 } thinkFunc_t;
@@ -231,6 +232,7 @@ extern void panel_turret_think		( gentity_t *self );
 extern void welder_think			( gentity_t *self );
 extern void gas_random_jet			( gentity_t *self );
 extern void poll_converter			( gentity_t *self );
+extern void shield_converter_think	( gentity_t *self );
 extern void spawn_rack_goods		( gentity_t *self );
 
 //	void		(*clThink)(centity_s *cent);	//Think func for equivalent centity

@@ -25,6 +25,9 @@ cvar_t *g_jkgAI;
 cvar_t *g_jkgWeapons;
 cvar_t *g_jkgMovement;
 cvar_t *g_jkgArmor;
+cvar_t *g_jkgMaxArmor;
+cvar_t *g_jkgShieldStationGive;
+cvar_t *g_jkgShieldStationTickMs;
 cvar_t *g_jkgCombat;
 cvar_t *g_jkgCamera;
 cvar_t *g_jkgHUD;
@@ -47,6 +50,56 @@ cvar_t *g_jkgNpcAnimMinScale;
 cvar_t *g_jkgDebugNpcMove;
 cvar_t *g_jkgDebugAimCone;
 
+static int JKG_CvarIntegerNonNegative( cvar_t *cv )
+{
+	int value;
+
+	if ( !cv )
+	{
+		return 0;
+	}
+
+	value = cv->integer;
+	if ( value < 0 )
+	{
+		value = 0;
+	}
+
+	return value;
+}
+
+void JKG_ApplyMaxArmor( gclient_t *client )
+{
+	if ( !client )
+	{
+		return;
+	}
+
+	if ( !JKG_ARMOR )
+	{
+		return;
+	}
+
+	client->ps.stats[STAT_MAX_ARMOR] = JKG_CvarIntegerNonNegative( g_jkgMaxArmor );
+}
+
+int JKG_MaxArmorCap( void )
+{
+	return JKG_CvarIntegerNonNegative( g_jkgMaxArmor );
+}
+
+int JKG_ShieldStationGivePerTick( void )
+{
+	return JKG_CvarIntegerNonNegative( g_jkgShieldStationGive );
+}
+
+int JKG_ShieldStationTickMs( void )
+{
+	const int tickMs = JKG_CvarIntegerNonNegative( g_jkgShieldStationTickMs );
+
+	return ( tickMs > 0 ) ? tickMs : 1;
+}
+
 void JKG_RegisterCvars( void )
 {
 	g_jkgplay    = gi.cvar( "g_jkgplay",    "1", CVAR_ARCHIVE );
@@ -55,6 +108,9 @@ void JKG_RegisterCvars( void )
 	g_jkgWeapons = gi.cvar( "g_jkgWeapons", "1", CVAR_ARCHIVE );
 	g_jkgMovement= gi.cvar( "g_jkgMovement","1", CVAR_ARCHIVE );
 	g_jkgArmor   = gi.cvar( "g_jkgArmor",   "1", CVAR_ARCHIVE );
+	g_jkgMaxArmor = gi.cvar( "g_jkgMaxArmor", "200", CVAR_ARCHIVE );
+	g_jkgShieldStationGive = gi.cvar( "g_jkgShieldStationGive", "4", CVAR_ARCHIVE );
+	g_jkgShieldStationTickMs = gi.cvar( "g_jkgShieldStationTickMs", "33", CVAR_ARCHIVE );
 	g_jkgCombat  = gi.cvar( "g_jkgCombat",  "1", CVAR_ARCHIVE );
 	g_jkgCamera  = gi.cvar( "g_jkgCamera",  "1", CVAR_ARCHIVE );
 	g_jkgHUD     = gi.cvar( "g_jkgHUD",     "1", CVAR_ARCHIVE );
