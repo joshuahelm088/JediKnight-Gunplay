@@ -461,12 +461,12 @@ Ghoul2 Insert Start
 			}
 			else
 			{
-				VectorSet( temp, 0, 0, 1 );
-
 				if ( !( cent->gent->svFlags & SVF_INACTIVE ))
 				{
 					ent.customShader = cgi_R_RegisterShader( "models/map_objects/imp_mine/turret_chair_on" );
 				}
+
+				VectorSet( temp, 0, 0, 1 );
 
 				// shadow under the gun
 				CG_ImpactMark( cgs.media.shadowMarkShader, cent->lerpOrigin, temp,
