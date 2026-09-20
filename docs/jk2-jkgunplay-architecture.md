@@ -226,7 +226,28 @@ Cvars registered in `cgame/cg_main.cpp` (`CVAR_ARCHIVE`). NPC callers keep defau
 | `g_jkgCamera` | `JKG_CAMERA` | Kickback + shake |
 | `g_jkgHUD` | `JKG_HUD` | HUD / view tweaks |
 
-Registration: `jkg_main.cpp` → `JKG_RegisterCvars()` called from `G_InitCvars()` in `g_main.cpp`.
+Registration: `jkg_main.cpp` → `JKG_RegisterCvars()` called from `G_InitCvars()` in `g_main.cpp`. Full NPC combat-move behavior and combat classes: [jk2-npc-ai-architecture.md](jk2-npc-ai-architecture.md).
+
+### NPC combat move (`JKG_AI`)
+
+Requires `g_jkgplay 1` and `g_jkgAI 1`. Stormtroopers skip `point_combat` while `g_jkgCombatMove` is on. Per-type numbers: `ext_data/NPCs.cfg` `combatClass` + `ext_data/jkg_combat_classes.cfg` (copy from `codeJK2/base/ext_data/`). Omitted class keys use these cvars live.
+
+| Cvar | Default | Flags | Role |
+|------|---------|-------|------|
+| `g_jkgCombatMove` | `1` | ARCHIVE | Calculated min/max positioning; skip combat-point picks |
+| `g_jkgNoCombatPoints` | `1` | CHEAT | Skip CP picks even if combat-move is off |
+| `g_jkgCombatIdealRangeMin` | `192` | ARCHIVE | Too-close line (class: `idealRangeMin` / `rangeMin`) |
+| `g_jkgCombatIdealRangeMax` | `320` | ARCHIVE | Too-far line (class: `idealRangeMax` / `rangeMax`) |
+| `g_jkgCombatRangeBand` | `32` | ARCHIVE | Slack if min == max |
+| `g_jkgCombatMoveDelay` | `700` | ARCHIVE | ms wait before close or back-up |
+| `g_jkgCombatStepDist` | `80` | ARCHIVE | One close/back-up step length |
+| `g_jkgCombatStrafeDist` | `64` | ARCHIVE | Shuffle distance |
+| `g_jkgCombatStrafeTime` | `900` | ARCHIVE | Shuffle burst ms |
+| `g_jkgCombatStrafePause` | `700` | ARCHIVE | Stand between shuffles ms |
+| `g_jkgCombatHuntCheatMs` | `2500` | ARCHIVE | After LOS loss, hunt live player this long |
+| `g_jkgDebugNpcState` | `0` | CHEAT | Head markers / prints for squadState |
+
+`g_jkgCombat` is the damage/pain subsystem toggle, not this mover.
 
 ### Integration patterns (what exists today)
 
@@ -252,6 +273,8 @@ Examples: `AI_Sentry.cpp`, `bg_pmove.cpp`, `g_combat.cpp`, `cg_view.cpp`.
 game/jkg_main.cpp
 game/jkg_local.h
 game/jkg_tuning.h
+game/jkg_npc_combat_move.cpp
+game/jkg_npc_combat_class.cpp
 game/AI_Stormtrooper_JKG.cpp
 game/wp_*_JKG.cpp  (bryar, blaster, repeater, bowcaster, thermal)
 ```
@@ -275,6 +298,7 @@ Listed in `codeJK2/game/CMakeLists.txt`.
 | I want to change… | Primary files |
 |-------------------|---------------|
 | Stormtrooper combat / squads | `AI_Stormtrooper_JKG.cpp` (JKG) or `AI_Stormtrooper.cpp` (stock) |
+| Combat range / hunt / strafe | `jkg_npc_combat_move.cpp`, `jkg_npc_combat_class.cpp` |
 | Which AI runs for a class | `NPC.cpp` → `NPC_RunBehavior` → `NPC_BehaviorSet_*` |
 | NPC pain / flinch | `NPC_reactions.cpp` (+ JKG guards today) |
 | NPC spawn health / weapons | `NPC_spawn.cpp`, `NPC_stats.cpp` |

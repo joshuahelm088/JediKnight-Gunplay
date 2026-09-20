@@ -13,12 +13,16 @@ Full doc: [docs/jk2-npc-ai-architecture.md](docs/jk2-npc-ai-architecture.md)
 - **Move vs shoot:** separate `AImove` / `shoot` flags each attack tick; `squadState` gates feet, LOS/`NPC_ShotEntity` gates fire. Commander assigns goals only.
 - **No NPC alert enum:** use `enemy`, investigate state, `squadState`, and `AEL_*` on `alertEvents`.
 - **Wake allies:** `G_SetEnemy` → `G_AngerAlert` → `G_AlertTeam` (512/256). Not `squadname`. Shares enemy pointer only.
-- **Groups:** `AI_GetGroup` rebuilds a frame clipboard (morale, last-seen, `numState[]`). `ST_Commander_*` runs once per group per frame; **each member gets their own** `NPC_FindCombatPoint`, not one squad waypoint.
-- **Combat points:** `point_combat` near fight; pool is **512 units around enemy**. `CP_COVER` = hidden from enemy, `CP_CLEAR` = can shoot. `CP_CLOSEST`/`CP_APPROACH`/`CP_FLANK` cause rushes and behind-player paths. Relaxation drops flags to `CP_ANY`.
+- **Groups:** `AI_GetGroup` rebuilds a frame clipboard (morale, last-seen, `numState[]`). `ST_Commander_*` runs once per group per frame. With **`g_jkgCombatMove`**, it does **not** pick combat points; attack think uses min/max range instead.
+- **Combat points (stock / `g_jkgCombatMove 0`):** `point_combat` near fight; pool is **512 units around enemy**. `CP_COVER` = hidden from enemy, `CP_CLEAR` = can shoot. `CP_CLOSEST`/`CP_APPROACH`/`CP_FLANK` cause rushes and behind-player paths.
 
 ## JKG
 
-Stormtrooper logic: `AI_Stormtrooper_JKG.cpp` when `JKG_AI`. Senses/groups/combat points are stock. Debug: `sv_cheats 1` then `g_jkgDebugNpcState`. Nav/CPs: stock `nav show …` (see docs/jk2-npc-ai-architecture.md).
+Stormtrooper logic: `AI_Stormtrooper_JKG.cpp` when `JKG_AI`.
+
+**Combat move** (`g_jkgCombatMove`, default 1): no `point_combat` picks. Min/max range + `moveDelay` in `jkg_npc_combat_move.cpp`. Classes: `ext_data/jkg_combat_classes.cfg`, NPCs.cfg `combatClass`; missing keys use `g_jkgCombat*` cvars. See [docs/jk2-npc-ai-architecture.md](docs/jk2-npc-ai-architecture.md).
+
+Senses/groups are stock. Debug: `sv_cheats 1` then `g_jkgDebugNpcState`. Nav/CPs: stock `nav show …`.
 
 ## Do not assume
 

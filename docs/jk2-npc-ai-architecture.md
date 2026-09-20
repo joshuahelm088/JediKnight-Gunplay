@@ -4,7 +4,7 @@ Reference for **gun-NPC** behavior (stormtroopers and similar). Jedi, snipers, g
 
 **Parent map:** [jk2-jkgunplay-architecture.md](jk2-jkgunplay-architecture.md)
 
-**Primary code (JKG on):** [`AI_Stormtrooper_JKG.cpp`](../codeJK2/game/AI_Stormtrooper_JKG.cpp), [`AI_Utils.cpp`](../codeJK2/game/AI_Utils.cpp), [`NPC_combat.cpp`](../codeJK2/game/NPC_combat.cpp) (`NPC_FindCombatPoint`), [`NPC_senses.cpp`](../codeJK2/game/NPC_senses.cpp), [`g_combat.cpp`](../codeJK2/game/g_combat.cpp) (`G_AlertTeam`).
+**Primary code (JKG on):** [`AI_Stormtrooper_JKG.cpp`](../codeJK2/game/AI_Stormtrooper_JKG.cpp), [`jkg_npc_combat_move.cpp`](../codeJK2/game/jkg_npc_combat_move.cpp), [`jkg_npc_combat_class.cpp`](../codeJK2/game/jkg_npc_combat_class.cpp), [`AI_Utils.cpp`](../codeJK2/game/AI_Utils.cpp), [`NPC_combat.cpp`](../codeJK2/game/NPC_combat.cpp) (`NPC_FindCombatPoint`), [`NPC_senses.cpp`](../codeJK2/game/NPC_senses.cpp), [`g_combat.cpp`](../codeJK2/game/g_combat.cpp) (`G_AlertTeam`).
 
 ---
 
@@ -28,14 +28,15 @@ flowchart TD
     cmd --> perceive
     perceive --> move
     perceive --> fire
-    move --> ucmd
+    move --> jkg[JKG combat move min/max]
+    jkg --> ucmd
     fire --> ucmd
     ucmd --> client
 ```
 
 **Coupling:** if moving away without facing the enemy (`!faceEnemy && AImove`), `shoot` is forced off (no run-and-gun).
 
-**`squadState`** gates movement (plant vs run). **LOS / `NPC_ShotEntity`** gates shooting. Commander assigns **goals**; attack think still sets shoot each frame.
+**`squadState`** gates movement (plant vs run). **LOS / `NPC_ShotEntity`** gates shooting. With **`g_jkgCombatMove`**, `JKG_ST_CombatMoveThink` overwrites commander combat-point goals with a min/max range step.
 
 ---
 
@@ -165,20 +166,30 @@ Arrival: `TRANSITION` → usually `STAND_AND_SHOOT`; `RETREAT` → `COVER` + duc
 
 ---
 
-## Combat points (`point_combat`)
+## JKG generic combat move (no combat points)
 
-**Disable CP assignment:** with **`g_jkgCombatMove`** (default 1) or **`g_jkgNoCombatPoints 1`**, the commander never calls `NPC_FindCombatPoint`. Existing CP reservations are released. Generic combat uses calculated range/strafe/hunt points only. Nav graph is still used to reach last-known/enemy when there is no LOS.
+When **`g_jkgCombatMove`** is **1** (default), stormtrooper JKG attack **does not use `point_combat`**. The commander skips `NPC_FindCombatPoint`. Positioning is calculated each attack tick in [`jkg_npc_combat_move.cpp`](../codeJK2/game/jkg_npc_combat_move.cpp) (`JKG_ST_CombatMoveThink`). Combat points remain in the map for later (cover/flank); they are unused while this is on.
 
-**Generic combat move** (`g_jkgCombatMove`, default **1**): keep a **min–max firing range** from the known or last-known enemy. Values come from a **combat class** (`ext_data/jkg_combat_classes.cfg`), assigned per NPC type in `ext_data/NPCs.cfg` with `combatClass rifle`. Omitted/`unknown` uses class **`default`**. Any key missing in a class falls back to the matching `g_jkgCombat*` cvar (live).
+`g_jkgNoCombatPoints 1` (cheat) also skips CP picks if combat-move is off.
 
-Copy `codeJK2/base/ext_data/jkg_combat_classes.cfg` into the game `base/ext_data/` folder.
+### Loop (visible enemy)
 
-- **No LOS:** nav to last-known; if already there (or for `huntCheatMs`) path toward the live enemy.
-- **Closer than min:** wait `moveDelay`, then back up until ≥ min.
-- **Farther than max:** wait `moveDelay`, then close until ≤ max.
-- **Inside min–max:** stand and shuffle (no ideal-range drift).
+There is **no mid “ideal” range**. The window is **min–max** only. They stop as soon as they are inside that window (often near **max** when approaching).
 
-Example NPCs.cfg field:
+| Condition | Behavior |
+|-----------|----------|
+| No LOS | Nav to last-known; if already there (or for `huntCheatMs` after losing sight) path toward the live enemy. Then plant when they can see again. |
+| Dist **&lt; min** | Wait **`moveDelay`** ms, then back up until dist ≥ min. Face and shoot while backing if they still have LOS. |
+| Dist **&gt; max** | Wait **`moveDelay`**, then close until dist ≤ max (or nav-hunt the enemy if the step is blocked). |
+| **min ≤ dist ≤ max** | Plant: stand and fire; occasional walking **strafe**. No continuous drift. |
+
+`moveDelay` does not re-arm while they are already closing or backing; it resets when they re-enter the window or the condition ends.
+
+Scripted nav (`TID_MOVE_NAV`), `SCF_CHASE_ENEMIES` off, flee timer, or no weapon skip this mover.
+
+### Combat classes
+
+Numbers are **not** per individual NPC. Each **NPC type** in `ext_data/NPCs.cfg` can set:
 
 ```
 stormtrooper
@@ -187,6 +198,51 @@ stormtrooper
 	combatClass	rifle
 }
 ```
+
+Parsed in [`NPC_stats.cpp`](../codeJK2/game/NPC_stats.cpp) into `gNPC_t::jkgCombatClass`. Omitted or unknown name → class **`default`**.
+
+Class definitions: **`ext_data/jkg_combat_classes.cfg`** (loaded at `NPC_LoadParms` via [`JKG_LoadCombatClasses`](../codeJK2/game/jkg_npc_combat_class.cpp)).
+
+Copy the template from the repo:
+
+`codeJK2/base/ext_data/jkg_combat_classes.cfg` → `<gamedata>/base/ext_data/jkg_combat_classes.cfg`
+
+Shipped blocks: **`default`** (empty), **`rifle`**, **`pistol`**, **`officer`**.
+
+**Resolve rule:** if a class sets a key, that value is used; if the key is omitted, the matching **`g_jkgCombat*` cvar is read live** (console works without a map restart for `default` and for any unset key).
+
+| Class key | Cvar fallback | Default | Meaning |
+|-----------|---------------|---------|---------|
+| `idealRangeMin` / `rangeMin` | `g_jkgCombatIdealRangeMin` | 192 | Too-close line (back up) |
+| `idealRangeMax` / `rangeMax` | `g_jkgCombatIdealRangeMax` | 320 | Too-far line (close in) |
+| `rangeBand` | `g_jkgCombatRangeBand` | 32 | Extra slack **only if min == max** |
+| `moveDelay` | `g_jkgCombatMoveDelay` | 700 | ms wait before close or back-up |
+| `stepDist` | `g_jkgCombatStepDist` | 80 | Max length of one close/back-up step |
+| `strafeDist` | `g_jkgCombatStrafeDist` | 64 | Side shuffle distance |
+| `strafeTime` | `g_jkgCombatStrafeTime` | 900 | Shuffle burst (ms) |
+| `strafePause` | `g_jkgCombatStrafePause` | 700 | Stand time between shuffles (ms) |
+| `huntCheatMs` | `g_jkgCombatHuntCheatMs` | 2500 | After LOS loss, path to live player pos this long; then last-known. `0` = last-known only |
+
+Master switches (not class keys): **`g_jkgCombatMove`**, **`g_jkgNoCombatPoints`**.
+
+`g_jkgCombat` is **damage/pain**, not this mover.
+
+Shipped class numbers (from the template cfg; omitted `moveDelay` uses the cvar):
+
+| Class | min | max | Notes |
+|-------|-----|-----|--------|
+| `default` | cvar 192 | cvar 320 | Empty block — all live cvars |
+| `rifle` | 256 | 400 | Typical E-11 trooper |
+| `pistol` | 128 | 224 | Closer band |
+| `officer` | 192 | 288 | Between rifle and pistol |
+
+Savegames store `gNPC_t::jkgCombatClass[32]`. Older JKG saves without that field can fail to load.
+
+---
+
+## Combat points (`point_combat`)
+
+**With `g_jkgCombatMove 1` (or `g_jkgNoCombatPoints 1`):** commander never calls `NPC_FindCombatPoint`. The rest of this section is stock CP behavior when those are off.
 
 ### Level design intent
 
@@ -249,6 +305,7 @@ NPC_BSST_Default_JKG
                if !group->processed → ST_Commander_JKG (assign per-member CP + squadState)
                LOS / ShotEntity → shoot flag
                ST_CheckMoveState_JKG / ST_CheckFireState_JKG
+               JKG_ST_CombatMoveThink (min/max range if g_jkgCombatMove)
                ST_Move → NPC_MoveToGoal (combatMove)
                WeaponThink → ShootThink → JKG_NpcBurstShootThink if JKG_AI
 ```
@@ -267,10 +324,11 @@ NPC_BSST_Default_JKG
 | Locomotion execution | Snap | `jkg_npc_move.cpp`, `g_active.cpp` |
 | Aim spread / pain | Stock | `jkg_npc_aim.cpp`, wider E-11 in `jkg_tuning.h` |
 | State debug | — | `g_jkgDebugNpcState` + `jkg_npc_state_debug.cpp` (`G_DebugLine` markers) |
-| No combat points | — | `g_jkgNoCombatPoints` gates `ST_Commander_JKG` CP picks |
-| Generic combat move | — | `g_jkgCombatMove` + `jkg_npc_combat_move.cpp`; classes in `jkg_npc_combat_class.cpp` |
+| No combat points | — | `g_jkgNoCombatPoints` and/or `g_jkgCombatMove` skip `ST_Commander_JKG` CP picks |
+| Generic combat move | — | `g_jkgCombatMove` + `jkg_npc_combat_move.cpp` (min/max + delay) |
+| Combat classes | — | `jkg_npc_combat_class.cpp`, `ext_data/jkg_combat_classes.cfg`, NPCs.cfg `combatClass` |
 
-JKG did **not** replace combat-point or commander architecture (except optional `g_jkgNoCombatPoints` bypass).
+JKG combat-move **replaces** commander CP assignment while `g_jkgCombatMove` is on. Stock CP selection still exists when that cvar is 0.
 
 ---
 
@@ -280,6 +338,8 @@ JKG did **not** replace combat-point or commander architecture (except optional 
 |-------|------|
 | Think / dispatch | `NPC.cpp` |
 | Commander + attack | `AI_Stormtrooper_JKG.cpp` |
+| Generic combat move | `jkg_npc_combat_move.cpp` |
+| Combat classes | `jkg_npc_combat_class.cpp`, `NPC_stats.cpp` (`combatClass`) |
 | Groups / morale | `AI_Utils.cpp` |
 | Combat points | `NPC_combat.cpp` |
 | Set enemy / anger | `NPC_combat.cpp`, `g_combat.cpp` |
