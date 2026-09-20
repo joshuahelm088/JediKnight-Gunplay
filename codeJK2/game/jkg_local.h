@@ -32,11 +32,13 @@ extern cvar_t *g_jkgplay;
 extern cvar_t *g_jkgAI;			// custom NPC AI (stormtrooper, probe, sentry, reactions, spawn scaling)
 extern cvar_t *g_jkgWeapons;	// custom weapon fire behavior + tuning
 extern cvar_t *g_jkgMovement;	// NPC locomotion ramp/blend; player pmove is stock JK2
-extern cvar_t *g_jkgNpcAccel;	// NPC speed-up rate (units/sec)
-extern cvar_t *g_jkgNpcDecel;	// NPC slow/stop rate (units/sec)
+extern cvar_t *g_jkgNpcAccel;	// NPC speed-up ramp rate (units/sec)
+extern cvar_t *g_jkgNpcDecel;	// NPC slow-down ramp rate (units/sec)
+extern cvar_t *g_jkgNpcStopDecel;	// decel for goal approach cap v=sqrt(2*a*d); independent of ramp feel
 extern cvar_t *g_jkgNpcTurnRate;	// max NPC moveDir heading change (deg/sec)
 extern cvar_t *g_jkgNpcSpeedScale;	// multiplier on NPC desired walk/run speed
 extern cvar_t *g_jkgNpcAnimMinScale;	// floor on NPC walk/run anim playback scale
+extern cvar_t *g_jkgDebugNpcMove;	// NPC locomotion debug (0=off, 1=brake events, 2=verbose)
 extern cvar_t *g_jkgArmor;		// separate MAX_ARMOR system (armor no longer clamped to max health)
 extern cvar_t *g_jkgCombat;		// custom damage tables / pain timing / hit locations
 extern cvar_t *g_jkgCamera;		// weapon-fire camera kickback
@@ -66,6 +68,9 @@ void JKG_ApplyNpcBurstFireMode( gentity_t *ent );
 qboolean JKG_NpcBurstShootThink( void );
 
 int JKG_NpcScaleDesiredSpeed( int speed );
+void JKG_NPCApplyStopSlowdown( gentity_t *ent );
+void JKG_NpcCombatDesiredSpeed( gentity_t *ent, usercmd_t *ucmd );
+void JKG_NpcApplyMovementCoast( gentity_t *ent, usercmd_t *ucmd );
 void JKG_NPCRampSpeed( gentity_t *ent, int msec );
 void JKG_NpcApplyMoveDir( gentity_t *self, usercmd_t *cmd, vec3_t dir );
 float JKG_NpcLocomotionAnimScale( gentity_t *ent, int anim );
