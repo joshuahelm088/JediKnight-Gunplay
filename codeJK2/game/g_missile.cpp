@@ -1238,6 +1238,11 @@ void G_RunMissile( gentity_t *ent )
 		*/
 		gi.trace( &tr, ent->currentOrigin, ent->mins, ent->maxs, origin,
 			ent->owner ? ent->owner->s.number : ent->s.number, ent->clipmask, JKG_MissileEntityTraceG2Type(), 10 );
+		if ( JKG_MissileUsesAabbHits() )
+		{
+			JKG_MissileClipToNpcShotHitboxes( ent, ent->currentOrigin, origin,
+				ent->owner ? ent->owner->s.number : ent->s.number, ent->clipmask, &tr );
+		}
 		/*
 		if ( !VectorCompare( ent->mins, vec3_origin ) || !VectorCompare( ent->maxs, vec3_origin ) )
 		{//don't do ghoul trace if ent has size because g2 just ignores that anyway

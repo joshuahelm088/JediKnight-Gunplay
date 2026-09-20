@@ -61,8 +61,8 @@ typedef enum {
 } jkgFireMode_t;
 
 float JKG_GetNpcHitboxScale( const gentity_t *ent );	// per-NPC override when client->jkgHitboxScale > 0
-
-void JKG_UpdateNpcHitboxes( void );
+void JKG_GetNpcShotAbsBounds( const gentity_t *ent, vec3_t absmin, vec3_t absmax );
+void JKG_MissileClipToNpcShotHitboxes( gentity_t *missile, const vec3_t start, const vec3_t end, int passEntityNum, int contentmask, trace_t *tr );
 
 void JKG_ApplyNpcBurstFireMode( gentity_t *ent );
 qboolean JKG_NpcBurstShootThink( void );

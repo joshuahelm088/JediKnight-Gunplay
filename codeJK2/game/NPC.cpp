@@ -869,6 +869,13 @@ void NPC_ShowDebugInfo (void)
 				VectorAdd( found->currentOrigin, found->mins, mins );
 				VectorAdd( found->currentOrigin, found->maxs, maxs );
 				CG_Cube( mins, maxs, NPCDEBUG_RED, 0.25 );
+
+				if ( JKG_WEAPONS && JKG_GetNpcHitboxScale( found ) > 1.0f )
+				{
+					vec3_t shotMins, shotMaxs;
+					JKG_GetNpcShotAbsBounds( found, shotMins, shotMaxs );
+					CG_Cube( shotMins, shotMaxs, NPCDEBUG_GREEN, 0.12f );
+				}
 			}
 		}
 	}
