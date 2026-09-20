@@ -868,7 +868,7 @@ localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir,
 */
 localEntity_t *CG_AddTempLight( vec3_t origin, float scale, vec3_t color, int msec );
 
-void CG_TestLine( vec3_t start, vec3_t end, int time, unsigned int color, int radius);
+void CG_TestLine( const vec3_t start, const vec3_t end, int time, unsigned int color, int radius );
 
 //
 // cg_snapshot.c

@@ -45,6 +45,7 @@ cvar_t *g_jkgNpcTurnRate;
 cvar_t *g_jkgNpcSpeedScale;
 cvar_t *g_jkgNpcAnimMinScale;
 cvar_t *g_jkgDebugNpcMove;
+cvar_t *g_jkgDebugAimCone;
 
 void JKG_RegisterCvars( void )
 {
@@ -74,4 +75,5 @@ void JKG_RegisterCvars( void )
 	g_jkgNpcSpeedScale = gi.cvar( "g_jkgNpcSpeedScale", "1", CVAR_ARCHIVE );
 	g_jkgNpcAnimMinScale = gi.cvar( "g_jkgNpcAnimMinScale", "0.25", CVAR_ARCHIVE );
 	g_jkgDebugNpcMove = gi.cvar( "g_jkgDebugNpcMove", "0", CVAR_CHEAT );
+	g_jkgDebugAimCone = gi.cvar( "g_jkgDebugAimCone", "0", CVAR_CHEAT );
 }

@@ -4679,7 +4679,7 @@ static float jkg_damageModifier[HL_MAX] =
 	1.0f,	//HL_ARM_LT,
 	1.0f,	//HL_HAND_RT,
 	1.0f,	//HL_HAND_LT,
-	2.0f,	//HL_HEAD,
+	3.0f,	//HL_HEAD, stock table 2.0f; JKG 1.5x headshot multiplier
 	1.0f,	//HL_GENERIC1,
 	1.0f,	//HL_GENERIC2,
 	1.0f,	//HL_GENERIC3,

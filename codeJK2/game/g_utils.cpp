@@ -1429,8 +1429,8 @@ qboolean G_ClearTrace( const vec3_t start, const vec3_t mins, const vec3_t maxs,
 	return qtrue;
 }
 
-extern void CG_TestLine( vec3_t start, vec3_t end, int time, unsigned int color, int radius);
-void	G_DebugLine(vec3_t A, vec3_t B, int duration, int color, qboolean deleteornot)
+extern void CG_TestLine( const vec3_t start, const vec3_t end, int time, unsigned int color, int radius );
+void	G_DebugLine( const vec3_t A, const vec3_t B, int duration, int color, qboolean deleteornot )
 {
 	/*
 	gentity_t *tent = G_TempEntity( A, EV_DEBUG_LINE );

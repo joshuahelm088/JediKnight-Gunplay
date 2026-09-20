@@ -579,7 +579,7 @@ void CG_Chunks( int owner, vec3_t origin, const vec3_t normal, const vec3_t mins
 	}
 }
 
-void CG_TestLine( vec3_t start, vec3_t end, int time, unsigned int color, int radius )
+void CG_TestLine( const vec3_t start, const vec3_t end, int time, unsigned int color, int radius )
 {
 	localEntity_t	*le;
 	refEntity_t		*re;

@@ -28,16 +28,19 @@ Each override keeps the stock value in a trailing comment for easy diffing.
 #define BRYAR_PISTOL_VEL			3350	// stock 1800
 #undef  BRYAR_PISTOL_DAMAGE
 #define BRYAR_PISTOL_DAMAGE			16		// stock 14
-#define BRYAR_BOLT_SIZE				4		// new (no stock value)
+#define BRYAR_BOLT_SIZE				3		// new (no stock value)
 
 // --- E11 Blaster ---
 #undef  BLASTER_MAIN_SPREAD
-#define BLASTER_MAIN_SPREAD			2.25f	// stock 0.5f
+#define BLASTER_MAIN_SPREAD			2.75f	// stock 0.5f; was 2.25f JKG
 #undef  BLASTER_ALT_SPREAD
-#define BLASTER_ALT_SPREAD			2.25f	// stock 1.5f
+#define BLASTER_ALT_SPREAD			2.75f	// stock 1.5f; was 2.25f JKG
 #undef  BLASTER_VELOCITY
 #define BLASTER_VELOCITY			3150	// stock 2300
-#define BLASTER_BOLT_SIZE			4		// new (no stock value)
+#undef  BLASTER_NPC_SPREAD
+#define BLASTER_NPC_SPREAD			1.0f	// stock 0.5f
+#define BLASTER_NPC_AIM_SPREAD_SCALE	0.3f	// stock 0.25f per currentAim point (NPC E-11)
+#define BLASTER_BOLT_SIZE			3		// new (no stock value)
 
 // --- Wookiee Bowcaster ---
 #undef  BOWCASTER_DAMAGE

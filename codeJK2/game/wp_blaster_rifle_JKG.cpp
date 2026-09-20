@@ -128,22 +128,18 @@ void WP_FireBlaster_JKG( gentity_t *ent, qboolean alt_fire )
 
 	}
 	
-	// Troopers use their aim values as well as the gun's inherent inaccuracy
-	// so check for all classes of stormtroopers and anyone else that has aim error
-	if ( ent->client && ent->NPC &&
-		( ent->client->NPC_class == CLASS_STORMTROOPER ||
-		ent->client->NPC_class == CLASS_SWAMPTROOPER ) )
+	if ( ent->client && ent->NPC )
 	{
-		angs[PITCH] += ( Q_flrand(-1.0f, 1.0f) * (BLASTER_NPC_SPREAD+(6-ent->NPC->currentAim)*0.25f));//was 0.5f
-		angs[YAW]	+= ( Q_flrand(-1.0f, 1.0f) * (BLASTER_NPC_SPREAD+(6-ent->NPC->currentAim)*0.25f));//was 0.5f
+		float spread = BLASTER_NPC_SPREAD + ( 6.0f - (float)ent->NPC->currentAim ) * BLASTER_NPC_AIM_SPREAD_SCALE;
+
+		angs[PITCH] += Q_flrand( -1.0f, 1.0f ) * spread;
+		angs[YAW] += Q_flrand( -1.0f, 1.0f ) * spread;
 	}
-	else
+	else if ( ent->client && ent->client->ps.weaponShotCount > 1 )
 	{
-		if (ent->client->ps.weaponShotCount > 1) {
-			// add some slop to the main-fire direction
-			angs[PITCH] += Q_flrand(-1.0f, 1.0f) * BLASTER_MAIN_SPREAD;
-			angs[YAW] += Q_flrand(-1.0f, 1.0f) * BLASTER_MAIN_SPREAD;
-		}
+		// Player only: ramp spread after the first shot in a burst
+		angs[PITCH] += Q_flrand( -1.0f, 1.0f ) * BLASTER_MAIN_SPREAD;
+		angs[YAW] += Q_flrand( -1.0f, 1.0f ) * BLASTER_MAIN_SPREAD;
 	}
 
 	AngleVectors( angs, dir, NULL, NULL );

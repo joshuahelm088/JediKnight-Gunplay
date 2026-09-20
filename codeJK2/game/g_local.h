@@ -399,7 +399,7 @@ void G_AddEvent( gentity_t *ent, int event, int eventParm );
 void G_SetOrigin( gentity_t *ent, const vec3_t origin );
 void G_SetAngles( gentity_t *ent, const vec3_t angles );
 
-void	G_DebugLine(vec3_t A, vec3_t B, int duration, int color, qboolean deleteornot);
+void	G_DebugLine( const vec3_t A, const vec3_t B, int duration, int color, qboolean deleteornot );
 
 //
 // g_combat.c

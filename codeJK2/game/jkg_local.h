@@ -39,6 +39,7 @@ extern cvar_t *g_jkgNpcTurnRate;	// max NPC moveDir heading change (deg/sec)
 extern cvar_t *g_jkgNpcSpeedScale;	// multiplier on NPC desired walk/run speed
 extern cvar_t *g_jkgNpcAnimMinScale;	// floor on NPC walk/run anim playback scale
 extern cvar_t *g_jkgDebugNpcMove;	// NPC locomotion debug (0=off, 1=brake events, 2=verbose)
+extern cvar_t *g_jkgDebugAimCone;	// NPC weapon spread cone (0=off, 1=draw, 2=+throttled print)
 extern cvar_t *g_jkgArmor;		// separate MAX_ARMOR system (armor no longer clamped to max health)
 extern cvar_t *g_jkgCombat;		// custom damage tables / pain timing / hit locations
 extern cvar_t *g_jkgCamera;		// weapon-fire camera kickback
@@ -109,5 +110,9 @@ void JKG_DebugProjectile_TraceSetStart( gentity_t *ent, const vec3_t before, con
 void JKG_DebugProjectile_CreateMissile( gentity_t *owner, gentity_t *missile, const vec3_t org, float vel );
 void JKG_DebugProjectile_ClientMuzzle( gentity_t *ent, const char *source, const vec3_t muzzlePoint, const vec3_t viewOrg );
 void JKG_DebugProjectile_ClientRender( struct centity_s *cent );
+
+float JKG_GetNpcWeaponSpreadDegrees( const gentity_t *ent );
+void JKG_NpcPenalizeAimOnHit( gentity_t *self, int damage, gentity_t *attacker );
+void JKG_DebugDrawNpcAimCone( gentity_t *ent );
 
 #endif	// JKG_LOCAL_H

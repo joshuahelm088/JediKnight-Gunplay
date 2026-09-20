@@ -40,6 +40,11 @@ void WP_FireBryarPistol_JKG( gentity_t *ent, qboolean alt_fire )
 	vec3_t	start;
 	int		damage = !alt_fire ? weaponData[ent->s.weapon].damage : weaponData[ent->s.weapon].altDamage;
 
+	if ( !ent->NPC && !alt_fire )
+	{
+		damage = weaponData[WP_BLASTER].damage;
+	}
+
 	VectorCopy( wpMuzzle, start );
 	WP_TraceSetStart( ent, start, vec3_origin, vec3_origin );//make sure our start point isn't on the other side of a wall
 

@@ -397,6 +397,10 @@ void NPC_Pain( gentity_t *self, gentity_t *inflictor, gentity_t *other, vec3_t p
 	if ( other == self )
 		return;
 
+	// >>> JKG HOOK: worsen aim when this NPC takes damage (g_jkgAI).
+	JKG_NpcPenalizeAimOnHit( self, damage, other );
+	// <<< JKG HOOK
+
 	//MCG: Ignore damage from your own team for now
 	if ( other->client )
 	{

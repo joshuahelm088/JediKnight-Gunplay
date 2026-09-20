@@ -2124,6 +2124,7 @@ void NPC_Think ( gentity_t *self)//, int msec )
 		NPCInfo->last_ucmd.serverTime = level.time - 50;
 		ClientThink( NPC->s.number, &ucmd );
 		VectorCopy(self->s.origin, self->s.origin2 );
+		JKG_DebugDrawNpcAimCone( self );
 		return;
 	}
 
@@ -2176,6 +2177,10 @@ void NPC_Think ( gentity_t *self)//, int msec )
 		}
 		VectorCopy(self->s.origin, self->s.origin2 );
 	}
+	// >>> JKG HOOK: aim spread cone debug (g_jkgDebugAimCone).
+	JKG_DebugDrawNpcAimCone( self );
+	// <<< JKG HOOK
+
 	//must update icarus *every* frame because of certain animation completions in the pmove stuff that can leave a 50ms gap between ICARUS animation commands
 	if( self->taskManager && !stop_icarus )
 	{
