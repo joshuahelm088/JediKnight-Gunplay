@@ -1594,8 +1594,9 @@ void Svcmd_Nav_f( void )
 	{
 		//Print the available commands
 		Com_Printf("nav - valid commands\n---\n" );
-		Com_Printf("show\n - nodes\n - edges\n - testpath\n - enemypath\n - combatpoints\n - navgoals\n---\n");
+		Com_Printf("show\n - all\n - nodes\n - edges\n - radius\n - testpath\n - enemypath\n - combatpoints\n - navgoals\n - collision\n---\n");
 		Com_Printf("set\n - testgoal\n---\n" );
+		Com_Printf("totals\n---\n" );
 	}
 }
 
