@@ -46,6 +46,7 @@ extern cvar_t *g_jkgCombatMove;		// 1 = generic range/hunt/strafe combat movemen
 extern cvar_t *g_jkgCombatIdealRangeMin;	// fallback min stand-off from enemy (class cfg can override)
 extern cvar_t *g_jkgCombatIdealRangeMax;	// fallback max stand-off from enemy (class cfg can override)
 extern cvar_t *g_jkgCombatRangeBand;	// extra slack when min==max (old single-range hysteresis)
+extern cvar_t *g_jkgCombatMoveDelay;	// ms to wait before close/back-up starts
 extern cvar_t *g_jkgCombatStepDist;	// how far each close/back-up step is placed
 extern cvar_t *g_jkgCombatStrafeDist;	// lateral shuffle distance
 extern cvar_t *g_jkgCombatStrafeTime;	// ms of a shuffle burst
@@ -122,6 +123,7 @@ typedef struct jkgCombatMoveParms_s {
 	int	strafeTime;
 	int	strafePause;
 	int	huntCheatMs;
+	int	moveDelay;
 } jkgCombatMoveParms_t;
 
 void JKG_LoadCombatClasses( void );

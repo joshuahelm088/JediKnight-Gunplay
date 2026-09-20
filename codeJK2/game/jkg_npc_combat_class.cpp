@@ -25,6 +25,7 @@ typedef struct jkgCombatClass_s {
 	int		strafeTime;
 	int		strafePause;
 	int		huntCheatMs;
+	int		moveDelay;
 } jkgCombatClass_t;
 
 static jkgCombatClass_t	s_classes[JKG_MAX_COMBAT_CLASSES];
@@ -72,6 +73,7 @@ static void JKG_ClearCombatClass( jkgCombatClass_t *cls )
 	cls->strafeTime = JKG_COMBAT_CLASS_UNSET;
 	cls->strafePause = JKG_COMBAT_CLASS_UNSET;
 	cls->huntCheatMs = JKG_COMBAT_CLASS_UNSET;
+	cls->moveDelay = JKG_COMBAT_CLASS_UNSET;
 }
 
 static jkgCombatClass_t *JKG_FindCombatClass( const char *name )
@@ -224,6 +226,17 @@ static void JKG_ParseCombatClassBlock( const char **p, jkgCombatClass_t *cls )
 			continue;
 		}
 
+		if ( !Q_stricmp( token, "moveDelay" ) )
+		{
+			if ( COM_ParseInt( p, &n ) )
+			{
+				SkipRestOfLine( p );
+				continue;
+			}
+			cls->moveDelay = n;
+			continue;
+		}
+
 		gi.Printf( S_COLOR_YELLOW"WARNING: unknown combat class key '%s' in '%s'\n", token, cls->name );
 		SkipRestOfLine( p );
 	}
@@ -319,6 +332,7 @@ void JKG_GetCombatMoveParms( const gentity_t *ent, jkgCombatMoveParms_t *out )
 	out->strafeTime = JKG_ResolveClassInt( cls->strafeTime, g_jkgCombatStrafeTime );
 	out->strafePause = JKG_ResolveClassInt( cls->strafePause, g_jkgCombatStrafePause );
 	out->huntCheatMs = JKG_ResolveClassInt( cls->huntCheatMs, g_jkgCombatHuntCheatMs );
+	out->moveDelay = JKG_ResolveClassInt( cls->moveDelay, g_jkgCombatMoveDelay );
 
 	if ( out->rangeMax < out->rangeMin )
 	{

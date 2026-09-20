@@ -173,10 +173,10 @@ Arrival: `TRANSITION` → usually `STAND_AND_SHOOT`; `RETREAT` → `COVER` + duc
 
 Copy `codeJK2/base/ext_data/jkg_combat_classes.cfg` into the game `base/ext_data/` folder.
 
-- **No LOS:** nav to last-known; if already there (or for `huntCheatMs` after losing sight) path to the live enemy.
-- **Closer than min:** back up toward the middle of the min–max window.
-- **Farther than max:** step in toward that middle (nav hunt if blocked).
-- **Inside min–max:** walking strafes, then stand and shoot.
+- **No LOS:** nav to last-known; if already there (or for `huntCheatMs`) path toward the live enemy.
+- **Closer than min:** wait `moveDelay`, then back up until ≥ min.
+- **Farther than max:** wait `moveDelay`, then close until ≤ max.
+- **Inside min–max:** stand and shuffle (no ideal-range drift).
 
 Example NPCs.cfg field:
 

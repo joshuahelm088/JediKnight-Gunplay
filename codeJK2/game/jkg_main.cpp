@@ -55,6 +55,7 @@ cvar_t *g_jkgCombatMove;
 cvar_t *g_jkgCombatIdealRangeMin;
 cvar_t *g_jkgCombatIdealRangeMax;
 cvar_t *g_jkgCombatRangeBand;
+cvar_t *g_jkgCombatMoveDelay;
 cvar_t *g_jkgCombatStepDist;
 cvar_t *g_jkgCombatStrafeDist;
 cvar_t *g_jkgCombatStrafeTime;
@@ -149,6 +150,7 @@ void JKG_RegisterCvars( void )
 	g_jkgCombatIdealRangeMin = gi.cvar( "g_jkgCombatIdealRangeMin", "192", CVAR_ARCHIVE );
 	g_jkgCombatIdealRangeMax = gi.cvar( "g_jkgCombatIdealRangeMax", "320", CVAR_ARCHIVE );
 	g_jkgCombatRangeBand = gi.cvar( "g_jkgCombatRangeBand", "32", CVAR_ARCHIVE );
+	g_jkgCombatMoveDelay = gi.cvar( "g_jkgCombatMoveDelay", "700", CVAR_ARCHIVE );
 	g_jkgCombatStepDist = gi.cvar( "g_jkgCombatStepDist", "80", CVAR_ARCHIVE );
 	g_jkgCombatStrafeDist = gi.cvar( "g_jkgCombatStrafeDist", "64", CVAR_ARCHIVE );
 	g_jkgCombatStrafeTime = gi.cvar( "g_jkgCombatStrafeTime", "900", CVAR_ARCHIVE );

@@ -242,14 +242,71 @@ static void JKG_ST_StartStrafeBurst( int duration, int pause )
 	TIMER_Set( NPC, "jkgStrafeWait", burst + wait );
 }
 
+static qboolean JKG_ST_Waited( const char *timerName, int delayMs )
+{
+	if ( delayMs <= 0 )
+	{
+		return qtrue;
+	}
+	if ( !TIMER_Exists( NPC, timerName ) )
+	{
+		TIMER_Set( NPC, timerName, delayMs );
+		return qfalse;
+	}
+	return TIMER_Done( NPC, timerName ) ? qtrue : qfalse;
+}
+
+static void JKG_ST_ClearWait( const char *timerName )
+{
+	if ( TIMER_Exists( NPC, timerName ) )
+	{
+		TIMER_Remove( NPC, timerName );
+	}
+}
+
+static float JKG_ST_StepIntoBand( float overshoot, float stepCap )
+{
+	float want = overshoot;
+
+	if ( want > stepCap )
+	{
+		want = stepCap;
+	}
+	if ( want < 32.0f )
+	{
+		want = 32.0f;
+	}
+	return want;
+}
+
+static qboolean JKG_ST_DoStrafeIdle( const jkgCombatMoveParms_t *parms )
+{
+	if ( TIMER_Done( NPC, "jkgStrafeWait" ) )
+	{
+		JKG_ST_StartStrafeBurst( parms->strafeTime, parms->strafePause );
+	}
+
+	if ( !TIMER_Done( NPC, "jkgStrafe" ) )
+	{
+		if ( JKG_ST_TryStrafe( parms->strafeDist ) )
+		{
+			return qtrue;
+		}
+		TIMER_Set( NPC, "jkgStrafe", -1 );
+		JKG_ST_FlipStrafe();
+	}
+
+	JKG_ST_StopTempGoal();
+	return qfalse;
+}
+
 qboolean JKG_ST_CombatMoveThink( qboolean canSee, float distSq )
 {
 	jkgCombatMoveParms_t parms;
-	vec3_t dest, dir, huntSpot;
+	vec3_t dest, dir, huntSpot, toward;
 	float dist;
-	float closeDist;
-	float farDist;
-	float mid;
+	float minDist;
+	float maxDist;
 	float step;
 
 	if ( !JKG_ST_CombatMoveAllowed() )
@@ -264,13 +321,14 @@ qboolean JKG_ST_CombatMoveThink( qboolean canSee, float distSq )
 	}
 
 	JKG_GetCombatMoveParms( NPC, &parms );
-	closeDist = (float)parms.rangeMin;
-	farDist = (float)parms.rangeMax;
-	mid = ( closeDist + farDist ) * 0.5f;
+	minDist = (float)parms.rangeMin;
+	maxDist = (float)parms.rangeMax;
 	step = (float)parms.stepDist;
 
 	if ( !canSee )
 	{
+		JKG_ST_ClearWait( "jkgCloseWait" );
+		JKG_ST_ClearWait( "jkgBackWait" );
 		JKG_ST_GetHuntSpot( huntSpot, parms.huntCheatMs );
 		if ( DistanceSquared( NPC->currentOrigin, huntSpot ) > 48.0f * 48.0f
 			&& DistanceSquared( huntSpot, NPC->enemy->currentOrigin ) > 32.0f * 32.0f )
@@ -298,18 +356,14 @@ qboolean JKG_ST_CombatMoveThink( qboolean canSee, float distSq )
 		VectorScale( dir, -1.0f, dir );
 	}
 
-	if ( dist < closeDist )
+	if ( dist < minDist )
 	{
-		float want = mid - dist;
-		if ( want > step )
+		JKG_ST_ClearWait( "jkgCloseWait" );
+		if ( !JKG_ST_Waited( "jkgBackWait", parms.moveDelay ) )
 		{
-			want = step;
+			return JKG_ST_DoStrafeIdle( &parms );
 		}
-		if ( want < 32.0f )
-		{
-			want = 32.0f;
-		}
-		if ( JKG_ST_OffsetGoalWalkable( dir, want, dest ) )
+		if ( JKG_ST_OffsetGoalWalkable( dir, JKG_ST_StepIntoBand( minDist - dist, step ), dest ) )
 		{
 			JKG_ST_GoToPoint( dest, qfalse, qfalse );
 			JKG_ST_SetSquadState( SQUAD_STAND_AND_SHOOT );
@@ -323,21 +377,18 @@ qboolean JKG_ST_CombatMoveThink( qboolean canSee, float distSq )
 		return qfalse;
 	}
 
-	if ( dist > farDist )
+	JKG_ST_ClearWait( "jkgBackWait" );
+
+	if ( dist > maxDist )
 	{
-		vec3_t toward;
-		float want = dist - mid;
+		if ( !JKG_ST_Waited( "jkgCloseWait", parms.moveDelay ) )
+		{
+			JKG_ST_StopTempGoal();
+			return qfalse;
+		}
 
 		VectorScale( dir, -1.0f, toward );
-		if ( want > step )
-		{
-			want = step;
-		}
-		if ( want < 32.0f )
-		{
-			want = 32.0f;
-		}
-		if ( JKG_ST_OffsetGoalWalkable( toward, want, dest ) )
+		if ( JKG_ST_OffsetGoalWalkable( toward, JKG_ST_StepIntoBand( dist - maxDist, step ), dest ) )
 		{
 			JKG_ST_GoToPoint( dest, qfalse, qfalse );
 			JKG_ST_SetSquadState( SQUAD_SCOUT );
@@ -347,23 +398,8 @@ qboolean JKG_ST_CombatMoveThink( qboolean canSee, float distSq )
 		return qtrue;
 	}
 
-	if ( TIMER_Done( NPC, "jkgStrafeWait" ) )
-	{
-		JKG_ST_StartStrafeBurst( parms.strafeTime, parms.strafePause );
-	}
-
-	if ( !TIMER_Done( NPC, "jkgStrafe" ) )
-	{
-		if ( JKG_ST_TryStrafe( parms.strafeDist ) )
-		{
-			return qtrue;
-		}
-		TIMER_Set( NPC, "jkgStrafe", -1 );
-		JKG_ST_FlipStrafe();
-	}
-
-	JKG_ST_StopTempGoal();
-	return qfalse;
+	JKG_ST_ClearWait( "jkgCloseWait" );
+	return JKG_ST_DoStrafeIdle( &parms );
 }
 
 void JKG_ST_ApplyCombatWalk( void )
