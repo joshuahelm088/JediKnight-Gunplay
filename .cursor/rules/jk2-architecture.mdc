@@ -6,7 +6,8 @@ alwaysApply: false
 
 # JK2 / JKGunplay investigation shortcut
 
-Full map: `docs/jk2-jkgunplay-architecture.md`
+Full map: `docs/jk2-jkgunplay-architecture.md`  
+NPC AI deep dive: `docs/jk2-npc-ai-architecture.md`
 
 ## Module
 

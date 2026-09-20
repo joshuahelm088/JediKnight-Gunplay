@@ -64,6 +64,8 @@ flowchart TD
 
 ## NPC / AI architecture (stock Raven)
 
+**Deep dive (commander, groups, combat points, awareness, move vs shoot):** [jk2-npc-ai-architecture.md](jk2-npc-ai-architecture.md)
+
 ### Globals (critical for reading AI code)
 
 Most `AI_*.cpp` files assume these are set:
@@ -314,5 +316,6 @@ When pulling upstream AI changes: merge stock `AI_*.cpp` cleanly, then reconcile
 
 ## Related docs
 
+- `docs/jk2-npc-ai-architecture.md` — NPC awareness, groups, commander, combat points, squad states
 - `docs/save games.md` — save system
 - `docs/renderer-architecture.md` — renderer (separate from gameplay)

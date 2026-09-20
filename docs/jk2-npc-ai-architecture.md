@@ -1,0 +1,320 @@
+# JK2 SP — NPC AI architecture (stock + JKG)
+
+Reference for **gun-NPC** behavior (stormtroopers and similar). Jedi, snipers, grenadiers, probes, and sentries use other `AI_*.cpp` modules.
+
+**Parent map:** [jk2-jkgunplay-architecture.md](jk2-jkgunplay-architecture.md)
+
+**Primary code (JKG on):** [`AI_Stormtrooper_JKG.cpp`](../codeJK2/game/AI_Stormtrooper_JKG.cpp), [`AI_Utils.cpp`](../codeJK2/game/AI_Utils.cpp), [`NPC_combat.cpp`](../codeJK2/game/NPC_combat.cpp) (`NPC_FindCombatPoint`), [`NPC_senses.cpp`](../codeJK2/game/NPC_senses.cpp), [`g_combat.cpp`](../codeJK2/game/g_combat.cpp) (`G_AlertTeam`).
+
+---
+
+## Think loop: movement and shooting are separate
+
+NPCs synthesize a fake `usercmd_t` each **100 ms** bState tick (`NPC_ExecuteBState` in `NPC.cpp`). **Feet** and **trigger** are independent flags (`AImove`, `shoot`), then `ClientThink` runs pmove and weapon fire separately.
+
+```mermaid
+flowchart TD
+    think[NPC_Think 50ms]
+    bstate[NPC_ExecuteBState 100ms]
+    cmd[ST_Commander once per group]
+    perceive[LOS / clear shot]
+    move[ST_CheckMoveState]
+    fire[ST_CheckFireState]
+    ucmd[Write ucmd]
+    client[ClientThink]
+
+    think --> bstate
+    bstate --> cmd
+    cmd --> perceive
+    perceive --> move
+    perceive --> fire
+    move --> ucmd
+    fire --> ucmd
+    ucmd --> client
+```
+
+**Coupling:** if moving away without facing the enemy (`!faceEnemy && AImove`), `shoot` is forced off (no run-and-gun).
+
+**`squadState`** gates movement (plant vs run). **LOS / `NPC_ShotEntity`** gates shooting. Commander assigns **goals**; attack think still sets shoot each frame.
+
+---
+
+## No single “alert level” on the NPC
+
+There is **no** `ALERT_COMBAT` enum on `gNPC_t`. Awareness is:
+
+| Field / system | Role |
+|----------------|------|
+| `enemy` | Who I fight (`NULL` = not in combat) |
+| `enemyLastSeenTime` / `enemyLastSeenLocation` | Last known position |
+| `investigate*` / `tempBehavior == BS_INVESTIGATE` | Heard/saw something, not full combat |
+| `squadState` | **Combat role** (stand, run to CP, scout), not awareness |
+| `level.alertEvents[]` + `AEL_*` | Short-lived world events (minor → danger great) |
+
+Stormtroopers often **keep** `enemy` once acquired (give-up paths largely disabled in stock ST attack).
+
+---
+
+## How NPCs become aware (four doors)
+
+All combat entry paths eventually call **`G_SetEnemy`** (stores enemy, bad first aim, attack delay, **`G_AngerAlert`**).
+
+```mermaid
+flowchart LR
+    sight[Stealth score + FOV + LOS]
+    events[Alert events AEL_*]
+    pain[NPC_Pain / attacker]
+    team[G_AlertTeam from buddy]
+    set[G_SetEnemy]
+    fight[Attack + group]
+
+    sight --> set
+    events --> set
+    pain --> set
+    team --> set
+    set --> fight
+```
+
+### Sight (patrol)
+
+`NPC_CheckEnemyStealth` / `_JKG`: distance, FOV, LOS, light/speed/crouch score. Thresholds ~0.6 realize, ~0.45 cautious then delay. Defaults: visrange 1024, hfov 90, vfov 60 (`NPC_stats.cpp` / NPCs.cfg). Requires `SCF_LOOK_FOR_ENEMIES`.
+
+### Sound / sight events
+
+`AddSoundEvent` / `AddSightEvent` → pool of 32, ~200 ms lifetime. `AEL_DISCOVERED` with enemy-team owner → `G_SetEnemy(owner)`. Lesser levels → look or walk to investigate (`BS_INVESTIGATE`) if `SCF_CHASE_ENEMIES`.
+
+### Being shot
+
+`NPC_Pain` → `NPC_CheckAttacker` → may `G_SetEnemy`. First anger runs **`G_AngerAlert`** (not pain itself).
+
+### “Squad wake” (contagion, not tactics)
+
+**`client->squadname` is unused** (legacy). Wake-up is **`G_AlertTeam`** when someone first gets mad or dies:
+
+- Radius **512** (anger sound **256**)
+- Same team, `SCF_LOOK_FOR_ENEMIES`, not `SCF_NO_GROUPS` / `SCF_IGNORE_ALERTS`
+- Target must have **no enemy yet**
+- Hear victim or **see** victim (FOV + LOS)
+- Sets **`G_SetEnemy(teammate, attacker)`** — enemy pointer only, not last-seen pos
+
+Commander loop that would `G_SetEnemy` every idle group member is **commented out**.
+
+**Script gates:** `SCF_LOOK_FOR_ENEMIES`, `SCF_IGNORE_ALERTS`, `SCF_CHASE_ENEMIES`, `SCF_NO_GROUPS`.
+
+---
+
+## Groups vs “squads” (design vs logic)
+
+### Design intent
+
+- Aggro spreads to nearby allies.
+- Not everyone charges at once (runner vs planters).
+- One scout to last-seen if LOS lost.
+- Shared “mood” (morale) from enemy weapon/health/deaths.
+- Officers feel like they hang back (speech + CP flags when Imperial commander rank).
+
+### Logic (two systems)
+
+**1. Contagion** — `G_AlertTeam` / `G_AngerAlert` / `G_DeathAlert`. Copies **who to hate**. Not a persistent unit.
+
+**2. Combat clipboard** — `AI_GetGroup` **rebuilt each frame** (max 32 groups, 31 members):
+
+- Same team, gun-NPC types only (no Jedi/sniper/droid/ATST/etc.)
+- Same `enemy`, or no enemy but in PVS of group enemy; patrol clumps within **384** of commander
+- Dropped if no `enemyLastSeenTime` update for **7 s**; dissolved after **3 min** no group LOS → search
+
+`group->commander` = highest **`rank`** (morale weight + Imperial hang-back when **that** member is processed). **Not** the sole thinker.
+
+**Shared:** enemy, `enemyLastSeenPos`, `lastSeenEnemyTime`, `lastClearShotTime`, morale, `numState[squadState]`.
+
+**Per member (set in commander pass):** `goalEntity`, `combatPoint`, `squadState`, timers (`roamTime`, `stick`, `duck`, `flee`).
+
+**Light coordination:** if anyone is `SCOUT` / `TRANSITION` / `RETREAT`, others often **stay and shoot**; covering fire at last seen; one scout when group hasn’t seen enemy **10 s**; `ST_TransferMoveGoal` on blocker.
+
+---
+
+## `ST_Commander` — batch assignment, not one order
+
+**Misleading name:** `ST_Commander_JKG()` is a **group tactical pass**, not “the officer NPC orders the squad.”
+
+- First group member to run attack each frame with `!group->processed` calls it; sets `processed = true`.
+- **Loops every angry member** (`SetNPCGlobals(member)`), picks **each member’s own** combat point via `NPC_FindCombatPoint` from **that member’s origin**.
+- Members do **not** independently search in their own attack think; they **execute** goals assigned here.
+
+`d_asynchronousGroupAI`: only one member processed per commander call (round-robin).
+
+---
+
+## Squad states (`SQUAD_*` in `ai.h`)
+
+Combat **roles** (feet), not awareness:
+
+| State | Typical behavior |
+|-------|------------------|
+| `SQUAD_IDLE` | No movement job |
+| `SQUAD_STAND_AND_SHOOT` | Planted, fire if clear shot |
+| `SQUAD_COVER` | At hidden point, hold (often after retreat arrival) |
+| `SQUAD_POINT` | On CP, duck/suppress until `stick` expires |
+| `SQUAD_TRANSITION` | **Running to a combat point** (most common “reposition”) |
+| `SQUAD_SCOUT` | Chase last-seen or approach enemy (may use CP or `goalEntity = enemy`) |
+| `SQUAD_RETREAT` | Flee CP / `NPC_StartFlee` |
+
+Arrival: `TRANSITION` → usually `STAND_AND_SHOOT`; `RETREAT` → `COVER` + duck/hide timers.
+
+**Debug marker** (`g_jkgDebugNpcState`, requires `sv_cheats 1`): colors map to idle/investigate/squad states — see `jkg_npc_state_debug.cpp`.
+
+---
+
+## Combat points (`point_combat`)
+
+**Disable CP assignment:** with **`g_jkgCombatMove`** (default 1) or **`g_jkgNoCombatPoints 1`**, the commander never calls `NPC_FindCombatPoint`. Existing CP reservations are released. Generic combat uses calculated range/strafe/hunt points only. Nav graph is still used to reach last-known/enemy when there is no LOS.
+
+**Generic combat move** (`g_jkgCombatMove`, default **1**): keep a **min–max firing range** from the known or last-known enemy. Values come from a **combat class** (`ext_data/jkg_combat_classes.cfg`), assigned per NPC type in `ext_data/NPCs.cfg` with `combatClass rifle`. Omitted/`unknown` uses class **`default`**. Any key missing in a class falls back to the matching `g_jkgCombat*` cvar (live).
+
+Copy `codeJK2/base/ext_data/jkg_combat_classes.cfg` into the game `base/ext_data/` folder.
+
+- **No LOS:** nav to last-known; if already there (or for `huntCheatMs` after losing sight) path to the live enemy.
+- **Closer than min:** back up toward the middle of the min–max window.
+- **Farther than max:** step in toward that middle (nav hunt if blocked).
+- **Inside min–max:** walking strafes, then stand and shoot.
+
+Example NPCs.cfg field:
+
+```
+stormtrooper
+{
+	...
+	combatClass	rifle
+}
+```
+
+### Level design intent
+
+Mapper-placed **`point_combat`** entities (`SP_point_combat` in `NPC_combat.cpp`):
+
+- **Fight positions** — cover angles, chokepoints, duck/flee/investigate tags (`CPF_DUCK`, `CPF_FLEE`, `CPF_INVESTIGATE`, `CPF_SNIPE`, …).
+- Linked to **nav waypoints** at map load (`CP_FindCombatPointWaypoints`).
+
+Not generic patrol nodes; the AI treats them as **tactical anchors near the fight**.
+
+### Runtime request flags (`CP_*` in `b_local.h`)
+
+| Flag | Meaning |
+|------|---------|
+| `CP_COVER` | Enemy **cannot** LOS this point (hidden) |
+| `CP_CLEAR` | From point, NPC can LOS enemy within `visrange` |
+| `CP_NEAREST` | Shortest **nav path** from NPC |
+| `CP_CLOSEST` | Prefer point **closest to enemy** (among survivors) |
+| `CP_APPROACH_ENEMY` | Point closer to enemy than NPC is now |
+| `CP_FLANK` | Point on **far side** of enemy from NPC (can be **behind player**) |
+| `CP_RETREAT` / `CP_FLEE` | Farther / flee-tagged |
+| `CP_HAS_ROUTE` | Must have nav route or clear path |
+| `CP_AVOID_ENEMY` | Don’t run toward enemy along approach vector |
+
+### Selection pool (why fights cluster on the player)
+
+`NPC_CollectCombatPoints` uses **`enemyPosition`** (usually the player) and radius **`CP_COLLECT_RADIUS` (512)**. Only points near **the enemy** are candidates. Map density around the player dominates behavior.
+
+If flags fail, requirements are **stripped in order** (investigate, duck, flank, cover, clear, …) until `CP_ANY`.
+
+### Morale-driven mixes (`ST_GetCPFlags_JKG`)
+
+- Low morale: hide (`CP_COVER`, no clear required).
+- High morale: charge (`CP_CLEAR`, `CP_FLANK`, `CP_APPROACH_ENEMY`, `CP_CLOSEST`) — **no cover required**.
+- Default mix: random among **CLEAR + COVER** + nearest / approach / closest / flank.
+
+**Triggers for new CP / `SQUAD_TRANSITION`:** not on CP + `roamTime` done; shot (`LSTATE_UNDERFIRE`); can’t see enemy in PVS; no clear shot **5 s** (`ST_ApproachEnemy` → `CP_CLEAR | CP_CLOSEST`); lost enemy **10 s** (scout to `enemyLastSeenPos`).
+
+### Why NPCs rush or run behind the player
+
+Often **by design of the rules**, not random:
+
+1. Candidate pool is always **within 512 of the player**.
+2. `CP_CLOSEST` + `CP_APPROACH_ENEMY` = step **toward** the enemy’s shootable spot.
+3. `CP_FLANK` = valid point **behind** the player relative to the trooper.
+4. Relaxation drops `CP_COVER` → open ground near player still valid.
+5. Scout / `ST_HuntEnemy` sets **`goalEntity = enemy`** if no CP.
+
+**Tuning levers (stock):** combat point placement, `SCF_CHASE_ENEMIES`, `SCF_USE_CP_NEAREST`, morale (enemy weapon/health), map waypoint connectivity.
+
+---
+
+## Stormtrooper attack flow (summary)
+
+```
+NPC_BSST_Default_JKG
+  no enemy → Patrol (stealth, alerts, investigate)
+  enemy    → NPC_BSST_Attack_JKG
+               AI_GetGroup
+               if !group->processed → ST_Commander_JKG (assign per-member CP + squadState)
+               LOS / ShotEntity → shoot flag
+               ST_CheckMoveState_JKG / ST_CheckFireState_JKG
+               ST_Move → NPC_MoveToGoal (combatMove)
+               WeaponThink → ShootThink → JKG_NpcBurstShootThink if JKG_AI
+```
+
+**bState** (`BS_PATROL`, `BS_STAND_AND_SHOOT`, …) is mostly a **dispatcher label** for troopers; real fight posture is **`squadState`**, not `BS_STAND_AND_SHOOT`.
+
+---
+
+## JKG layer (AI)
+
+| Area | Stock | JKG (`g_jkgAI` + `g_jkgplay`) |
+|------|-------|-------------------------------|
+| Group / senses / `G_AlertTeam` | Same | Same |
+| Stormtrooper brain | `AI_Stormtrooper.cpp` | `AI_Stormtrooper_JKG.cpp` via `NPC_BehaviorSet_Stormtrooper` |
+| Burst fire | Stock spacing | `jkg_npc_fire.cpp` |
+| Locomotion execution | Snap | `jkg_npc_move.cpp`, `g_active.cpp` |
+| Aim spread / pain | Stock | `jkg_npc_aim.cpp`, wider E-11 in `jkg_tuning.h` |
+| State debug | — | `g_jkgDebugNpcState` + `jkg_npc_state_debug.cpp` (`G_DebugLine` markers) |
+| No combat points | — | `g_jkgNoCombatPoints` gates `ST_Commander_JKG` CP picks |
+| Generic combat move | — | `g_jkgCombatMove` + `jkg_npc_combat_move.cpp`; classes in `jkg_npc_combat_class.cpp` |
+
+JKG did **not** replace combat-point or commander architecture (except optional `g_jkgNoCombatPoints` bypass).
+
+---
+
+## Key files quick index
+
+| Topic | File |
+|-------|------|
+| Think / dispatch | `NPC.cpp` |
+| Commander + attack | `AI_Stormtrooper_JKG.cpp` |
+| Groups / morale | `AI_Utils.cpp` |
+| Combat points | `NPC_combat.cpp` |
+| Set enemy / anger | `NPC_combat.cpp`, `g_combat.cpp` |
+| Senses / alerts | `NPC_senses.cpp` |
+| Pain | `NPC_reactions.cpp` |
+| Enums | `ai.h`, `bstate.h`, `g_local.h` (`AEL_*`), `b_local.h` (`CP_*`, `CPF_*`) |
+
+---
+
+## Debug visualization (nav nodes and combat points)
+
+**Requires `sv_cheats 1`.**
+
+### Stock console command: `nav`
+
+Registered in [`g_svcmds.cpp`](../codeJK2/game/g_svcmds.cpp) (cheat). Toggles draw flags consumed each frame in [`NAV_ShowDebugInfo`](../codeJK2/game/g_nav.cpp) (`G_RunFrame`).
+
+| Command | Effect |
+|---------|--------|
+| `nav show all` | Toggle nodes, edges, radius, combat points, enemy path, nav goals, collision |
+| `nav show nodes` | Red sprites on nav graph nodes in PVS (~1024 units of player) |
+| `nav show edges` | Lines between connected nodes |
+| `nav show combatpoints` | Cyan sprites at each `point_combat` origin |
+| `nav show enemypath` | Debug lines while NPCs macro-navigate |
+| `nav show radius` | Node radii when near player |
+| `nav show navgoals` | Script nav goal tags |
+| `nav totals` | Print node count + combat point count |
+
+Rendering uses cgame local entities / FX (`CG_DrawNode`, `CG_DrawCombatPoint` in [`cg_main.cpp`](../codeJK2/cgame/cg_main.cpp)).
+
+---
+
+## Known stock quirks (when debugging)
+
+- Commander “morale much lower than squad size → flee” branches compare positive `moraleDrop` to negative thresholds — flee/retreat branches **never fire**; `morale < 0` hide still works.
+- `AI_SortGroupByPathCostToEnemy` uses enemy waypoint for all members — “closest/farthest member” list slots are not true distance ranking.
+- `closestBuddy` / “buddy tell friend to get mad” commander block is **commented out**; buddy finder never skips self.
+- `CG_DrawAlert` exists but is **not called** from game AI (stealth debug unused).

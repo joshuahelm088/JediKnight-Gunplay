@@ -40,6 +40,17 @@ extern cvar_t *g_jkgNpcSpeedScale;	// multiplier on NPC desired walk/run speed
 extern cvar_t *g_jkgNpcAnimMinScale;	// floor on NPC walk/run anim playback scale
 extern cvar_t *g_jkgDebugNpcMove;	// NPC locomotion debug (0=off, 1=brake events, 2=verbose)
 extern cvar_t *g_jkgDebugAimCone;	// NPC weapon spread cone (0=off, 1=draw, 2=+throttled print)
+extern cvar_t *g_jkgDebugNpcState;	// NPC AI state marker (0=off, 1=draw, 2=+throttled print)
+extern cvar_t *g_jkgNoCombatPoints;	// 1 = stormtrooper commander skips point_combat selection (direct hunt/scout)
+extern cvar_t *g_jkgCombatMove;		// 1 = generic range/hunt/strafe combat movement (not combat points)
+extern cvar_t *g_jkgCombatIdealRangeMin;	// fallback min stand-off from enemy (class cfg can override)
+extern cvar_t *g_jkgCombatIdealRangeMax;	// fallback max stand-off from enemy (class cfg can override)
+extern cvar_t *g_jkgCombatRangeBand;	// extra slack when min==max (old single-range hysteresis)
+extern cvar_t *g_jkgCombatStepDist;	// how far each close/back-up step is placed
+extern cvar_t *g_jkgCombatStrafeDist;	// lateral shuffle distance
+extern cvar_t *g_jkgCombatStrafeTime;	// ms of a shuffle burst
+extern cvar_t *g_jkgCombatStrafePause;	// ms of standing between shuffles
+extern cvar_t *g_jkgCombatHuntCheatMs;	// ms after LOS loss to still path toward live enemy pos
 extern cvar_t *g_jkgArmor;		// separate MAX_ARMOR system (armor no longer clamped to max health)
 extern cvar_t *g_jkgMaxArmor;	// player shield cap when g_jkgArmor is on (STAT_MAX_ARMOR)
 extern cvar_t *g_jkgShieldStationGive;	// shield points per tick (stock 4; default 12 = 3x)
@@ -100,6 +111,22 @@ struct centity_s;
 // Registers all g_jkg* cvars. Called from G_InitCvars().
 void JKG_RegisterCvars( void );
 
+#define JKG_COMBAT_CLASS_NAME_LEN	32
+
+typedef struct jkgCombatMoveParms_s {
+	int	rangeMin;
+	int	rangeMax;
+	int	rangeBand;
+	int	stepDist;
+	int	strafeDist;
+	int	strafeTime;
+	int	strafePause;
+	int	huntCheatMs;
+} jkgCombatMoveParms_t;
+
+void JKG_LoadCombatClasses( void );
+void JKG_GetCombatMoveParms( const gentity_t *ent, jkgCombatMoveParms_t *out );
+
 // Sets ps.stats[STAT_MAX_ARMOR] from g_jkgMaxArmor when JKG_ARMOR is on.
 void JKG_ApplyMaxArmor( gclient_t *client );
 
@@ -127,5 +154,10 @@ void JKG_DebugProjectile_ClientRender( struct centity_s *cent );
 float JKG_GetNpcWeaponSpreadDegrees( const gentity_t *ent );
 void JKG_NpcPenalizeAimOnHit( gentity_t *self, int damage, gentity_t *attacker );
 void JKG_DebugDrawNpcAimCone( gentity_t *ent );
+void JKG_DebugDrawNpcState( gentity_t *ent );
+
+qboolean JKG_ST_CombatMoveEnabled( void );
+qboolean JKG_ST_CombatMoveThink( qboolean canSee, float distSq );
+void JKG_ST_ApplyCombatWalk( void );
 
 #endif	// JKG_LOCAL_H
