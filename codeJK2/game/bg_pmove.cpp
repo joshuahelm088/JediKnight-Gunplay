@@ -125,8 +125,6 @@ const float pm_airDecelRate = 1.35f;	//Used for air decelleration away from curr
 
 int	c_pmove = 0;
 
-bool pm_firedLastFrame = false;
-
 extern void PM_SetTorsoAnimTimer( gentity_t *ent, int *torsoAnimTimer, int time );
 extern void PM_SetLegsAnimTimer( gentity_t *ent, int *legsAnimTimer, int time );
 //extern void PM_SetAnim(pmove_t	*pm,int setAnimParts,int anim,int setAnimFlags);
@@ -7961,18 +7959,6 @@ static void PM_Weapon( void )
 	int			addTime, amount, trueCount = 1;
 	qboolean	delayed_fire = qfalse;
 
-	if ( JKG_WEAPONS )
-	{
-		if ( pm->cmd.buttons & ( BUTTON_ATTACK | BUTTON_ALT_ATTACK ) )
-		{
-			pm_firedLastFrame = true;
-		}
-		else if ( !( pm->cmd.buttons & ( BUTTON_ATTACK | BUTTON_ALT_ATTACK ) ) )
-		{
-			pm_firedLastFrame = false;
-		}
-	}
-
 	if (pm->ps->weapon == WP_SABER && (cg.zoomMode==3||!cg.zoomMode||pm->ps->clientNum) )		// WP_LIGHTSABER
 	{	// Separate logic for lightsaber, but not for player when zoomed
 		PM_WeaponLightsaber();
@@ -8062,9 +8048,22 @@ static void PM_Weapon( void )
 
 	if ( pm->ps->weaponTime > 0 )
 	{
-		if ( JKG_WEAPONS && pm->ps->weapon == WP_BRYAR_PISTOL )
+		// JKG HOOK: Bryar tap-fire may cut the remaining cooldown, but not below
+		// g_jkgBryarTapFireTime (default half of weapons.dat fireTime). Held fire
+		// still waits the full fireTime. Charge-shot recovery cannot be skipped.
+		if ( JKG_WEAPONS && pm->ps->weapon == WP_BRYAR_PISTOL
+			&& !JKG_BryarChargeLocked( pm->gent )
+			&& ( pm->cmd.buttons & BUTTON_ATTACK )
+			&& !( pm->ps->pm_flags & PMF_ATTACK_HELD ) )
 		{
-			if ( pm_firedLastFrame )
+			const int tapDelay = JKG_BryarTapFireTime();
+			const int sinceShot = pm->ps->lastShotTime ? ( level.time - pm->ps->lastShotTime ) : tapDelay;
+
+			if ( sinceShot >= tapDelay )
+			{
+				pm->ps->weaponTime = 0;
+			}
+			else
 			{
 				return;
 			}
@@ -8073,6 +8072,11 @@ static void PM_Weapon( void )
 		{
 			return;
 		}
+	}
+
+	if ( JKG_WEAPONS && pm->ps->weapon == WP_BRYAR_PISTOL && JKG_BryarChargeLocked( pm->gent ) )
+	{
+		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_ALT_ATTACK );
 	}
 
 	// change weapon if time
@@ -8321,6 +8325,13 @@ static void PM_Weapon( void )
 		{
 			switch ( pm->ps->weapon )
 			{
+			case WP_BRYAR_PISTOL:
+				{
+					const int recovery = JKG_BryarChargeRecoveryTime( trueCount );
+					addTime = recovery;
+					JKG_BryarArmChargeLock( pm->gent, recovery );
+				}
+				break;
 			case WP_BLASTER:
 				pm->ps->weaponShotCount++;
 				break;

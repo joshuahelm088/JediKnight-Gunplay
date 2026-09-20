@@ -41,6 +41,8 @@ cvar_t *g_jkgBurstPistolShots;
 cvar_t *g_jkgBurstShotDelay;
 cvar_t *g_jkgBurstPause;
 cvar_t *g_jkgBurstPistolPause;
+cvar_t *g_jkgBryarTapFireTime;
+cvar_t *g_jkgBryarChargeFireTime;
 cvar_t *g_jkgNpcAccel;
 cvar_t *g_jkgNpcDecel;
 cvar_t *g_jkgNpcStopDecel;
@@ -105,6 +107,55 @@ int JKG_ShieldStationGivePerTick( void )
 	return JKG_CvarIntegerNonNegative( g_jkgShieldStationGive );
 }
 
+int JKG_BryarTapFireTime( void )
+{
+	return JKG_CvarIntegerNonNegative( g_jkgBryarTapFireTime );
+}
+
+int JKG_BryarChargeFireTime( void )
+{
+	return JKG_CvarIntegerNonNegative( g_jkgBryarChargeFireTime );
+}
+
+int JKG_BryarChargeRecoveryTime( int chargeCount )
+{
+	const int minDelay = JKG_BryarTapFireTime();
+	const int maxDelay = JKG_BryarChargeFireTime();
+	int t;
+
+	if ( chargeCount < 1 )
+	{
+		chargeCount = 1;
+	}
+	else if ( chargeCount > 5 )
+	{
+		chargeCount = 5;
+	}
+
+	t = chargeCount - 1;
+	return minDelay + ( maxDelay - minDelay ) * t / 4;
+}
+
+qboolean JKG_BryarChargeLocked( const gentity_t *ent )
+{
+	if ( !ent || !ent->client )
+	{
+		return qfalse;
+	}
+
+	return ( ent->client->jkgBryarChargeLockTime > level.time ) ? qtrue : qfalse;
+}
+
+void JKG_BryarArmChargeLock( gentity_t *ent, int recovery )
+{
+	if ( !ent || !ent->client || recovery <= 0 )
+	{
+		return;
+	}
+
+	ent->client->jkgBryarChargeLockTime = level.time + recovery;
+}
+
 int JKG_ShieldStationTickMs( void )
 {
 	const int tickMs = JKG_CvarIntegerNonNegative( g_jkgShieldStationTickMs );
@@ -136,6 +187,8 @@ void JKG_RegisterCvars( void )
 	g_jkgBurstShotDelay = gi.cvar( "g_jkgBurstShotDelay", "500", CVAR_ARCHIVE );
 	g_jkgBurstPause = gi.cvar( "g_jkgBurstPause", "3000", CVAR_ARCHIVE );
 	g_jkgBurstPistolPause = gi.cvar( "g_jkgBurstPistolPause", "2000", CVAR_ARCHIVE );
+	g_jkgBryarTapFireTime = gi.cvar( "g_jkgBryarTapFireTime", "200", CVAR_ARCHIVE );
+	g_jkgBryarChargeFireTime = gi.cvar( "g_jkgBryarChargeFireTime", "600", CVAR_ARCHIVE );
 	g_jkgNpcAccel = gi.cvar( "g_jkgNpcAccel", "150", CVAR_ARCHIVE );
 	g_jkgNpcDecel = gi.cvar( "g_jkgNpcDecel", "200", CVAR_ARCHIVE );
 	g_jkgNpcStopDecel = gi.cvar( "g_jkgNpcStopDecel", "200", CVAR_ARCHIVE );

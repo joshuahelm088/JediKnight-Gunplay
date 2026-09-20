@@ -69,6 +69,8 @@ extern cvar_t *g_jkgBurstPistolShots;	// shots per JKG officer pistol (WP_BLASTE
 extern cvar_t *g_jkgBurstShotDelay;	// ms between shots within a burst (blaster and pistol)
 extern cvar_t *g_jkgBurstPause;		// ms after an E-11 burst before the next burst starts
 extern cvar_t *g_jkgBurstPistolPause;	// ms after a pistol burst before the next burst starts
+extern cvar_t *g_jkgBryarTapFireTime;	// min ms between player Bryar tap-fires; also uncharged alt recovery (0.5x fireTime)
+extern cvar_t *g_jkgBryarChargeFireTime;	// ms after a fully charged Bryar alt (1.5x fireTime); lerps from tap time by charge level
 
 typedef enum {
 	JKG_FIREMODE_DEFAULT = 0,
@@ -138,6 +140,15 @@ int JKG_MaxArmorCap( void );
 // Shield power converter recharge timing (stock: 4 points every 100 ms).
 int JKG_ShieldStationGivePerTick( void );
 int JKG_ShieldStationTickMs( void );
+
+// Min delay between Bryar tap-fires (0 = no extra cap).
+int JKG_BryarTapFireTime( void );
+
+// Recovery after Bryar alt: tap-fire time at charge 1, charge-fire time at charge 5.
+int JKG_BryarChargeFireTime( void );
+int JKG_BryarChargeRecoveryTime( int chargeCount );
+qboolean JKG_BryarChargeLocked( const gentity_t *ent );
+void JKG_BryarArmChargeLock( gentity_t *ent, int recovery );
 
 // Weapon fire dispatch (implemented in wp_*_JKG.cpp).
 void WP_FireBryarPistol_JKG( gentity_t *ent, qboolean alt_fire );

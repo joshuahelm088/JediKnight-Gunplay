@@ -803,6 +803,7 @@ public:
 	int			pushVecTime;
 
 	float		jkgHitboxScale;	// 0 = use g_jkgNpcHitboxScale; else horizontal XY bbox scale for this NPC
+	int			jkgBryarChargeLockTime;	// level.time until Bryar may fire or charge after an alt shot
 
 	void sg_export(
 		ojk::SavedGameHelper& saved_game) const
@@ -928,6 +929,7 @@ public:
 		saved_game.read<float>(pushVec);
 		saved_game.read<int32_t>(pushVecTime);
 		saved_game.read<float>(jkgHitboxScale);
+		jkgBryarChargeLockTime = 0;
 	}
 }; // gclient_t
 
