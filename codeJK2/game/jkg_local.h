@@ -40,6 +40,7 @@ extern cvar_t *g_jkgNpcSpeedScale;	// multiplier on NPC desired walk/run speed
 extern cvar_t *g_jkgNpcAnimMinScale;	// floor on NPC walk/run anim playback scale
 extern cvar_t *g_jkgDebugNpcMove;	// NPC locomotion debug (0=off, 1=brake events, 2=verbose)
 extern cvar_t *g_jkgDebugAimCone;	// NPC weapon spread cone (0=off, 1=draw, 2=+throttled print)
+extern cvar_t *g_jkgDebugNpcState;	// NPC AI state marker (0=off, 1=draw, 2=+throttled print)
 extern cvar_t *g_jkgArmor;		// separate MAX_ARMOR system (armor no longer clamped to max health)
 extern cvar_t *g_jkgMaxArmor;	// player shield cap when g_jkgArmor is on (STAT_MAX_ARMOR)
 extern cvar_t *g_jkgShieldStationGive;	// shield points per tick (stock 4; default 12 = 3x)
@@ -127,5 +128,6 @@ void JKG_DebugProjectile_ClientRender( struct centity_s *cent );
 float JKG_GetNpcWeaponSpreadDegrees( const gentity_t *ent );
 void JKG_NpcPenalizeAimOnHit( gentity_t *self, int damage, gentity_t *attacker );
 void JKG_DebugDrawNpcAimCone( gentity_t *ent );
+void JKG_DebugDrawNpcState( gentity_t *ent );
 
 #endif	// JKG_LOCAL_H

@@ -2007,6 +2007,25 @@ void CG_DrawAlert( vec3_t origin, float rating )
 	FX_AddSprite( drawPos, NULL, NULL, 16, 0.0f, 1.0f, 1.0f, startRGB, startRGB, 0, 0, 50, cgs.media.whiteShader );
 }
 
+/*
+-------------------------
+CG_DrawNpcStateMarker
+-------------------------
+*/
+
+void CG_DrawNpcStateMarker( vec3_t origin, const vec3_t rgb )
+{
+	vec3_t	drawPos;
+	vec3_t	startRGB;
+
+	VectorCopy( origin, drawPos );
+	drawPos[2] += 56;
+
+	VectorCopy( rgb, startRGB );
+
+	FX_AddSprite( drawPos, NULL, NULL, 14.0f, 0.0f, 1.0f, 1.0f, startRGB, startRGB, 0, 0, 80, cgs.media.whiteShader );
+}
+
 
 #define MAX_MENUDEFFILE				4096
 

@@ -93,6 +93,7 @@ set(JK2SPGameGameFiles
 	"${JK2SPDir}/game/jkg_npc_move.cpp"
 	"${JK2SPDir}/game/jkg_debug_projectile.cpp"
 	"${JK2SPDir}/game/jkg_npc_aim.cpp"
+	"${JK2SPDir}/game/jkg_npc_state_debug.cpp"
 	"${JK2SPDir}/game/g_mem.cpp"
 	"${JK2SPDir}/game/g_misc.cpp"
 	"${JK2SPDir}/game/g_misc_model.cpp"
