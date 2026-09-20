@@ -169,14 +169,24 @@ Arrival: `TRANSITION` → usually `STAND_AND_SHOOT`; `RETREAT` → `COVER` + duc
 
 **Disable CP assignment:** with **`g_jkgCombatMove`** (default 1) or **`g_jkgNoCombatPoints 1`**, the commander never calls `NPC_FindCombatPoint`. Existing CP reservations are released. Generic combat uses calculated range/strafe/hunt points only. Nav graph is still used to reach last-known/enemy when there is no LOS.
 
-**Generic combat move** (`g_jkgCombatMove`, default **1**): when not in a CP transition/retreat/cover/point, troopers keep an **ideal firing range** (`g_jkgCombatIdealRange`, default 128) from the known or last-known enemy:
+**Generic combat move** (`g_jkgCombatMove`, default **1**): keep a **min–max firing range** from the known or last-known enemy. Values come from a **combat class** (`ext_data/jkg_combat_classes.cfg`), assigned per NPC type in `ext_data/NPCs.cfg` with `combatClass rifle`. Omitted/`unknown` uses class **`default`**. Any key missing in a class falls back to the matching `g_jkgCombat*` cvar (live).
 
-- **No LOS:** nav to last-known position; if already there (or for ~`g_jkgCombatHuntCheatMs` after losing sight) path to the live enemy.
-- **LOS too close:** back up along the away vector.
-- **LOS too far:** step toward the enemy (nav hunt if the step is blocked).
-- **In the range band:** short walking strafes (`g_jkgCombatStrafe*`), then stand and shoot.
+Copy `codeJK2/base/ext_data/jkg_combat_classes.cfg` into the game `base/ext_data/` folder.
 
-Stock `SQUAD_STAND_AND_SHOOT` planting and scout-on-LOS stick are skipped while this is on. Combat points can later overlay flank/cover without replacing this loop.
+- **No LOS:** nav to last-known; if already there (or for `huntCheatMs` after losing sight) path to the live enemy.
+- **Closer than min:** back up toward the middle of the min–max window.
+- **Farther than max:** step in toward that middle (nav hunt if blocked).
+- **Inside min–max:** walking strafes, then stand and shoot.
+
+Example NPCs.cfg field:
+
+```
+stormtrooper
+{
+	...
+	combatClass	rifle
+}
+```
 
 ### Level design intent
 
@@ -258,7 +268,7 @@ NPC_BSST_Default_JKG
 | Aim spread / pain | Stock | `jkg_npc_aim.cpp`, wider E-11 in `jkg_tuning.h` |
 | State debug | — | `g_jkgDebugNpcState` + `jkg_npc_state_debug.cpp` (`G_DebugLine` markers) |
 | No combat points | — | `g_jkgNoCombatPoints` gates `ST_Commander_JKG` CP picks |
-| Generic combat move | — | `g_jkgCombatMove` + `jkg_npc_combat_move.cpp` (range / hunt / strafe) |
+| Generic combat move | — | `g_jkgCombatMove` + `jkg_npc_combat_move.cpp`; classes in `jkg_npc_combat_class.cpp` |
 
 JKG did **not** replace combat-point or commander architecture (except optional `g_jkgNoCombatPoints` bypass).
 

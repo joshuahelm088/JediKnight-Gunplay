@@ -43,8 +43,9 @@ extern cvar_t *g_jkgDebugAimCone;	// NPC weapon spread cone (0=off, 1=draw, 2=+t
 extern cvar_t *g_jkgDebugNpcState;	// NPC AI state marker (0=off, 1=draw, 2=+throttled print)
 extern cvar_t *g_jkgNoCombatPoints;	// 1 = stormtrooper commander skips point_combat selection (direct hunt/scout)
 extern cvar_t *g_jkgCombatMove;		// 1 = generic range/hunt/strafe combat movement (not combat points)
-extern cvar_t *g_jkgCombatIdealRange;	// desired distance from enemy while shooting
-extern cvar_t *g_jkgCombatRangeBand;	// hysteresis around ideal range (no move if inside)
+extern cvar_t *g_jkgCombatIdealRangeMin;	// fallback min stand-off from enemy (class cfg can override)
+extern cvar_t *g_jkgCombatIdealRangeMax;	// fallback max stand-off from enemy (class cfg can override)
+extern cvar_t *g_jkgCombatRangeBand;	// extra slack when min==max (old single-range hysteresis)
 extern cvar_t *g_jkgCombatStepDist;	// how far each close/back-up step is placed
 extern cvar_t *g_jkgCombatStrafeDist;	// lateral shuffle distance
 extern cvar_t *g_jkgCombatStrafeTime;	// ms of a shuffle burst
@@ -109,6 +110,22 @@ struct centity_s;
 
 // Registers all g_jkg* cvars. Called from G_InitCvars().
 void JKG_RegisterCvars( void );
+
+#define JKG_COMBAT_CLASS_NAME_LEN	32
+
+typedef struct jkgCombatMoveParms_s {
+	int	rangeMin;
+	int	rangeMax;
+	int	rangeBand;
+	int	stepDist;
+	int	strafeDist;
+	int	strafeTime;
+	int	strafePause;
+	int	huntCheatMs;
+} jkgCombatMoveParms_t;
+
+void JKG_LoadCombatClasses( void );
+void JKG_GetCombatMoveParms( const gentity_t *ent, jkgCombatMoveParms_t *out );
 
 // Sets ps.stats[STAT_MAX_ARMOR] from g_jkgMaxArmor when JKG_ARMOR is on.
 void JKG_ApplyMaxArmor( gclient_t *client );

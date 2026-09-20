@@ -19,23 +19,6 @@ extern void AI_GroupUpdateSquadstates( AIGroupInfo_t *group, gentity_t *member, 
 extern qboolean G_ExpandPointToBBox( vec3_t point, const vec3_t mins, const vec3_t maxs, int ignore, int clipmask );
 extern qboolean Q3_TaskIDPending( gentity_t *ent, taskID_t taskType );
 
-static int JKG_CvarIntegerNonNegative( cvar_t *cv )
-{
-	int value;
-
-	if ( !cv )
-	{
-		return 0;
-	}
-
-	value = cv->integer;
-	if ( value < 0 )
-	{
-		value = 0;
-	}
-	return value;
-}
-
 qboolean JKG_ST_CombatMoveEnabled( void )
 {
 	return ( g_jkgCombatMove && g_jkgCombatMove->integer ) ? qtrue : qfalse;
@@ -149,10 +132,8 @@ static void JKG_ST_HuntEnemyEntity( void )
 	JKG_ST_SetSquadState( SQUAD_SCOUT );
 }
 
-static void JKG_ST_GetHuntSpot( vec3_t out )
+static void JKG_ST_GetHuntSpot( vec3_t out, int cheatMs )
 {
-	const int cheatMs = JKG_CvarIntegerNonNegative( g_jkgCombatHuntCheatMs );
-
 	if ( cheatMs > 0
 		&& NPCInfo->enemyLastSeenTime
 		&& ( level.time - NPCInfo->enemyLastSeenTime ) <= cheatMs )
@@ -193,7 +174,7 @@ static void JKG_ST_FlipStrafe( void )
 	}
 }
 
-static qboolean JKG_ST_TryStrafe( void )
+static qboolean JKG_ST_TryStrafe( int strafeDist )
 {
 	vec3_t away, right, dest;
 	float dist;
@@ -212,7 +193,7 @@ static qboolean JKG_ST_TryStrafe( void )
 		VectorNormalize( right );
 	}
 
-	dist = (float)JKG_CvarIntegerNonNegative( g_jkgCombatStrafeDist );
+	dist = (float)strafeDist;
 	if ( dist < 24.0f )
 	{
 		dist = 24.0f;
@@ -238,10 +219,8 @@ static qboolean JKG_ST_TryStrafe( void )
 	return qtrue;
 }
 
-static void JKG_ST_StartStrafeBurst( void )
+static void JKG_ST_StartStrafeBurst( int duration, int pause )
 {
-	const int duration = JKG_CvarIntegerNonNegative( g_jkgCombatStrafeTime );
-	const int pause = JKG_CvarIntegerNonNegative( g_jkgCombatStrafePause );
 	int burst = duration;
 	int wait = pause;
 
@@ -265,13 +244,13 @@ static void JKG_ST_StartStrafeBurst( void )
 
 qboolean JKG_ST_CombatMoveThink( qboolean canSee, float distSq )
 {
+	jkgCombatMoveParms_t parms;
 	vec3_t dest, dir, huntSpot;
 	float dist;
-	float ideal;
-	float band;
-	float step;
 	float closeDist;
 	float farDist;
+	float mid;
+	float step;
 
 	if ( !JKG_ST_CombatMoveAllowed() )
 	{
@@ -284,32 +263,15 @@ qboolean JKG_ST_CombatMoveThink( qboolean canSee, float distSq )
 		NPCInfo->combatPoint = -1;
 	}
 
-	ideal = (float)JKG_CvarIntegerNonNegative( g_jkgCombatIdealRange );
-	band = (float)JKG_CvarIntegerNonNegative( g_jkgCombatRangeBand );
-	step = (float)JKG_CvarIntegerNonNegative( g_jkgCombatStepDist );
-	if ( ideal <= 0.0f )
-	{
-		ideal = 128.0f;
-	}
-	if ( band <= 0.0f )
-	{
-		band = 32.0f;
-	}
-	if ( step < 32.0f )
-	{
-		step = 32.0f;
-	}
-
-	closeDist = ideal - band;
-	farDist = ideal + band;
-	if ( closeDist < 48.0f )
-	{
-		closeDist = 48.0f;
-	}
+	JKG_GetCombatMoveParms( NPC, &parms );
+	closeDist = (float)parms.rangeMin;
+	farDist = (float)parms.rangeMax;
+	mid = ( closeDist + farDist ) * 0.5f;
+	step = (float)parms.stepDist;
 
 	if ( !canSee )
 	{
-		JKG_ST_GetHuntSpot( huntSpot );
+		JKG_ST_GetHuntSpot( huntSpot, parms.huntCheatMs );
 		if ( DistanceSquared( NPC->currentOrigin, huntSpot ) > 48.0f * 48.0f
 			&& DistanceSquared( huntSpot, NPC->enemy->currentOrigin ) > 32.0f * 32.0f )
 		{
@@ -338,13 +300,22 @@ qboolean JKG_ST_CombatMoveThink( qboolean canSee, float distSq )
 
 	if ( dist < closeDist )
 	{
-		if ( JKG_ST_OffsetGoalWalkable( dir, step, dest ) )
+		float want = mid - dist;
+		if ( want > step )
+		{
+			want = step;
+		}
+		if ( want < 32.0f )
+		{
+			want = 32.0f;
+		}
+		if ( JKG_ST_OffsetGoalWalkable( dir, want, dest ) )
 		{
 			JKG_ST_GoToPoint( dest, qfalse, qfalse );
 			JKG_ST_SetSquadState( SQUAD_STAND_AND_SHOOT );
 			return qtrue;
 		}
-		if ( JKG_ST_TryStrafe() )
+		if ( JKG_ST_TryStrafe( parms.strafeDist ) )
 		{
 			return qtrue;
 		}
@@ -355,9 +326,18 @@ qboolean JKG_ST_CombatMoveThink( qboolean canSee, float distSq )
 	if ( dist > farDist )
 	{
 		vec3_t toward;
+		float want = dist - mid;
 
 		VectorScale( dir, -1.0f, toward );
-		if ( JKG_ST_OffsetGoalWalkable( toward, step, dest ) )
+		if ( want > step )
+		{
+			want = step;
+		}
+		if ( want < 32.0f )
+		{
+			want = 32.0f;
+		}
+		if ( JKG_ST_OffsetGoalWalkable( toward, want, dest ) )
 		{
 			JKG_ST_GoToPoint( dest, qfalse, qfalse );
 			JKG_ST_SetSquadState( SQUAD_SCOUT );
@@ -369,12 +349,12 @@ qboolean JKG_ST_CombatMoveThink( qboolean canSee, float distSq )
 
 	if ( TIMER_Done( NPC, "jkgStrafeWait" ) )
 	{
-		JKG_ST_StartStrafeBurst();
+		JKG_ST_StartStrafeBurst( parms.strafeTime, parms.strafePause );
 	}
 
 	if ( !TIMER_Done( NPC, "jkgStrafe" ) )
 	{
-		if ( JKG_ST_TryStrafe() )
+		if ( JKG_ST_TryStrafe( parms.strafeDist ) )
 		{
 			return qtrue;
 		}

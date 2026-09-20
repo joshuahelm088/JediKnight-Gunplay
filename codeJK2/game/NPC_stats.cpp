@@ -1116,6 +1116,7 @@ qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 		stats->walkSpeed	= 90;
 		stats->runSpeed		= 300;
 		stats->acceleration	= 15;//Increase/descrease speed this much per frame (20fps)
+		Q_strncpyz( NPC->NPC->jkgCombatClass, "default", sizeof( NPC->NPC->jkgCombatClass ) );
 	}
 	else
 	{
@@ -1603,6 +1604,20 @@ qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 					{
 						gi.Printf( S_COLOR_YELLOW"WARNING: bad fireMode '%s' in NPC '%s' (use burst or single)\n", value, NPCName );
 					}
+				}
+				continue;
+			}
+
+			// JKGunplay combat class (name in ext_data/jkg_combat_classes.cfg)
+			if ( !Q_stricmp( token, "combatClass" ) )
+			{
+				if ( COM_ParseString( &p, &value ) )
+				{
+					continue;
+				}
+				if ( NPC->NPC )
+				{
+					Q_strncpyz( NPC->NPC->jkgCombatClass, value, sizeof( NPC->NPC->jkgCombatClass ) );
 				}
 				continue;
 			}
@@ -2276,6 +2291,7 @@ void NPC_LoadParms( void )
 	len = gi.FS_ReadFile( filename, (void **) &buffer );
 	if ( len == -1 ) {
 		gi.Printf( "file not found\n" );
+		JKG_LoadCombatClasses();
 		return;
 	}
 
@@ -2316,4 +2332,7 @@ void NPC_LoadParms( void )
 			marker = NPCParms+totallen;
 		}
 	}
+
+	// >>> JKG HOOK: combat class table (ext_data/jkg_combat_classes.cfg)
+	JKG_LoadCombatClasses();
 }
