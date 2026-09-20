@@ -35,9 +35,28 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "g_nav.h"
 #include "anims.h"
 #include "g_navigator.h"
+#include "jkg_local.h"
 
 
 extern void CG_DrawAlert(vec3_t origin, float rating);
+
+static qboolean JKG_NoCombatPoints_JKG( void )
+{
+	return ( g_jkgNoCombatPoints && g_jkgNoCombatPoints->integer ) ? qtrue : qfalse;
+}
+
+static void JKG_ClearCombatPointMove_JKG( void )
+{
+	if ( NPCInfo->combatPoint != -1 )
+	{
+		NPC_FreeCombatPoint( NPCInfo->combatPoint );
+		NPCInfo->combatPoint = -1;
+	}
+	if ( NPCInfo->goalEntity == NPCInfo->tempGoal )
+	{
+		NPC_ClearGoal();
+	}
+}
 extern void G_AddVoiceEvent(gentity_t* self, int event, int speakDebounceTime);
 extern void AI_GroupUpdateSquadstates(AIGroupInfo_t* group, gentity_t* member, int newSquadState);
 extern qboolean AI_GroupContainsEntNum(AIGroupInfo_t* group, int entNum);
@@ -852,7 +871,7 @@ static qboolean NPC_ST_InvestigateEvent_JKG(int eventID, bool extraSuspicious)
 				NPCInfo->localState = LSTATE_INVESTIGATE;
 			}
 		}
-		else
+		else if ( !JKG_NoCombatPoints_JKG() )
 		{
 			int id = NPC_FindCombatPoint(NPCInfo->investigateGoal, NPCInfo->investigateGoal, NPCInfo->investigateGoal, CP_INVESTIGATE | CP_HAS_ROUTE, 0);
 
@@ -1915,6 +1934,15 @@ void ST_Commander_JKG(void)
 			continue;
 		}
 
+		if ( JKG_NoCombatPoints_JKG() )
+		{
+			JKG_ClearCombatPointMove_JKG();
+			if ( NPCInfo->squadState == SQUAD_TRANSITION )
+			{
+				AI_GroupUpdateSquadstates( group, NPC, SQUAD_STAND_AND_SHOOT );
+			}
+		}
+
 		//check the local state
 		if (NPCInfo->squadState != SQUAD_RETREAT)
 		{//not already retreating
@@ -2202,6 +2230,27 @@ void ST_Commander_JKG(void)
 			cpFlags |= CP_NEAREST;
 		}
 		//Assign combat points
+		if ( JKG_NoCombatPoints_JKG() && cpFlags )
+		{
+			const int cpIntent = cpFlags;
+			const qboolean fleeOrRetreat = ( ( cpIntent & CP_FLEE ) || ( cpIntent & CP_RETREAT ) ) ? qtrue : qfalse;
+
+			cpFlags = 0;
+			cp = -1;
+
+			if ( fleeOrRetreat )
+			{
+				if ( NPCInfo->squadState == SQUAD_TRANSITION || NPCInfo->squadState == SQUAD_RETREAT )
+				{
+					AI_GroupUpdateSquadstates( group, NPC, SQUAD_STAND_AND_SHOOT );
+				}
+			}
+			else if ( group->enemy && ( NPCInfo->scriptFlags & SCF_CHASE_ENEMIES ) )
+			{
+				ST_HuntEnemy_JKG( NPC );
+				AI_GroupUpdateSquadstates( group, NPC, SQUAD_SCOUT );
+			}
+		}
 		if (cpFlags)
 		{//we want to run to a combat point
 			/*

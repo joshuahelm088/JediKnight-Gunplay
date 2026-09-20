@@ -50,6 +50,7 @@ cvar_t *g_jkgNpcAnimMinScale;
 cvar_t *g_jkgDebugNpcMove;
 cvar_t *g_jkgDebugAimCone;
 cvar_t *g_jkgDebugNpcState;
+cvar_t *g_jkgNoCombatPoints;
 
 static int JKG_CvarIntegerNonNegative( cvar_t *cv )
 {
@@ -134,4 +135,5 @@ void JKG_RegisterCvars( void )
 	g_jkgDebugNpcMove = gi.cvar( "g_jkgDebugNpcMove", "0", CVAR_CHEAT );
 	g_jkgDebugAimCone = gi.cvar( "g_jkgDebugAimCone", "0", CVAR_CHEAT );
 	g_jkgDebugNpcState = gi.cvar( "g_jkgDebugNpcState", "0", CVAR_CHEAT );
+	g_jkgNoCombatPoints = gi.cvar( "g_jkgNoCombatPoints", "0", CVAR_CHEAT );
 }

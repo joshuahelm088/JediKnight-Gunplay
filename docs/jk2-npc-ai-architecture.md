@@ -167,6 +167,8 @@ Arrival: `TRANSITION` → usually `STAND_AND_SHOOT`; `RETREAT` → `COVER` + duc
 
 ## Combat points (`point_combat`)
 
+**Disable CP assignment** (`g_jkgNoCombatPoints 1`, `sv_cheats 1`, JKG stormtrooper commander only): skips `NPC_FindCombatPoint` / move goals to `point_combat`; scouts and approach intents use `ST_HuntEnemy` instead. Nav graph pathfinding to the enemy still runs. Investigation fallback to CP is also skipped (direct bbox investigate still works).
+
 ### Level design intent
 
 Mapper-placed **`point_combat`** entities (`SP_point_combat` in `NPC_combat.cpp`):
@@ -246,8 +248,9 @@ NPC_BSST_Default_JKG
 | Locomotion execution | Snap | `jkg_npc_move.cpp`, `g_active.cpp` |
 | Aim spread / pain | Stock | `jkg_npc_aim.cpp`, wider E-11 in `jkg_tuning.h` |
 | State debug | — | `g_jkgDebugNpcState` + `jkg_npc_state_debug.cpp` (`G_DebugLine` markers) |
+| No combat points | — | `g_jkgNoCombatPoints` gates `ST_Commander_JKG` CP picks |
 
-JKG did **not** replace combat-point or commander architecture.
+JKG did **not** replace combat-point or commander architecture (except optional `g_jkgNoCombatPoints` bypass).
 
 ---
 
