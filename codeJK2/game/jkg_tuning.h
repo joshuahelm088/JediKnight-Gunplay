@@ -46,7 +46,7 @@ Each override keeps the stock value in a trailing comment for easy diffing.
 #undef  BOWCASTER_DAMAGE
 #define BOWCASTER_DAMAGE			60		// stock 45
 #undef  BOWCASTER_SIZE
-#define BOWCASTER_SIZE				6		// stock 2
+#define BOWCASTER_SIZE				3		// stock 2; same as BLASTER_BOLT_SIZE
 #undef  BOWCASTER_ALT_SPREAD
 #define BOWCASTER_ALT_SPREAD		2.2f	// stock 5.0f
 
