@@ -7628,6 +7628,13 @@ static bool PM_DoChargedWeapons( void )
 	//------------------
 	case WP_BOWCASTER:
 
+		// >>> JKG HOOK: NPC bowcaster uses aim volleys, not stock charge (g_jkgAI).
+		if ( JKG_AI && pm->gent && pm->gent->NPC && pm->ps->clientNum )
+		{
+			break;
+		}
+		// <<< JKG HOOK
+
 		// main-fire charges the weapon
 		if ( pm->cmd.buttons & BUTTON_ATTACK )
 		{
@@ -8001,6 +8008,7 @@ static void PM_Weapon( void )
 				pm->cmd.buttons |= BUTTON_ALT_ATTACK;
 			}
 			pm->gent->client->fireDelay = 0;
+			pm->gent->client->jkgCombatAimPose = qfalse;
 			delayed_fire = qtrue;
 		}
 		else
@@ -8010,6 +8018,18 @@ static void PM_Weapon( void )
 				G_SoundOnEnt( pm->gent, CHAN_WEAPON, "sound/weapons/rocket/tick.wav" );
 			}
 		}
+	}
+
+	if ( JKG_AI
+		&& pm->gent && pm->gent->client && pm->gent->NPC && pm->ps->clientNum
+		&& pm->gent->client->jkgCombatAimPose
+		&& pm->gent->client->fireDelay > 0
+		&& !delayed_fire
+		&& ( pm->cmd.buttons & ( BUTTON_ATTACK | BUTTON_ALT_ATTACK ) ) )
+	{
+		pm->ps->weaponstate = WEAPON_FIRING;
+		PM_SetAnim( pm, SETANIM_TORSO, TORSO_WEAPONREADY4, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD );
+		return;
 	}
 
    // don't allow attack until all buttons are up
@@ -8198,7 +8218,7 @@ static void PM_Weapon( void )
 			break;
 
 		case WP_BLASTER:
-			PM_SetAnim( pm, SETANIM_TORSO, JKG_WEAPONS ? BOTH_ATTACK4 : BOTH_ATTACK3, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
+			PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK3, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
 			break;
 
 		case WP_DISRUPTOR:
@@ -8280,6 +8300,24 @@ static void PM_Weapon( void )
 	{
 		// charging weapons may want to do their own ammo logic.
 		trueCount = PM_DoChargingAmmoUsage( &amount );
+	}
+
+	if ( delayed_fire && pm->gent && pm->gent->client && pm->gent->client->jkgCombatAimPose )
+	{
+		pm->gent->client->jkgCombatAimPose = qfalse;
+		switch ( pm->ps->weapon )
+		{
+		case WP_BRYAR_PISTOL:
+		case WP_BLASTER_PISTOL:
+			PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK2, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_RESTART|SETANIM_FLAG_HOLD );
+			break;
+		case WP_BLASTER:
+			PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK3, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART );
+			break;
+		default:
+			PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK3, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_RESTART|SETANIM_FLAG_HOLD );
+			break;
+		}
 	}
 
 	pm->ps->weaponstate = WEAPON_FIRING;

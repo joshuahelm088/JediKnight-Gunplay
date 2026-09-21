@@ -69,6 +69,119 @@ float CG_WeaponChargeFraction( const playerState_t *ps )
 	return val;
 }
 
+/*
+=================
+CG_JKG_NpcBowcasterAimChargeFraction
+
+NPC bowcaster volley aim (3/5 bolts): green muzzle ramp during fireDelay windup,
+not stock WEAPON_CHARGING. Returns qfalse if this entity should not draw aim glow.
+=================
+*/
+qboolean CG_JKG_NpcBowcasterAimChargeFraction( centity_t *cent, const playerState_t *ps, float *outVal )
+{
+	int aimMs;
+	int volley;
+	float maxChargeTime;
+	float val;
+
+	if ( !outVal || !cent || !ps )
+	{
+		return qfalse;
+	}
+
+	if ( !g_jkgplay || !g_jkgplay->integer )
+	{
+		return qfalse;
+	}
+
+	if ( ps->weapon != WP_BOWCASTER )
+	{
+		return qfalse;
+	}
+
+	if ( cent->currentState.number == 0 )
+	{
+		return qfalse;
+	}
+
+	if ( cent->currentState.torsoAnim != TORSO_WEAPONREADY4 )
+	{
+		return qfalse;
+	}
+
+	volley = ps->weaponShotCount;
+	if ( volley < 3 && cent->gent && cent->gent->NPC )
+	{
+		volley = cent->gent->NPC->jkgBowcasterVolleyShots;
+	}
+
+	if ( volley < 3 )
+	{
+		return qfalse;
+	}
+
+	if ( volley >= 5 )
+	{
+		if ( !g_jkgBowcasterAimDelayFive )
+		{
+			return qfalse;
+		}
+		aimMs = g_jkgBowcasterAimDelayFive->integer;
+	}
+	else
+	{
+		if ( !g_jkgBowcasterAimDelayTriple )
+		{
+			return qfalse;
+		}
+		aimMs = g_jkgBowcasterAimDelayTriple->integer;
+	}
+
+	if ( aimMs < 1 )
+	{
+		aimMs = 1;
+	}
+
+	maxChargeTime = (float)aimMs;
+	val = ( cg.time - ps->weaponChargeTime ) / maxChargeTime;
+
+	if ( val < 0.0f )
+	{
+		val = 0.0f;
+	}
+	else if ( val > 1.0f )
+	{
+		val = 1.0f;
+	}
+
+	*outVal = val;
+	return qtrue;
+}
+
+void CG_JKG_DrawNpcBowcasterAimGlow( centity_t *cent, const vec3_t muzzleOrigin )
+{
+	float val;
+	vec3_t origin;
+	vec3_t WHITE = {1.0f, 1.0f, 1.0f};
+	int shader;
+
+	if ( !cent || !cent->gent || !cent->gent->client )
+	{
+		return;
+	}
+
+	if ( !CG_JKG_NpcBowcasterAimChargeFraction( cent, &cent->gent->client->ps, &val ) )
+	{
+		return;
+	}
+
+	VectorCopy( muzzleOrigin, origin );
+	shader = cgi_R_RegisterShader( "gfx/effects/greenFrontFlash" );
+	val += Q_flrand( 0.0f, 1.0f ) * 0.5f;
+	FX_AddSprite( origin, NULL, NULL, 3.0f * val, 0.0f, 0.7f, 0.7f, WHITE, WHITE,
+		Q_flrand( 0.0f, 1.0f ) * 360, 0.0f, 1.0f, shader, FX_USE_ALPHA );
+}
+
 #define	PHASER_HOLDFRAME	2
 int cgi_UI_GetMenuInfo(char *menuFile,int *x,int *y);
 extern void G_SoundOnEnt( gentity_t *ent, soundChannel_t channel, const char *soundPath );
@@ -1242,42 +1355,61 @@ void CG_AddViewWeapon( playerState_t *ps )
 		CG_LightningBolt( cent, flash.origin );
 	}
 
-	// Do special charge bits
+	// Do special charge bits (player stock charge + JKG NPC bowcaster 3/5 aim glow)
 	//-----------------------
-	if (( ps->weaponstate == WEAPON_CHARGING_ALT && ps->weapon == WP_BRYAR_PISTOL )
-			|| ( ps->weapon == WP_BOWCASTER && ps->weaponstate == WEAPON_CHARGING )
-			|| ( ps->weapon == WP_DEMP2 && ps->weaponstate == WEAPON_CHARGING_ALT ))
 	{
+		qboolean npcBowcasterAimGlow = qfalse;
+		qboolean drawChargeFx = qfalse;
 		int		shader = 0;
-		float	val = CG_WeaponChargeFraction( ps );
+		float	val = 0.0f;
 		float	scale = 1.0f;
 		vec3_t	WHITE	= {1.0f,1.0f,1.0f};
-		if ( ps->weapon == WP_BRYAR_PISTOL )
+
+		if ( CG_JKG_NpcBowcasterAimChargeFraction( cent, ps, &val ) )
 		{
-			shader = cgi_R_RegisterShader( "gfx/effects/bryarFrontFlash" );
-		}
-		else if ( ps->weapon == WP_BOWCASTER )
-		{
+			drawChargeFx = qtrue;
+			npcBowcasterAimGlow = qtrue;
 			shader = cgi_R_RegisterShader( "gfx/effects/greenFrontFlash" );
 		}
-		else if ( ps->weapon == WP_DEMP2 )
+		else if (( ps->weaponstate == WEAPON_CHARGING_ALT && ps->weapon == WP_BRYAR_PISTOL )
+				|| ( ps->weapon == WP_BOWCASTER && ps->weaponstate == WEAPON_CHARGING )
+				|| ( ps->weapon == WP_DEMP2 && ps->weaponstate == WEAPON_CHARGING_ALT ))
 		{
-			shader = cgi_R_RegisterShader( "gfx/misc/lightningFlash" );
-			scale = 1.75f;
+			drawChargeFx = qtrue;
+			val = CG_WeaponChargeFraction( ps );
+			if ( ps->weapon == WP_BRYAR_PISTOL )
+			{
+				shader = cgi_R_RegisterShader( "gfx/effects/bryarFrontFlash" );
+			}
+			else if ( ps->weapon == WP_BOWCASTER )
+			{
+				shader = cgi_R_RegisterShader( "gfx/effects/greenFrontFlash" );
+			}
+			else if ( ps->weapon == WP_DEMP2 )
+			{
+				shader = cgi_R_RegisterShader( "gfx/misc/lightningFlash" );
+				scale = 1.75f;
+			}
 		}
 
-		if ( val >= 1.0f )
+		if ( drawChargeFx )
 		{
-			CGCam_Shake( 0.1f, 100 );
-		}
-		else
-		{
-			CGCam_Shake( val * val * 0.3f, 100 );
-		}
+			if ( !npcBowcasterAimGlow )
+			{
+				if ( val >= 1.0f )
+				{
+					CGCam_Shake( 0.1f, 100 );
+				}
+				else
+				{
+					CGCam_Shake( val * val * 0.3f, 100 );
+				}
+			}
 
-		val += Q_flrand(0.0f, 1.0f) * 0.5f;
+			val += Q_flrand(0.0f, 1.0f) * 0.5f;
 
-		FX_AddSprite( flash.origin, NULL, NULL, 3.0f * val * scale, 0.0f, 0.7f, 0.7f, WHITE, WHITE, Q_flrand(0.0f, 1.0f) * 360, 0.0f, 1.0f, shader, FX_USE_ALPHA | FX_DEPTH_HACK );
+			FX_AddSprite( flash.origin, NULL, NULL, 3.0f * val * scale, 0.0f, 0.7f, 0.7f, WHITE, WHITE, Q_flrand(0.0f, 1.0f) * 360, 0.0f, 1.0f, shader, FX_USE_ALPHA | FX_DEPTH_HACK );
+		}
 	}
 
 	// Check if the heavy repeater is finishing up a sustained burst

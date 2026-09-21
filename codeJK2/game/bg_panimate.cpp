@@ -3365,7 +3365,7 @@ void PM_TorsoAnimation( void )
 					}
 					break;
 				case WP_BLASTER:
-					PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONREADY4,SETANIM_FLAG_NORMAL);
+					PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONREADY3,SETANIM_FLAG_NORMAL);
 					//PM_SetAnim(pm,SETANIM_LEGS,BOTH_ATTACK2,SETANIM_FLAG_NORMAL);
 					break;
 				case WP_DISRUPTOR:
@@ -3615,11 +3615,11 @@ void PM_TorsoAnimation( void )
 				case WP_BLASTER:
 					if ( weaponBusy )
 					{
-						PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONREADY4,SETANIM_FLAG_NORMAL);
+						PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONREADY3,SETANIM_FLAG_NORMAL);
 					}
 					else
 					{
-						PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONIDLE4,SETANIM_FLAG_NORMAL);
+					 PM_SetAnim(pm,SETANIM_TORSO,TORSO_WEAPONIDLE3,SETANIM_FLAG_NORMAL);
 					}
 					break;
 

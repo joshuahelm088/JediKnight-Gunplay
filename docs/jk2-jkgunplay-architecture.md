@@ -245,6 +245,7 @@ Requires `g_jkgplay 1` and `g_jkgAI 1`. Stormtroopers skip `point_combat` while 
 | `g_jkgCombatStrafeTime` | `900` | ARCHIVE | Shuffle burst ms |
 | `g_jkgCombatStrafePause` | `700` | ARCHIVE | Stand between shuffles ms |
 | `g_jkgCombatHuntCheatMs` | `2500` | ARCHIVE | After LOS loss, hunt live player this long |
+| `g_jkgCombatAimDelay` | `0` | ARCHIVE | Fallback class `aimDelay` ms (ADS windup before NPC fires) |
 | `g_jkgDebugNpcState` | `0` | CHEAT | Head markers / prints for squadState |
 
 `g_jkgCombat` is the damage/pain subsystem toggle, not this mover.

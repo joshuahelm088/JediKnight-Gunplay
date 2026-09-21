@@ -207,7 +207,9 @@ Copy the template from the repo:
 
 `codeJK2/base/ext_data/jkg_combat_classes.cfg` → `<gamedata>/base/ext_data/jkg_combat_classes.cfg`
 
-Shipped blocks: **`default`** (empty), **`rifle`**, **`pistol`**, **`officer`**.
+Shipped blocks: **`default`** (empty), **`rifle`**, **`pistol`**, **`officer`**, **`bowcaster`**.
+
+NPCs with **`combatClass` omitted or `default`** and **`WP_BOWCASTER`** automatically use the **`bowcaster`** class (movement + `aimDelay`). Any other explicit `combatClass` wins.
 
 **Resolve rule:** if a class sets a key, that value is used; if the key is omitted, the matching **`g_jkgCombat*` cvar is read live** (console works without a map restart for `default` and for any unset key).
 
@@ -222,6 +224,7 @@ Shipped blocks: **`default`** (empty), **`rifle`**, **`pistol`**, **`officer`**.
 | `strafeTime` | `g_jkgCombatStrafeTime` | 900 | Shuffle burst (ms) |
 | `strafePause` | `g_jkgCombatStrafePause` | 700 | Stand time between shuffles (ms) |
 | `huntCheatMs` | `g_jkgCombatHuntCheatMs` | 2500 | After LOS loss, path to live player pos this long; then last-known. `0` = last-known only |
+| `aimDelay` | `g_jkgCombatAimDelay` | 0 | ms ADS windup before the bolt (`TORSO_WEAPONREADY4`); then normal fire anim |
 
 Master switches (not class keys): **`g_jkgCombatMove`**, **`g_jkgNoCombatPoints`**.
 
@@ -235,6 +238,7 @@ Shipped class numbers (from the template cfg; omitted `moveDelay` uses the cvar)
 | `rifle` | 256 | 400 | Typical E-11 trooper |
 | `pistol` | 128 | 224 | Closer band |
 | `officer` | 192 | 288 | Between rifle and pistol |
+| `bowcaster` | 256 | 400 | Default for bowcaster weapon; `aimDelay` 1000 ms |
 
 Savegames store `gNPC_t::jkgCombatClass[32]`. Older JKG saves without that field can fail to load.
 

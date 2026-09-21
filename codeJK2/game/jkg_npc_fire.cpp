@@ -119,6 +119,57 @@ void JKG_ApplyNpcBurstFireMode( gentity_t *ent )
 	ent->NPC->burstCount = 0;
 }
 
+void JKG_ApplyNpcCombatClassAimDelay( gentity_t *ent )
+{
+	int aimMs;
+	int merged;
+
+	if ( !JKG_AI || !ent || !ent->client || !ent->NPC )
+	{
+		return;
+	}
+
+	if ( ent->client->ps.weapon == WP_BOWCASTER )
+	{
+		return;
+	}
+
+	aimMs = JKG_GetCombatAimDelay( ent );
+	if ( aimMs <= 0 )
+	{
+		ent->client->jkgCombatAimPose = qfalse;
+		return;
+	}
+
+	merged = ent->client->fireDelay;
+	if ( aimMs > merged )
+	{
+		ent->client->fireDelay = aimMs;
+	}
+
+	if ( ent->client->fireDelay >= aimMs )
+	{
+		ent->client->jkgCombatAimPose = qtrue;
+	}
+}
+
+void JKG_AdjustNpcShotTimeForFireDelay( gentity_t *ent )
+{
+	if ( !ent || !ent->NPC || !ent->client )
+	{
+		return;
+	}
+
+	if ( ent->client->fireDelay > 0 )
+	{
+		const int holdUntil = level.time + ent->client->fireDelay;
+		if ( ent->NPC->shotTime < holdUntil )
+		{
+			ent->NPC->shotTime = holdUntil;
+		}
+	}
+}
+
 qboolean JKG_NpcBurstShootThink( void )
 {
 	int delay;
@@ -170,6 +221,10 @@ qboolean JKG_NpcBurstShootThink( void )
 	}
 
 	NPCInfo->shotTime = level.time + delay;
+	if ( JKG_AI )
+	{
+		JKG_AdjustNpcShotTimeForFireDelay( NPC );
+	}
 	NPC->attackDebounceTime = level.time + NPC_AttackDebounceForWeapon();
 
 	return qtrue;

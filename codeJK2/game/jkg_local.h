@@ -52,6 +52,11 @@ extern cvar_t *g_jkgCombatStrafeDist;	// lateral shuffle distance
 extern cvar_t *g_jkgCombatStrafeTime;	// ms of a shuffle burst
 extern cvar_t *g_jkgCombatStrafePause;	// ms of standing between shuffles
 extern cvar_t *g_jkgCombatHuntCheatMs;	// ms after LOS loss to still path toward live enemy pos
+extern cvar_t *g_jkgCombatAimDelay;	// fallback ms ADS windup before NPC fires (class aimDelay key)
+extern cvar_t *g_jkgBowcasterAimDelaySingle;	// NPC bowcaster aim ms before 1 bolt
+extern cvar_t *g_jkgBowcasterAimDelayTriple;	// NPC bowcaster aim ms before 3 bolts
+extern cvar_t *g_jkgBowcasterAimDelayFive;	// NPC bowcaster aim ms before 5 bolts
+extern cvar_t *g_jkgBowcasterRepause;	// NPC bowcaster ms after volley before next aim cycle
 extern cvar_t *g_jkgArmor;		// separate MAX_ARMOR system (armor no longer clamped to max health)
 extern cvar_t *g_jkgMaxArmor;	// player shield cap when g_jkgArmor is on (STAT_MAX_ARMOR)
 extern cvar_t *g_jkgShieldStationGive;	// shield points per tick (stock 4; default 12 = 3x)
@@ -84,6 +89,9 @@ void JKG_MissileClipToNpcShotHitboxes( gentity_t *missile, const vec3_t start, c
 
 void JKG_ApplyNpcBurstFireMode( gentity_t *ent );
 qboolean JKG_NpcBurstShootThink( void );
+qboolean JKG_NpcBowcasterShootThink( void );
+void JKG_NpcBowcasterMaintainAttack( gentity_t *ent, usercmd_t *ucmd );
+int JKG_NpcBowcasterVolleyShotsForFire( gentity_t *ent );
 
 int JKG_NpcScaleDesiredSpeed( int speed );
 void JKG_NPCApplyStopSlowdown( gentity_t *ent );
@@ -130,6 +138,9 @@ typedef struct jkgCombatMoveParms_s {
 
 void JKG_LoadCombatClasses( void );
 void JKG_GetCombatMoveParms( const gentity_t *ent, jkgCombatMoveParms_t *out );
+int JKG_GetCombatAimDelay( const gentity_t *ent );
+void JKG_ApplyNpcCombatClassAimDelay( gentity_t *ent );
+void JKG_AdjustNpcShotTimeForFireDelay( gentity_t *ent );
 
 // Sets ps.stats[STAT_MAX_ARMOR] from g_jkgMaxArmor when JKG_ARMOR is on.
 void JKG_ApplyMaxArmor( gclient_t *client );

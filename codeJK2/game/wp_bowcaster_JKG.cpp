@@ -26,6 +26,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "wp_saber.h"
 #include "w_local.h"
 #include "g_functions.h"
+#include "jkg_local.h"
 
 //-------------------
 //	Wookiee Bowcaster
@@ -43,6 +44,30 @@ static void WP_BowcasterMainFire_JKG( gentity_t *ent )
 	VectorCopy( wpMuzzle, start );
 	WP_TraceSetStart( ent, start, vec3_origin, vec3_origin );//make sure our start point isn't on the other side of a wall
 
+	if ( ent->NPC && JKG_AI )
+	{
+		count = JKG_NpcBowcasterVolleyShotsForFire( ent );
+	}
+	else
+	{
+		count = ( level.time - ent->client->ps.weaponChargeTime ) / BOWCASTER_CHARGE_UNIT;
+
+		if ( count < 1 )
+		{
+			count = 1;
+		}
+		else if ( count > 5 )
+		{
+			count = 5;
+		}
+
+		if ( !(count & 1 ))
+		{
+			// if we aren't odd, knock us down a level
+			count--;
+		}
+	}
+
 	// Do the damages
 	if ( ent->s.number != 0 )
 	{
@@ -58,23 +83,6 @@ static void WP_BowcasterMainFire_JKG( gentity_t *ent )
 		{
 			damage = BOWCASTER_NPC_DAMAGE_HARD;
 		}
-	}
-
-	count = ( level.time - ent->client->ps.weaponChargeTime ) / BOWCASTER_CHARGE_UNIT;
-
-	if ( count < 1 )
-	{
-		count = 1;
-	}
-	else if ( count > 5 )
-	{
-		count = 5;
-	}
-
-	if ( !(count & 1 ))
-	{
-		// if we aren't odd, knock us down a level
-		count--;
 	}
 
 //	if ( ent->client && ent->client->ps.powerups[PW_WEAPON_OVERCHARGE] > 0 && ent->client->ps.powerups[PW_WEAPON_OVERCHARGE] > cg.time )

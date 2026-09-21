@@ -821,6 +821,8 @@ void CG_DPPrevForcePower_f( void );
 void CG_RegisterWeapon( int weaponNum );
 float CG_WeaponChargeMaxTime( int weapon );
 float CG_WeaponChargeFraction( const playerState_t *ps );
+qboolean CG_JKG_NpcBowcasterAimChargeFraction( centity_t *cent, const playerState_t *ps, float *outVal );
+void CG_JKG_DrawNpcBowcasterAimGlow( centity_t *cent, const vec3_t muzzleOrigin );
 void CG_RegisterItemVisuals( int itemNum );
 void CG_RegisterItemSounds( int itemNum );
 

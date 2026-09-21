@@ -5440,6 +5440,23 @@ extern vmCvar_t	cg_thirdPersonAlpha;
 				cent->gent->client->renderInfo.mPCalcTime = cg.time;
 			}
 
+			if ( cent->currentState.weapon == WP_BOWCASTER && cent->gent && cent->gent->client )
+			{
+				vec3_t bowMuzzle;
+
+				VectorCopy( cent->gent->client->renderInfo.muzzlePoint, bowMuzzle );
+				if ( cent->gent->weaponModel != -1
+					&& cent->gent->ghoul2.size() > (unsigned)cent->gent->weaponModel
+					&& cent->gent->ghoul2[cent->gent->weaponModel].mModelindex != -1 )
+				{
+					mdxaBone_t bowBoltMatrix;
+
+					gi.G2API_GetBoltMatrix( cent->gent->ghoul2, cent->gent->weaponModel, 0, &bowBoltMatrix, tempAngles, ent.origin, cg.time, cgs.model_draw, cent->currentState.modelScale );
+					gi.G2API_GiveMeVectorFromMatrix( bowBoltMatrix, ORIGIN, bowMuzzle );
+				}
+				CG_JKG_DrawNpcBowcasterAimGlow( cent, bowMuzzle );
+			}
+
 			// Pick the right effect for the type of weapon we are, defaults to no effect unless explicitly specified
 			if ( cent->muzzleFlashTime > 0 && wData && !(cent->currentState.eFlags & EF_LOCKED_TO_WEAPON ))
 			{
@@ -5935,6 +5952,13 @@ Ghoul2 Insert End
 				cent->gent->client->renderInfo.mPCalcTime = cg.time;
 				// Weapon wasn't firing anymore, so ditch any weapon associated looping sounds.
 				//cent->gent->s.loopSound = 0;
+			}
+
+			// JKG: NPC bowcaster 3/5-bolt aim glow (MD3 path — Ghoul2 NPCs use weapon bolt path earlier)
+			if ( cent->gent && cent->gent->client && wData && cent->currentState.weapon == WP_BOWCASTER )
+			{
+				CG_PositionEntityOnTag( &flash, &gun, gun.hModel, "tag_flash" );
+				CG_JKG_DrawNpcBowcasterAimGlow( cent, flash.origin );
 			}
 		}
 	}

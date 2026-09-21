@@ -887,6 +887,13 @@ void NPC_ApplyWeaponFireDelay(void)
 		client->fireDelay = 0;
 		break;
 	}
+
+	// >>> JKG HOOK: combat-class aim delay (g_jkgAI).
+	if ( JKG_AI )
+	{
+		JKG_ApplyNpcCombatClassAimDelay( NPC );
+	}
+	// <<< JKG HOOK
 };
 
 /*
@@ -902,6 +909,11 @@ void ShootThink( void )
 		return;
 */
 
+	// >>> JKG HOOK: JKG bowcaster aim volleys (g_jkgAI).
+	if ( JKG_AI && JKG_NpcBowcasterShootThink() )
+	{
+		return;
+	}
 	// >>> JKG HOOK: JKG burst fire (g_jkgAI).
 	if ( JKG_AI && JKG_NpcBurstShootThink() )
 	{
@@ -979,6 +991,12 @@ void ShootThink( void )
 	}
 
 	NPCInfo->shotTime = level.time + delay;
+	// >>> JKG HOOK: hold shotTime through class aim windup (g_jkgAI).
+	if ( JKG_AI )
+	{
+		JKG_AdjustNpcShotTimeForFireDelay( NPC );
+	}
+	// <<< JKG HOOK
 	NPC->attackDebounceTime = level.time + NPC_AttackDebounceForWeapon();
 }
 
@@ -1005,8 +1023,18 @@ void WeaponThink( qboolean inCombat )
 
 	if ( client->ps.weaponstate != WEAPON_READY && client->ps.weaponstate != WEAPON_FIRING && client->ps.weaponstate != WEAPON_IDLE)
 	{
-		return;
+		if ( !( JKG_AI && client->ps.weapon == WP_BOWCASTER && client->ps.weaponstate == WEAPON_CHARGING ) )
+		{
+			return;
+		}
 	}
+
+	// >>> JKG HOOK: hold attack during bowcaster aim windup (g_jkgAI).
+	if ( JKG_AI )
+	{
+		JKG_NpcBowcasterMaintainAttack( NPC, &ucmd );
+	}
+	// <<< JKG HOOK
 
 	if ( level.time < NPCInfo->shotTime )
 	{

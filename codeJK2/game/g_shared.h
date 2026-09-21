@@ -765,6 +765,7 @@ public:
 	signed char		forced_forwardmove;
 	signed char		forced_rightmove;
 	int				fireDelay;		//msec to delay calling G_FireWeapon after EV_FIREWEAPON event is called
+	qboolean		jkgCombatAimPose;	// JKG: TORSO_WEAPONREADY4 during class aimDelay windup
 
 	//Used to be in gentity_t, now here.. mostly formation stuff
 	team_t		playerTeam;

@@ -63,6 +63,11 @@ cvar_t *g_jkgCombatStrafeDist;
 cvar_t *g_jkgCombatStrafeTime;
 cvar_t *g_jkgCombatStrafePause;
 cvar_t *g_jkgCombatHuntCheatMs;
+cvar_t *g_jkgCombatAimDelay;
+cvar_t *g_jkgBowcasterAimDelaySingle;
+cvar_t *g_jkgBowcasterAimDelayTriple;
+cvar_t *g_jkgBowcasterAimDelayFive;
+cvar_t *g_jkgBowcasterRepause;
 
 static int JKG_CvarIntegerNonNegative( cvar_t *cv )
 {
@@ -209,4 +214,9 @@ void JKG_RegisterCvars( void )
 	g_jkgCombatStrafeTime = gi.cvar( "g_jkgCombatStrafeTime", "900", CVAR_ARCHIVE );
 	g_jkgCombatStrafePause = gi.cvar( "g_jkgCombatStrafePause", "700", CVAR_ARCHIVE );
 	g_jkgCombatHuntCheatMs = gi.cvar( "g_jkgCombatHuntCheatMs", "2500", CVAR_ARCHIVE );
+	g_jkgCombatAimDelay = gi.cvar( "g_jkgCombatAimDelay", "0", CVAR_ARCHIVE );
+	g_jkgBowcasterAimDelaySingle = gi.cvar( "g_jkgBowcasterAimDelaySingle", "1000", CVAR_ARCHIVE );
+	g_jkgBowcasterAimDelayTriple = gi.cvar( "g_jkgBowcasterAimDelayTriple", "2000", CVAR_ARCHIVE );
+	g_jkgBowcasterAimDelayFive = gi.cvar( "g_jkgBowcasterAimDelayFive", "4000", CVAR_ARCHIVE );
+	g_jkgBowcasterRepause = gi.cvar( "g_jkgBowcasterRepause", "1000", CVAR_ARCHIVE );
 }

@@ -346,6 +346,7 @@ public:
 
 	int			jkgFireMode;	// JKGunplay NPC fire cadence (see jkgFireMode_t in jkg_local.h)
 	char		jkgCombatClass[32];	// name from NPCs.cfg; looks up ext_data/jkg_combat_classes.cfg
+	int			jkgBowcasterVolleyShots;	// JKG NPC bowcaster: 1/3/5 bolts after aim windup (0 = idle)
 
 	void sg_export(
 		ojk::SavedGameHelper& saved_game) const
@@ -452,6 +453,7 @@ public:
 		saved_game.write<int32_t>(ffireFadeDebounce);
 		saved_game.write<int32_t>(jkgFireMode);
 		saved_game.write<int8_t>(jkgCombatClass);
+		saved_game.write<int32_t>(jkgBowcasterVolleyShots);
 	}
 
 	void sg_import(
@@ -559,6 +561,7 @@ public:
 		saved_game.read<int32_t>(ffireFadeDebounce);
 		saved_game.read<int32_t>(jkgFireMode);
 		saved_game.read<int8_t>(jkgCombatClass);
+		saved_game.read<int32_t>(jkgBowcasterVolleyShots);
 	}
 }; // gNPC_t
 

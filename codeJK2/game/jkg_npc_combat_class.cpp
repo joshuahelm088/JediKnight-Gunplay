@@ -26,6 +26,7 @@ typedef struct jkgCombatClass_s {
 	int		strafePause;
 	int		huntCheatMs;
 	int		moveDelay;
+	int		aimDelay;
 } jkgCombatClass_t;
 
 static jkgCombatClass_t	s_classes[JKG_MAX_COMBAT_CLASSES];
@@ -74,6 +75,7 @@ static void JKG_ClearCombatClass( jkgCombatClass_t *cls )
 	cls->strafePause = JKG_COMBAT_CLASS_UNSET;
 	cls->huntCheatMs = JKG_COMBAT_CLASS_UNSET;
 	cls->moveDelay = JKG_COMBAT_CLASS_UNSET;
+	cls->aimDelay = JKG_COMBAT_CLASS_UNSET;
 }
 
 static jkgCombatClass_t *JKG_FindCombatClass( const char *name )
@@ -94,6 +96,34 @@ static jkgCombatClass_t *JKG_FindCombatClass( const char *name )
 	}
 
 	return NULL;
+}
+
+static const jkgCombatClass_t *JKG_ResolveCombatClass( const gentity_t *ent )
+{
+	const jkgCombatClass_t *cls;
+
+	cls = &s_classes[0];
+	if ( ent && ent->NPC && ent->NPC->jkgCombatClass[0] )
+	{
+		jkgCombatClass_t *found = JKG_FindCombatClass( ent->NPC->jkgCombatClass );
+		if ( found )
+		{
+			cls = found;
+		}
+	}
+
+	if ( ent && ent->client && ent->NPC
+		&& ent->client->ps.weapon == WP_BOWCASTER
+		&& ( !ent->NPC->jkgCombatClass[0] || !Q_stricmp( ent->NPC->jkgCombatClass, "default" ) ) )
+	{
+		jkgCombatClass_t *bow = JKG_FindCombatClass( "bowcaster" );
+		if ( bow )
+		{
+			cls = bow;
+		}
+	}
+
+	return cls;
 }
 
 static jkgCombatClass_t *JKG_EnsureCombatClass( const char *name )
@@ -237,8 +267,63 @@ static void JKG_ParseCombatClassBlock( const char **p, jkgCombatClass_t *cls )
 			continue;
 		}
 
+		if ( !Q_stricmp( token, "aimDelay" ) )
+		{
+			if ( COM_ParseInt( p, &n ) )
+			{
+				SkipRestOfLine( p );
+				continue;
+			}
+			cls->aimDelay = n;
+			continue;
+		}
+
 		gi.Printf( S_COLOR_YELLOW"WARNING: unknown combat class key '%s' in '%s'\n", token, cls->name );
 		SkipRestOfLine( p );
+	}
+}
+
+static void JKG_RegisterBuiltinCombatClasses( void )
+{
+	jkgCombatClass_t *bow;
+
+	bow = JKG_EnsureCombatClass( "bowcaster" );
+	if ( !bow )
+	{
+		return;
+	}
+
+	if ( bow->rangeMin < 0 )
+	{
+		bow->rangeMin = 256;
+	}
+	if ( bow->rangeMax < 0 )
+	{
+		bow->rangeMax = 400;
+	}
+	if ( bow->stepDist < 0 )
+	{
+		bow->stepDist = 80;
+	}
+	if ( bow->strafeDist < 0 )
+	{
+		bow->strafeDist = 64;
+	}
+	if ( bow->strafeTime < 0 )
+	{
+		bow->strafeTime = 900;
+	}
+	if ( bow->strafePause < 0 )
+	{
+		bow->strafePause = 700;
+	}
+	if ( bow->huntCheatMs < 0 )
+	{
+		bow->huntCheatMs = 2500;
+	}
+	if ( bow->aimDelay < 0 )
+	{
+		bow->aimDelay = 1000;
 	}
 }
 
@@ -263,6 +348,7 @@ void JKG_LoadCombatClasses( void )
 	if ( len <= 0 )
 	{
 		gi.Printf( S_COLOR_YELLOW"WARNING: ext_data/jkg_combat_classes.cfg not found; using cvar combat defaults\n" );
+		JKG_RegisterBuiltinCombatClasses();
 		return;
 	}
 
@@ -300,6 +386,21 @@ void JKG_LoadCombatClasses( void )
 
 	COM_EndParseSession();
 	gi.FS_FreeFile( buffer );
+
+	JKG_RegisterBuiltinCombatClasses();
+}
+
+int JKG_GetCombatAimDelay( const gentity_t *ent )
+{
+	const jkgCombatClass_t *cls;
+
+	if ( !ent || !ent->client )
+	{
+		return 0;
+	}
+
+	cls = JKG_ResolveCombatClass( ent );
+	return JKG_ResolveClassInt( cls->aimDelay, g_jkgCombatAimDelay );
 }
 
 void JKG_GetCombatMoveParms( const gentity_t *ent, jkgCombatMoveParms_t *out )
@@ -314,15 +415,7 @@ void JKG_GetCombatMoveParms( const gentity_t *ent, jkgCombatMoveParms_t *out )
 
 	memset( out, 0, sizeof( *out ) );
 
-	cls = &s_classes[0];
-	if ( ent && ent->NPC && ent->NPC->jkgCombatClass[0] )
-	{
-		jkgCombatClass_t *found = JKG_FindCombatClass( ent->NPC->jkgCombatClass );
-		if ( found )
-		{
-			cls = found;
-		}
-	}
+	cls = JKG_ResolveCombatClass( ent );
 
 	out->rangeMin = JKG_ResolveClassInt( cls->rangeMin, g_jkgCombatIdealRangeMin );
 	out->rangeMax = JKG_ResolveClassInt( cls->rangeMax, g_jkgCombatIdealRangeMax );
