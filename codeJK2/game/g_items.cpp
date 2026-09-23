@@ -883,14 +883,16 @@ void FinishSpawningItem( gentity_t *ent ) {
 		gi.trace( &tr, ent->s.origin, ent->mins, ent->maxs, dest, ent->s.number, MASK_SOLID|CONTENTS_PLAYERCLIP, G2_NOCOLLIDE, 0 );
 		if ( tr.startsolid )
 		{
-			if ( g_entities[tr.entityNum].inuse )
+			const char *entName = ( ent->classname && ent->classname[0] ) ? ent->classname : "<no classname>";
+			const char *targetName = ( ent->targetname && ent->targetname[0] ) ? ent->targetname : "<none>";
+			const char *inName = "world/solid";
+			if ( tr.entityNum >= 0 && tr.entityNum < ENTITYNUM_MAX_NORMAL && g_entities[tr.entityNum].inuse
+				&& g_entities[tr.entityNum].classname && g_entities[tr.entityNum].classname[0] )
 			{
-				gi.Printf (S_COLOR_RED"FinishSpawningItem: removing %s startsolid at %s (in a %s)\n", ent->classname, vtos(ent->s.origin), g_entities[tr.entityNum].classname );
+				inName = g_entities[tr.entityNum].classname;
 			}
-			else
-			{
-				gi.Printf (S_COLOR_RED"FinishSpawningItem: removing %s startsolid at %s (in a %s)\n", ent->classname, vtos(ent->s.origin) );
-			}
+			gi.Printf( S_COLOR_RED "FinishSpawningItem: removing %s targetname \"%s\" origin \"%.2f %.2f %.2f\" (in %s)\n",
+				entName, targetName, ent->s.origin[0], ent->s.origin[1], ent->s.origin[2] - 1.0f, inName );
 			assert( 0 && "item starting in solid");
 #ifndef FINAL_BUILD
 			if (!g_entities[ENTITYNUM_WORLD].s.radius){	//not a region
