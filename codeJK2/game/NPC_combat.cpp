@@ -45,8 +45,14 @@ extern	CNavigator	navigator;
 
 void ChangeWeapon( gentity_t *ent, int newWeapon );
 
+extern void JKG_ST_OnClearEnemy(gentity_t* self);
+
 void G_ClearEnemy (gentity_t *self)
 {
+	if ( self->enemy )
+	{
+		JKG_ST_OnClearEnemy(self);
+	}
 	NPC_CheckLookTarget( self );
 
 	if ( self->enemy )
@@ -513,8 +519,15 @@ void G_SetEnemy( gentity_t *self, gentity_t *enemy )
 	}
 
 	//Take the enemy
+	gentity_t* previousEnemy = self->enemy;
+	const qboolean hadSpotted = TIMER_Exists( self, "spottedPlayer" );
 	G_ClearEnemy(self);
 	self->enemy = enemy;
+	if ( previousEnemy == enemy && hadSpotted )
+	{
+		// Re-assigning the same enemy is not a new sighting.
+		TIMER_Set( self, "spottedPlayer", 3600000 );
+	}
 }
 
 /*

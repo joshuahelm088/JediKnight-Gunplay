@@ -250,6 +250,22 @@ int Pickup_Battery( gentity_t *ent, gentity_t *other )
 
 extern void WP_SaberInitBladeData( gentity_t *ent );
 extern void CG_ChangeWeapon( int num );
+extern int NPC_WeaponsForTeam( team_t team, int spawnflags, const char *NPC_type );
+extern gitem_t *FindItemForAmmo( ammo_t ammo );
+
+static qboolean JKG_NPCSpawnedWithBlasterPistol( gentity_t *npc )
+{
+	if ( !npc || !npc->client || !npc->NPC_type )
+	{
+		return qfalse;
+	}
+	if ( NPC_WeaponsForTeam( npc->client->playerTeam, npc->spawnflags, npc->NPC_type ) & ( 1 << WP_BLASTER_PISTOL ) )
+	{
+		return qtrue;
+	}
+	return qfalse;
+}
+
 int Pickup_Weapon (gentity_t *ent, gentity_t *other)
 {
 	int		quantity;
@@ -274,6 +290,24 @@ int Pickup_Weapon (gentity_t *ent, gentity_t *other)
 	else
 	{//wasn't dropped
 		quantity = ent->item->quantity?ent->item->quantity:50;
+	}
+
+	if ( ent->item->giTag == WP_BLASTER_PISTOL && !other->s.number )
+	{//player has no enemy pistol slot; dropped officer pistol is ammo only
+		if ( quantity )
+		{
+			Add_Ammo2( other, AMMO_BLASTER, quantity );
+		}
+		return 5;
+	}
+	if ( ent->item->giTag == WP_BLASTER_PISTOL && other->s.number
+		&& !JKG_NPCSpawnedWithBlasterPistol( other ) )
+	{//only NPCs that spawn with this pistol may rearm
+		if ( quantity )
+		{
+			Add_Ammo2( other, AMMO_BLASTER, quantity );
+		}
+		return 5;
 	}
 
 	// add the weapon
@@ -450,6 +484,11 @@ qboolean CheckItemCanBePickedUpByNPC( gentity_t *item, gentity_t *pickerupper )
 		item->item->giTag == INV_SECURITY_KEY ) {
 		return qfalse;
 	}
+	if ( item->item->giType == IT_WEAPON && item->item->giTag == WP_BLASTER_PISTOL
+		&& !JKG_NPCSpawnedWithBlasterPistol( pickerupper ) )
+	{
+		return qfalse;
+	}
 	if ( (item->flags&FL_DROPPED_ITEM)
 		&& item->activator != &g_entities[0]
 		&& pickerupper->s.number
@@ -602,24 +641,37 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 		return;
 	}
 
+	int pickupIndex = ent->s.modelindex;
+	const char *pickupSound = ent->item->pickup_sound;
+	if ( !other->s.number && ent->item->giType == IT_WEAPON && ent->item->giTag == WP_BLASTER_PISTOL )
+	{//player pickup is blaster ammo; do not autoswitch to the enemy pistol
+		gitem_t *ammoItem = FindItemForAmmo( AMMO_BLASTER );
+		if ( ammoItem )
+		{
+			pickupIndex = ammoItem - bg_itemlist;
+			pickupSound = ammoItem->pickup_sound;
+			bHadWeapon = qtrue;
+		}
+	}
+
 	// play the normal pickup sound
 	if ( !other->s.number && g_timescale->value < 1.0f  )
 	{//SIGH... with timescale on, you lose events left and right
 extern void CG_ItemPickup( int itemNum, qboolean bHadItem );
 		// but we're SP so we'll cheat
-		cgi_S_StartSound( NULL, other->s.number, CHAN_AUTO,	cgi_S_RegisterSound( ent->item->pickup_sound ) );
+		cgi_S_StartSound( NULL, other->s.number, CHAN_AUTO,	cgi_S_RegisterSound( pickupSound ) );
 		// show icon and name on status bar
-		CG_ItemPickup( ent->s.modelindex, bHadWeapon );
+		CG_ItemPickup( pickupIndex, bHadWeapon );
 	}
 	else
 	{
 		if ( bHadWeapon )
 		{
-			G_AddEvent( other, EV_ITEM_PICKUP, -ent->s.modelindex );
+			G_AddEvent( other, EV_ITEM_PICKUP, -pickupIndex );
 		}
 		else
 		{
-			G_AddEvent( other, EV_ITEM_PICKUP, ent->s.modelindex );
+			G_AddEvent( other, EV_ITEM_PICKUP, pickupIndex );
 		}
 	}
 

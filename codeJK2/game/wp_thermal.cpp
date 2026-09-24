@@ -52,7 +52,7 @@ void thermalDetonatorExplode( gentity_t *ent )
 
 		ent->takedamage = qfalse; // don't allow double deaths!
 
-		G_RadiusDamage( ent->currentOrigin, ent->owner, weaponData[WP_THERMAL].splashDamage, weaponData[WP_THERMAL].splashRadius, NULL, MOD_EXPLOSIVE_SPLASH );
+		G_RadiusDamage( ent->currentOrigin, ent->owner, weaponData[WP_THERMAL].splashDamage, ent->splashRadius, NULL, MOD_EXPLOSIVE_SPLASH );
 
 		G_PlayEffect( "thermal/explosion", ent->currentOrigin );
 		G_PlayEffect( "thermal/shockwave", ent->currentOrigin );
@@ -270,8 +270,8 @@ void WP_ThermalThink( gentity_t *ent )
 gentity_t *WP_FireThermalDetonator( gentity_t *ent, qboolean alt_fire )
 //---------------------------------------------------------
 {
-	// >>> JKG HOOK: route to JKGunplay thermal fire when enabled (g_jkgWeapons).
-	if ( JKG_WEAPONS )
+	// >>> JKG HOOK: player-only JKGunplay thermal (g_jkgWeapons). NPCs keep stock fire.
+	if ( JKG_WEAPONS && ent->s.number == 0 )
 	{
 		return WP_FireThermalDetonator_JKG( ent, alt_fire );
 	}
