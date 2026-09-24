@@ -133,10 +133,7 @@ gentity_t *TossClientItems( gentity_t *self )
 			self->s.weapon = WP_NONE;
 		}
 	}
-	else if ( weapon == WP_BLASTER_PISTOL )
-	{//FIXME: either drop the pistol and make the pickup only give ammo or drop ammo
-	}
-	else if ( weapon > WP_SABER && weapon <= MAX_PLAYER_WEAPONS )//&& self->client->ps.ammo[ weaponData[weapon].ammoIndex ]
+	else if ( ( weapon > WP_SABER && weapon <= MAX_PLAYER_WEAPONS ) || weapon == WP_BLASTER_PISTOL )//&& self->client->ps.ammo[ weaponData[weapon].ammoIndex ]
 	{
 		self->s.weapon = WP_NONE;
 
@@ -168,6 +165,9 @@ gentity_t *TossClientItems( gentity_t *self )
 				switch ( weapon )
 				{
 				case WP_BRYAR_PISTOL:
+					dropped->count = 20;
+					break;
+				case WP_BLASTER_PISTOL:
 					dropped->count = 20;
 					break;
 				case WP_BLASTER:
@@ -213,7 +213,16 @@ gentity_t *TossClientItems( gentity_t *self )
 				&& weapon != WP_TRIP_MINE
 				&& weapon != WP_DET_PACK )
 			{
-				gi.G2API_InitGhoul2Model( dropped->ghoul2, item->world_model, G_ModelIndex( item->world_model ), NULL_HANDLE, NULL_HANDLE, 0, 0);
+				const char *dropModel = item->world_model;
+				if ( weapon == WP_BLASTER_PISTOL )
+				{//JK2 has no blaster_pistol world mesh; officers use the Bryar glm
+					gitem_t *bryarItem = FindItemForWeapon( WP_BRYAR_PISTOL );
+					if ( bryarItem && bryarItem->world_model )
+					{
+						dropModel = bryarItem->world_model;
+					}
+				}
+				gi.G2API_InitGhoul2Model( dropped->ghoul2, dropModel, G_ModelIndex( dropModel ), NULL_HANDLE, NULL_HANDLE, 0, 0);
 				dropped->s.radius = 10;
 			}
 		}
@@ -3632,7 +3641,7 @@ extern void RunEmplacedWeapon( gentity_t *ent, usercmd_t **ucmd );
 			}
 		}
 	}
-	else if ( self->s.weapon != WP_BLASTER_PISTOL )
+	else
 	{// Sigh...borg shouldn't drop their weapon attachments when they die..
 		self->s.weapon = WP_NONE;
 		if ( self->weaponModel >= 0 && self->ghoul2.size())
