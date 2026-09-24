@@ -35,28 +35,58 @@ static qboolean JKG_IsJkgBurstWeapon( int weapon )
 	return qfalse;
 }
 
-static int JKG_BurstShotsForWeapon( int weapon )
+static int JKG_PistolBurstShots( void )
 {
 	int shots;
 
-	if ( weapon == WP_BLASTER_PISTOL )
-	{
-		shots = JKG_CvarIntegerNonNegative( g_jkgBurstPistolShots );
-	}
-	else if ( weapon == WP_BLASTER )
-	{
-		shots = JKG_CvarIntegerNonNegative( g_jkgBurstShots );
-	}
-	else
-	{
-		shots = 0;
-	}
-
+	shots = JKG_CvarIntegerNonNegative( g_jkgBurstPistolShots );
 	if ( shots < 1 )
 	{
 		shots = 1;
 	}
 	return shots;
+}
+
+// Weighted 1/2/3 like JKG_PickBowcasterVolleyShots (1/3/5). Triple is most common.
+static int JKG_PickBlasterBurstShots( void )
+{
+	const int roll = Q_irand( 0, 99 );
+
+	if ( roll < 50 )
+	{
+		return 3;
+	}
+	if ( roll < 80 )
+	{
+		return 2;
+	}
+	return 1;
+}
+
+static int JKG_PickBurstShotsForWeapon( int weapon )
+{
+	if ( weapon == WP_BLASTER_PISTOL )
+	{
+		return JKG_PistolBurstShots();
+	}
+	if ( weapon == WP_BLASTER )
+	{
+		return JKG_PickBlasterBurstShots();
+	}
+	return 1;
+}
+
+static int JKG_BlasterBurstPauseMs( int burstShots )
+{
+	if ( burstShots >= 3 )
+	{
+		return JKG_CvarIntegerNonNegative( g_jkgBurstPauseTriple );
+	}
+	if ( burstShots >= 2 )
+	{
+		return JKG_CvarIntegerNonNegative( g_jkgBurstPauseDouble );
+	}
+	return JKG_CvarIntegerNonNegative( g_jkgBurstPauseSingle );
 }
 
 static qboolean JKG_NPCUsesBurstCadence( const gentity_t *ent )
@@ -111,11 +141,19 @@ void JKG_ApplyNpcBurstFireMode( gentity_t *ent )
 		return;
 	}
 
-	shots = JKG_BurstShotsForWeapon( weapon );
+	if ( weapon == WP_BLASTER_PISTOL )
+	{
+		shots = JKG_PistolBurstShots();
+		ent->NPC->burstMin = shots;
+		ent->NPC->burstMax = shots;
+	}
+	else
+	{
+		ent->NPC->burstMin = 1;
+		ent->NPC->burstMax = 3;
+	}
 
 	ent->NPC->aiFlags |= NPCAI_BURST_WEAPON;
-	ent->NPC->burstMin = shots;
-	ent->NPC->burstMax = shots;
 	ent->NPC->burstCount = 0;
 }
 
@@ -173,7 +211,6 @@ void JKG_AdjustNpcShotTimeForFireDelay( gentity_t *ent )
 qboolean JKG_NpcBurstShootThink( void )
 {
 	int delay;
-	int shots;
 	int weapon;
 
 	if ( !NPC || !NPC->NPC || !NPC->client )
@@ -198,18 +235,24 @@ qboolean JKG_NpcBurstShootThink( void )
 
 	NPC_ApplyWeaponFireDelay();
 
-	shots = JKG_BurstShotsForWeapon( weapon );
-
 	if ( NPCInfo->burstCount <= 0 )
 	{
-		NPCInfo->burstCount = shots;
+		NPCInfo->burstCount = JKG_PickBurstShotsForWeapon( weapon );
+		NPCInfo->burstMax = NPCInfo->burstCount;
 	}
 
 	NPCInfo->burstCount--;
 
 	if ( NPCInfo->burstCount > 0 )
 	{
-		delay = JKG_CvarIntegerNonNegative( g_jkgBurstShotDelay );
+		if ( weapon == WP_BLASTER_PISTOL )
+		{
+			delay = JKG_CvarIntegerNonNegative( g_jkgBurstPistolShotDelay );
+		}
+		else
+		{
+			delay = JKG_CvarIntegerNonNegative( g_jkgBurstShotDelay );
+		}
 	}
 	else if ( weapon == WP_BLASTER_PISTOL )
 	{
@@ -217,7 +260,7 @@ qboolean JKG_NpcBurstShootThink( void )
 	}
 	else
 	{
-		delay = JKG_CvarIntegerNonNegative( g_jkgBurstPause );
+		delay = JKG_BlasterBurstPauseMs( NPCInfo->burstMax );
 	}
 
 	NPCInfo->shotTime = level.time + delay;

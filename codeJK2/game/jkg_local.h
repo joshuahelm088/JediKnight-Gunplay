@@ -69,10 +69,12 @@ extern cvar_t *g_jkgGunSwayReturn;	// weapon sway return speed (lower = slower r
 extern cvar_t *g_jkgDebugProjectile;	// projectile spawn debug (0=off, 1=server, 2=+client, 3=+NPC)
 extern cvar_t *g_jkgProjectileAabbHits;	// 1=player missiles use NPC shot hulls; enemy missiles and the player stay Ghoul2 mesh
 extern cvar_t *g_jkgNpcHitboxScale;	// default horizontal XY bbox scale for NPCs (1.0 = stock)
-extern cvar_t *g_jkgBurstShots;		// shots per JKG E-11 (WP_BLASTER) burst
 extern cvar_t *g_jkgBurstPistolShots;	// shots per JKG officer pistol (WP_BLASTER_PISTOL) burst
-extern cvar_t *g_jkgBurstShotDelay;	// ms between shots within a burst (blaster and pistol)
-extern cvar_t *g_jkgBurstPause;		// ms after an E-11 burst before the next burst starts
+extern cvar_t *g_jkgBurstShotDelay;	// ms between shots within an E-11 burst
+extern cvar_t *g_jkgBurstPistolShotDelay;	// ms between shots within an officer pistol burst
+extern cvar_t *g_jkgBurstPauseSingle;	// ms after a 1-shot E-11 burst
+extern cvar_t *g_jkgBurstPauseDouble;	// ms after a 2-shot E-11 burst
+extern cvar_t *g_jkgBurstPauseTriple;	// ms after a 3-shot E-11 burst (most common)
 extern cvar_t *g_jkgBurstPistolPause;	// ms after a pistol burst before the next burst starts
 extern cvar_t *g_jkgBryarTapFireTime;	// min ms between player Bryar tap-fires; also uncharged alt recovery (0.5x fireTime)
 extern cvar_t *g_jkgBryarChargeFireTime;	// ms after a fully charged Bryar alt (1.5x fireTime); lerps from tap time by charge level
