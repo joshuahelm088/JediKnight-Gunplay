@@ -222,21 +222,13 @@ static void ST_Speech_JKG(gentity_t* self, int speechType, float failChance)
 		}
 	}
 
-	if (self->NPC->group)
-	{//So they don't all speak at once...
-		//FIXME: if they're not yet mad, they have no group, so distracting a group of them makes them all speak!
-		self->NPC->group->speechDebounceTime = level.time + Q_irand(2000, 4000);
-	}
-	else
-	{
-		TIMER_Set(self, "chatter", Q_irand(2000, 4000));
-	}
-	groupSpeechDebounceTime_JKG[self->client->playerTeam] = level.time + Q_irand(2000, 4000);
-
 	if (self->NPC->blockedSpeechDebounceTime > level.time)
 	{
 		return;
 	}
+
+	// G_AddVoiceEvent writes this only when the line actually starts.
+	const int blockedBefore = self->NPC->blockedSpeechDebounceTime;
 
 	switch (speechType)
 	{
@@ -283,10 +275,58 @@ static void ST_Speech_JKG(gentity_t* self, int speechType, float failChance)
 		G_AddVoiceEvent(self, Q_irand(EV_PUSHED1, EV_PUSHED3), 2000);
 		break;
 	default:
-		break;
+		return;
 	}
 
-	self->NPC->blockedSpeechDebounceTime = level.time + 2000;
+	if (self->NPC->blockedSpeechDebounceTime == blockedBefore)
+	{
+		return;
+	}
+
+	if (self->NPC->group)
+	{//So they don't all speak at once...
+		//FIXME: if they're not yet mad, they have no group, so distracting a group of them makes them all speak!
+		self->NPC->group->speechDebounceTime = level.time + Q_irand(2000, 4000);
+	}
+	else
+	{
+		TIMER_Set(self, "chatter", Q_irand(2000, 4000));
+	}
+	groupSpeechDebounceTime_JKG[self->client->playerTeam] = level.time + Q_irand(2000, 4000);
+}
+
+/*
+-------------------------
+ST_SpeechOnFirstSight_JKG
+
+One bark per NPC the first time that NPC personally sees the enemy.
+Bypasses the group speech timer so a teammate's sound alert does not
+use up this line. Later squadmates who then see the player each get one too.
+-------------------------
+*/
+static void ST_SpeechOnFirstSight_JKG(gentity_t* self)
+{
+	if (!self || !self->NPC)
+	{
+		return;
+	}
+	if (TIMER_Exists(self, "spottedPlayer"))
+	{
+		return;
+	}
+	TIMER_Set(self, "spottedPlayer", 3600000);
+	// A recent sound/alert line on this NPC must not swallow the sight bark.
+	self->NPC->blockedSpeechDebounceTime = 0;
+	ST_Speech_JKG(self, SPEECH_DETECTED, -1.0f);
+}
+
+void JKG_ST_OnClearEnemy(gentity_t* self)
+{
+	if (!self)
+	{
+		return;
+	}
+	TIMER_Remove(self, "spottedPlayer");
 }
 
 void ST_MarkToCover_JKG(gentity_t* self)
@@ -517,6 +557,10 @@ void NPC_BSST_Sleep_JKG(void)
 		{
 			if (&g_entities[0] && g_entities[0].health > 0)
 			{
+				if (!NPC->enemy)
+				{
+					ST_Speech_JKG(NPC, SPEECH_SOUND, 0);
+				}
 				G_SetEnemy(NPC, &g_entities[0]);
 				return;
 			}
@@ -558,6 +602,7 @@ qboolean NPC_CheckEnemyStealth_JKG(gentity_t* target)
 	//If the target is this close, then wake up regardless
 	if ((target_dist = DistanceSquared(target->currentOrigin, NPC->currentOrigin)) < (minDist * minDist) && (NPCInfo->scriptFlags & SCF_LOOK_FOR_ENEMIES))
 	{
+		ST_SpeechOnFirstSight_JKG(NPC);
 		G_SetEnemy(NPC, target);
 		NPCInfo->enemyLastSeenTime = level.time;
 		TIMER_Set(NPC, "attackDelay", Q_irand(500, 2500));
@@ -587,6 +632,7 @@ qboolean NPC_CheckEnemyStealth_JKG(gentity_t* target)
 	{
 		if (target->client->NPC_class == CLASS_ATST)
 		{//can't miss 'em!
+			ST_SpeechOnFirstSight_JKG(NPC);
 			G_SetEnemy(NPC, target);
 			TIMER_Set(NPC, "attackDelay", Q_irand(500, 2500));
 			return qtrue;
@@ -622,6 +668,7 @@ qboolean NPC_CheckEnemyStealth_JKG(gentity_t* target)
 		//Too close?
 		if (dist_rating < DISTANCE_THRESHOLD)
 		{
+			ST_SpeechOnFirstSight_JKG(NPC);
 			G_SetEnemy(NPC, target);
 			TIMER_Set(NPC, "attackDelay", Q_irand(500, 2500));
 			return qtrue;
@@ -711,6 +758,7 @@ qboolean NPC_CheckEnemyStealth_JKG(gentity_t* target)
 
 		if (target_rating > realize && (NPCInfo->scriptFlags & SCF_LOOK_FOR_ENEMIES))
 		{
+			ST_SpeechOnFirstSight_JKG(NPC);
 			G_SetEnemy(NPC, target);
 			NPCInfo->enemyLastSeenTime = level.time;
 			TIMER_Set(NPC, "attackDelay", Q_irand(500, 2500));
@@ -737,6 +785,7 @@ qboolean NPC_CheckEnemyStealth_JKG(gentity_t* target)
 					int	interrogateTime = Q_irand(2000, 4000);
 					ST_Speech_JKG(NPC, SPEECH_SUSPICIOUS, 0);
 					TIMER_Set(NPC, "interrogating", interrogateTime);
+					TIMER_Set(NPC, "spottedPlayer", 3600000);
 					G_SetEnemy(NPC, target);
 					NPCInfo->enemyLastSeenTime = level.time;
 					TIMER_Set(NPC, "attackDelay", interrogateTime);
@@ -744,6 +793,7 @@ qboolean NPC_CheckEnemyStealth_JKG(gentity_t* target)
 				}
 				else
 				{
+					ST_SpeechOnFirstSight_JKG(NPC);
 					G_SetEnemy(NPC, target);
 					NPCInfo->enemyLastSeenTime = level.time;
 					//FIXME: ambush guys (like those popping out of water) shouldn't delay...
@@ -809,7 +859,17 @@ static qboolean NPC_ST_InvestigateEvent_JKG(int eventID, bool extraSuspicious)
 				return qfalse;
 			}
 			//FIXME: what if can't actually see enemy, don't know where he is... should we make them just become very alert and start looking for him?  Or just let combat AI handle this... (act as if you lost him)
-			//ST_Speech_JKG( NPC, SPEECH_CHARGE, 0 );
+			if (!NPC->enemy)
+			{
+				if (level.alertEvents[eventID].type == AET_SOUND)
+				{
+					ST_Speech_JKG(NPC, SPEECH_SOUND, 0);
+				}
+				else
+				{
+					ST_SpeechOnFirstSight_JKG(NPC);
+				}
+			}
 			G_SetEnemy(NPC, level.alertEvents[eventID].owner);
 			NPCInfo->enemyLastSeenTime = level.time;
 			TIMER_Set(NPC, "attackDelay", Q_irand(500, 2500));
@@ -1023,7 +1083,7 @@ void NPC_BSST_Investigate_JKG(void)
 			if (NPC_CheckPlayerTeamStealth_JKG())
 			{
 				//NPCInfo->behaviorState	= BS_HUNT_AND_KILL;//should be auto now
-				ST_Speech_JKG(NPC, SPEECH_DETECTED, 0);
+				// Sight bark is played from the acquire path, or later on first LOS.
 				NPCInfo->tempBehavior = BS_DEFAULT;
 				NPC_UpdateAngles(qtrue, qtrue);
 				return;
@@ -2597,6 +2657,8 @@ void NPC_BSST_Attack_JKG(void)
 	if (NPC_ClearLOS(NPC->enemy))
 	{
 		AI_GroupUpdateEnemyLastSeen(NPCInfo->group, NPC->enemy->currentOrigin);
+		// Alerted by a teammate or a sound, but this is the first time they see the player.
+		ST_SpeechOnFirstSight_JKG(NPC);
 		NPCInfo->enemyLastSeenTime = level.time;
 		enemyLOS = qtrue;
 
