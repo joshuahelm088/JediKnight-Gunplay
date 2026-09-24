@@ -29,8 +29,12 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "g_functions.h"
 
 //---------------------
-//	Thermal Detonator (JKGunplay)
+//	Thermal Detonator (JKGunplay) — player-only fire path.
+//	Stock TD_* stay in weapons.h for NPCs; these are the player cook/splash values.
 //---------------------
+
+static const int JKG_TD_TIME = 750;			// stock TD_TIME 4000
+static const int JKG_TD_SPLASH_RAD = 256;	// stock TD_SPLASH_RAD 128
 
 //---------------------------------------------------------
 static qboolean WP_LobFire_JKG( gentity_t *self, vec3_t start, vec3_t target, vec3_t mins, vec3_t maxs, int clipmask,
@@ -256,12 +260,12 @@ gentity_t *WP_FireThermalDetonator_JKG( gentity_t *ent, qboolean alt_fire )
 		// Main fires for the players do a little bit of extra thinking
 		bolt->e_ThinkFunc = thinkF_WP_ThermalThink_JKG;
 		bolt->nextthink = level.time + TD_THINK_TIME;
-		bolt->delay = level.time + TD_TIME; // How long 'til she blows
+		bolt->delay = level.time + JKG_TD_TIME; // How long 'til she blows
 	}
 	else
 	{
 		bolt->e_ThinkFunc = thinkF_thermalDetonatorExplode;
-		bolt->nextthink = level.time + TD_TIME; // How long 'til she blows
+		bolt->nextthink = level.time + JKG_TD_TIME; // How long 'til she blows
 	}
 
 	bolt->mass = 10;
@@ -345,7 +349,7 @@ gentity_t *WP_FireThermalDetonator_JKG( gentity_t *ent, qboolean alt_fire )
 	bolt->damage = weaponData[WP_THERMAL].damage * damageScale;
 	bolt->dflags = 0;
 	bolt->splashDamage = weaponData[WP_THERMAL].splashDamage * damageScale;
-	bolt->splashRadius = weaponData[WP_THERMAL].splashRadius;
+	bolt->splashRadius = JKG_TD_SPLASH_RAD;
 
 	bolt->s.eType = ET_MISSILE;
 	bolt->svFlags = SVF_USE_CURRENT_ORIGIN;
