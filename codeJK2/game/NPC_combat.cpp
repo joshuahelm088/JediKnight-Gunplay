@@ -51,6 +51,7 @@ void G_ClearEnemy (gentity_t *self)
 
 	if ( self->enemy )
 	{
+		JKG_NpcClearFirstAlert( self );
 		if(	self->client && self->client->renderInfo.lookTarget == self->enemy->s.number )
 		{
 			NPC_ClearLookTarget( self );
@@ -405,6 +406,8 @@ void G_SetEnemy( gentity_t *self, gentity_t *enemy )
 
 	if ( self->enemy == NULL )
 	{
+		JKG_NpcFirstAlert( self, enemy );
+
 		//TEMP HACK: turn on our saber
 		if ( self->health > 0 )
 		{

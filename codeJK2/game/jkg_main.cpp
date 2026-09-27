@@ -54,6 +54,8 @@ cvar_t *g_jkgNpcAnimMinScale;
 cvar_t *g_jkgDebugNpcMove;
 cvar_t *g_jkgDebugAimCone;
 cvar_t *g_jkgDebugNpcState;
+cvar_t *g_jkgDebugNpcSpeech;
+cvar_t *g_jkgNpcFirstAlert;
 cvar_t *g_jkgNoCombatPoints;
 cvar_t *g_jkgCombatMove;
 cvar_t *g_jkgCombatIdealRangeMin;
@@ -207,6 +209,8 @@ void JKG_RegisterCvars( void )
 	g_jkgDebugNpcMove = gi.cvar( "g_jkgDebugNpcMove", "0", CVAR_CHEAT );
 	g_jkgDebugAimCone = gi.cvar( "g_jkgDebugAimCone", "0", CVAR_CHEAT );
 	g_jkgDebugNpcState = gi.cvar( "g_jkgDebugNpcState", "0", CVAR_CHEAT );
+	g_jkgDebugNpcSpeech = gi.cvar( "g_jkgDebugNpcSpeech", "0", CVAR_CHEAT );
+	g_jkgNpcFirstAlert = gi.cvar( "g_jkgNpcFirstAlert", "1", CVAR_ARCHIVE );
 	g_jkgNoCombatPoints = gi.cvar( "g_jkgNoCombatPoints", "1", CVAR_CHEAT );
 	g_jkgCombatMove = gi.cvar( "g_jkgCombatMove", "1", CVAR_ARCHIVE );
 	g_jkgCombatIdealRangeMin = gi.cvar( "g_jkgCombatIdealRangeMin", "192", CVAR_ARCHIVE );

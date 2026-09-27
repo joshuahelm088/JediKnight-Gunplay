@@ -186,8 +186,221 @@ enum
 	SPEECH_PUSHED
 };
 
+enum
+{
+	JKG_SPEECH_DBG_SPOKE_AWAKE = 1,
+	JKG_SPEECH_DBG_SPOKE_INVESTIGATE,
+	JKG_SPEECH_DBG_SPOKE_OTHER,
+	JKG_SPEECH_DBG_BLOCK_SELF,
+	JKG_SPEECH_DBG_BLOCK_GROUP,
+	JKG_SPEECH_DBG_BLOCK_AWAKE,
+	JKG_SPEECH_DBG_BLOCK_SCRIPT,
+	JKG_SPEECH_DBG_BLOCK_TASK,
+	JKG_SPEECH_DBG_BLOCK_VOICE
+};
+
+typedef struct jkgSpeechDbg_s
+{
+	int reason;
+	int time;
+	int speechType;
+} jkgSpeechDbg_t;
+
+static jkgSpeechDbg_t s_speechDbg[MAX_GENTITIES];
+static int s_awakeSpeechDebounce[MAX_FRAME_GROUPS];
+
+static qboolean ST_IsInvestigateSpeech_JKG(int speechType)
+{
+	switch (speechType)
+	{
+	case SPEECH_GIVEUP:
+	case SPEECH_LOOK:
+	case SPEECH_SIGHT:
+	case SPEECH_SOUND:
+	case SPEECH_SUSPICIOUS:
+		return qtrue;
+	default:
+		return qfalse;
+	}
+}
+
+static qboolean ST_IsAwakeSpeech_JKG(int speechType)
+{
+	return (speechType == SPEECH_DETECTED) ? qtrue : qfalse;
+}
+
+static int ST_GroupIndex_JKG(const gentity_t* self)
+{
+	int idx;
+
+	if (!self || !self->NPC || !self->NPC->group)
+	{
+		return -1;
+	}
+
+	idx = (int)(self->NPC->group - level.groups);
+	if (idx < 0 || idx >= MAX_FRAME_GROUPS)
+	{
+		return -1;
+	}
+	return idx;
+}
+
+static const char* ST_SpeechName_JKG(int speechType)
+{
+	switch (speechType)
+	{
+	case SPEECH_CHASE: return "chase";
+	case SPEECH_CONFUSED: return "confused";
+	case SPEECH_COVER: return "cover";
+	case SPEECH_DETECTED: return "detected";
+	case SPEECH_GIVEUP: return "giveup";
+	case SPEECH_LOOK: return "look";
+	case SPEECH_LOST: return "lost";
+	case SPEECH_OUTFLANK: return "outflank";
+	case SPEECH_ESCAPING: return "escaping";
+	case SPEECH_SIGHT: return "sight";
+	case SPEECH_SOUND: return "sound";
+	case SPEECH_SUSPICIOUS: return "suspicious";
+	case SPEECH_YELL: return "yell";
+	case SPEECH_PUSHED: return "pushed";
+	default: return "none";
+	}
+}
+
+static const char* ST_SpeechReasonName_JKG(int reason)
+{
+	switch (reason)
+	{
+	case JKG_SPEECH_DBG_SPOKE_AWAKE: return "spoke-awake";
+	case JKG_SPEECH_DBG_SPOKE_INVESTIGATE: return "spoke-investigate";
+	case JKG_SPEECH_DBG_SPOKE_OTHER: return "spoke-other";
+	case JKG_SPEECH_DBG_BLOCK_SELF: return "blocked-self";
+	case JKG_SPEECH_DBG_BLOCK_GROUP: return "blocked-group";
+	case JKG_SPEECH_DBG_BLOCK_AWAKE: return "blocked-awake-taken";
+	case JKG_SPEECH_DBG_BLOCK_SCRIPT: return "blocked-script";
+	case JKG_SPEECH_DBG_BLOCK_TASK: return "blocked-voice-task";
+	case JKG_SPEECH_DBG_BLOCK_VOICE: return "blocked-voice";
+	default: return "none";
+	}
+}
+
+static void ST_NoteSpeech_JKG(gentity_t* self, int speechType, int reason)
+{
+	if (!self || self->s.number < 0 || self->s.number >= MAX_GENTITIES)
+	{
+		return;
+	}
+
+	s_speechDbg[self->s.number].reason = reason;
+	s_speechDbg[self->s.number].time = level.time;
+	s_speechDbg[self->s.number].speechType = speechType;
+
+	if (g_jkgDebugNpcSpeech && g_jkgDebugNpcSpeech->integer >= 2)
+	{
+		gi.Printf("npcSpeech %s #%d %s %s\n",
+			self->NPC_type ? self->NPC_type : "?",
+			self->s.number,
+			ST_SpeechName_JKG(speechType),
+			ST_SpeechReasonName_JKG(reason));
+	}
+}
+
+static int ST_SpeechEvent_JKG(int speechType)
+{
+	switch (speechType)
+	{
+	case SPEECH_CHASE: return Q_irand(EV_CHASE1, EV_CHASE3);
+	case SPEECH_CONFUSED: return Q_irand(EV_CONFUSE1, EV_CONFUSE3);
+	case SPEECH_COVER: return Q_irand(EV_COVER1, EV_COVER5);
+	case SPEECH_DETECTED: return Q_irand(EV_DETECTED1, EV_DETECTED5);
+	case SPEECH_GIVEUP: return Q_irand(EV_GIVEUP1, EV_GIVEUP4);
+	case SPEECH_LOOK: return Q_irand(EV_LOOK1, EV_LOOK2);
+	case SPEECH_LOST: return EV_LOST1;
+	case SPEECH_OUTFLANK: return Q_irand(EV_OUTFLANK1, EV_OUTFLANK2);
+	case SPEECH_ESCAPING: return Q_irand(EV_ESCAPING1, EV_ESCAPING3);
+	case SPEECH_SIGHT: return Q_irand(EV_SIGHT1, EV_SIGHT3);
+	case SPEECH_SOUND: return Q_irand(EV_SOUND1, EV_SOUND3);
+	case SPEECH_SUSPICIOUS: return Q_irand(EV_SUSPICIOUS1, EV_SUSPICIOUS5);
+	case SPEECH_YELL: return Q_irand(EV_ANGER1, EV_ANGER3);
+	case SPEECH_PUSHED: return Q_irand(EV_PUSHED1, EV_PUSHED3);
+	default: return -1;
+	}
+}
+
+static int ST_VoiceBlockReason_JKG(gentity_t* self, int event)
+{
+	if (!self->NPC || !self->client || self->client->ps.pm_type >= PM_DEAD)
+	{
+		return JKG_SPEECH_DBG_BLOCK_VOICE;
+	}
+
+	if (self->NPC->blockedSpeechDebounceTime > level.time)
+	{
+		return JKG_SPEECH_DBG_BLOCK_SELF;
+	}
+
+	if (Q3_TaskIDPending(self, TID_CHAN_VOICE))
+	{
+		return JKG_SPEECH_DBG_BLOCK_TASK;
+	}
+
+	if ((self->NPC->scriptFlags & SCF_NO_COMBAT_TALK)
+		&& ((event >= EV_ANGER1 && event <= EV_VICTORY3) || (event >= EV_CHASE1 && event <= EV_SUSPICIOUS5)))
+	{
+		return JKG_SPEECH_DBG_BLOCK_SCRIPT;
+	}
+
+	if ((self->NPC->scriptFlags & SCF_NO_ALERT_TALK) && (event >= EV_GIVEUP1 && event <= EV_SUSPICIOUS5))
+	{
+		return JKG_SPEECH_DBG_BLOCK_SCRIPT;
+	}
+
+	return 0;
+}
+
+static void ST_CommitSpeechTimers_JKG(gentity_t* self, int speechType)
+{
+	const int debounce = Q_irand(2000, 4000);
+
+	if (self->NPC->group)
+	{
+		if (ST_IsAwakeSpeech_JKG(speechType))
+		{
+			const int idx = ST_GroupIndex_JKG(self);
+			if (idx >= 0)
+			{
+				s_awakeSpeechDebounce[idx] = level.time + debounce;
+			}
+		}
+		else
+		{
+			self->NPC->group->speechDebounceTime = level.time + debounce;
+		}
+	}
+	else
+	{
+		TIMER_Set(self, "chatter", debounce);
+	}
+
+	if (!ST_IsAwakeSpeech_JKG(speechType))
+	{
+		groupSpeechDebounceTime_JKG[self->client->playerTeam] = level.time + debounce;
+	}
+}
+
 static void ST_Speech_JKG(gentity_t* self, int speechType, float failChance)
 {
+	int event;
+	int blockReason;
+	int blockedBefore;
+	int spokeReason;
+
+	if (!self || !self->NPC)
+	{
+		return;
+	}
+
 	if (Q_flrand(0.0f, 1.0f) < failChance)
 	{
 		return;
@@ -195,98 +408,246 @@ static void ST_Speech_JKG(gentity_t* self, int speechType, float failChance)
 
 	if (failChance >= 0)
 	{//a negative failChance makes it always talk
+		if (self->NPC->blockedSpeechDebounceTime > level.time)
+		{
+			ST_NoteSpeech_JKG(self, speechType, JKG_SPEECH_DBG_BLOCK_SELF);
+			return;
+		}
+
 		if (self->NPC->group)
-		{//group AI speech debounce timer
-			if (self->NPC->group->speechDebounceTime > level.time)
+		{
+			if (ST_IsAwakeSpeech_JKG(speechType))
 			{
-				return;
-			}
-			/*
-			else if ( !self->NPC->group->enemy )
-			{
-				if ( groupSpeechDebounceTime_JKG[self->client->playerTeam] > level.time )
+				const int idx = ST_GroupIndex_JKG(self);
+				if (idx >= 0 && s_awakeSpeechDebounce[idx] > level.time)
 				{
+					ST_NoteSpeech_JKG(self, speechType, JKG_SPEECH_DBG_BLOCK_AWAKE);
 					return;
 				}
 			}
-			*/
+			else if (self->NPC->group->speechDebounceTime > level.time)
+			{
+				ST_NoteSpeech_JKG(self, speechType, JKG_SPEECH_DBG_BLOCK_GROUP);
+				return;
+			}
 		}
 		else if (!TIMER_Done(self, "chatter"))
-		{//personal timer
+		{
+			ST_NoteSpeech_JKG(self, speechType, JKG_SPEECH_DBG_BLOCK_SELF);
 			return;
 		}
-		else if (groupSpeechDebounceTime_JKG[self->client->playerTeam] > level.time)
+		else if (!ST_IsAwakeSpeech_JKG(speechType) && groupSpeechDebounceTime_JKG[self->client->playerTeam] > level.time)
 		{//for those not in group AI
-			//FIXME: let certain speech types interrupt others?  Let closer NPCs interrupt farther away ones?
+			ST_NoteSpeech_JKG(self, speechType, JKG_SPEECH_DBG_BLOCK_GROUP);
 			return;
 		}
 	}
 
-	if (self->NPC->group)
-	{//So they don't all speak at once...
-		//FIXME: if they're not yet mad, they have no group, so distracting a group of them makes them all speak!
-		self->NPC->group->speechDebounceTime = level.time + Q_irand(2000, 4000);
-	}
-	else
-	{
-		TIMER_Set(self, "chatter", Q_irand(2000, 4000));
-	}
-	groupSpeechDebounceTime_JKG[self->client->playerTeam] = level.time + Q_irand(2000, 4000);
-
-	if (self->NPC->blockedSpeechDebounceTime > level.time)
+	event = ST_SpeechEvent_JKG(speechType);
+	if (event < 0)
 	{
 		return;
 	}
 
-	switch (speechType)
+	blockReason = ST_VoiceBlockReason_JKG(self, event);
+	if (blockReason)
 	{
-	case SPEECH_CHASE:
-		G_AddVoiceEvent(self, Q_irand(EV_CHASE1, EV_CHASE3), 2000);
-		break;
-	case SPEECH_CONFUSED:
-		G_AddVoiceEvent(self, Q_irand(EV_CONFUSE1, EV_CONFUSE3), 2000);
-		break;
-	case SPEECH_COVER:
-		G_AddVoiceEvent(self, Q_irand(EV_COVER1, EV_COVER5), 2000);
-		break;
-	case SPEECH_DETECTED:
-		G_AddVoiceEvent(self, Q_irand(EV_DETECTED1, EV_DETECTED5), 2000);
-		break;
-	case SPEECH_GIVEUP:
-		G_AddVoiceEvent(self, Q_irand(EV_GIVEUP1, EV_GIVEUP4), 2000);
-		break;
-	case SPEECH_LOOK:
-		G_AddVoiceEvent(self, Q_irand(EV_LOOK1, EV_LOOK2), 2000);
-		break;
-	case SPEECH_LOST:
-		G_AddVoiceEvent(self, EV_LOST1, 2000);
-		break;
-	case SPEECH_OUTFLANK:
-		G_AddVoiceEvent(self, Q_irand(EV_OUTFLANK1, EV_OUTFLANK2), 2000);
-		break;
-	case SPEECH_ESCAPING:
-		G_AddVoiceEvent(self, Q_irand(EV_ESCAPING1, EV_ESCAPING3), 2000);
-		break;
-	case SPEECH_SIGHT:
-		G_AddVoiceEvent(self, Q_irand(EV_SIGHT1, EV_SIGHT3), 2000);
-		break;
-	case SPEECH_SOUND:
-		G_AddVoiceEvent(self, Q_irand(EV_SOUND1, EV_SOUND3), 2000);
-		break;
-	case SPEECH_SUSPICIOUS:
-		G_AddVoiceEvent(self, Q_irand(EV_SUSPICIOUS1, EV_SUSPICIOUS5), 2000);
-		break;
-	case SPEECH_YELL:
+		ST_NoteSpeech_JKG(self, speechType, blockReason);
+		return;
+	}
+
+	blockedBefore = self->NPC->blockedSpeechDebounceTime;
+	G_AddVoiceEvent(self, event, 2000);
+	if (self->NPC->blockedSpeechDebounceTime == blockedBefore)
+	{
+		ST_NoteSpeech_JKG(self, speechType, JKG_SPEECH_DBG_BLOCK_VOICE);
+		return;
+	}
+
+	ST_CommitSpeechTimers_JKG(self, speechType);
+
+	if (ST_IsAwakeSpeech_JKG(speechType))
+	{
+		spokeReason = JKG_SPEECH_DBG_SPOKE_AWAKE;
+	}
+	else if (ST_IsInvestigateSpeech_JKG(speechType))
+	{
+		spokeReason = JKG_SPEECH_DBG_SPOKE_INVESTIGATE;
+	}
+	else
+	{
+		spokeReason = JKG_SPEECH_DBG_SPOKE_OTHER;
+	}
+	ST_NoteSpeech_JKG(self, speechType, spokeReason);
+}
+
+static void ST_BarkAwake_JKG(gentity_t* self)
+{
+	if (!self || !self->NPC || self->enemy)
+	{
+		return;
+	}
+	if (g_jkgNpcFirstAlert && g_jkgNpcFirstAlert->integer)
+	{
+		// G_SetEnemy plays this NPC's own first-alert bark.
+		return;
+	}
+	ST_Speech_JKG(self, SPEECH_DETECTED, 0.0f);
+}
+
+static qboolean JKG_NpcUsesTrooperAlert(const gentity_t* self)
+{
+	if (!self->client || self->client->ps.weapon == WP_SABER)
+	{
+		return qfalse;
+	}
+
+	switch (self->client->NPC_class)
+	{
+	case CLASS_ATST:
+	case CLASS_PROBE:
+	case CLASS_REMOTE:
+	case CLASS_SENTRY:
+	case CLASS_INTERROGATOR:
+	case CLASS_MINEMONSTER:
+	case CLASS_HOWLER:
+	case CLASS_MARK1:
+	case CLASS_MARK2:
+	case CLASS_GALAKMECH:
+	case CLASS_SEEKER:
+		return qfalse;
+	default:
+		return qtrue;
+	}
+}
+
+void JKG_NpcFirstAlert(gentity_t* self, gentity_t* enemy)
+{
+	if (!g_jkgNpcFirstAlert || !g_jkgNpcFirstAlert->integer)
+	{
+		return;
+	}
+	if (!self || !self->NPC || !self->client || self->health <= 0)
+	{
+		return;
+	}
+	if (!enemy || enemy->s.number != 0)
+	{
+		return;
+	}
+	if (TIMER_Exists(self, "jkgFirstAlert"))
+	{
+		return;
+	}
+
+	TIMER_Set(self, "jkgFirstAlert", 3600000);
+	// An investigate line on this NPC must not swallow the first alert.
+	self->NPC->blockedSpeechDebounceTime = 0;
+
+	if (JKG_NpcUsesTrooperAlert(self))
+	{
+		ST_Speech_JKG(self, SPEECH_DETECTED, -1.0f);
+	}
+	else
+	{
 		G_AddVoiceEvent(self, Q_irand(EV_ANGER1, EV_ANGER3), 2000);
+	}
+}
+
+void JKG_NpcClearFirstAlert(gentity_t* self)
+{
+	if (!self)
+	{
+		return;
+	}
+	TIMER_Remove(self, "jkgFirstAlert");
+}
+
+static int JKG_PackSpeechDebugColor(int r, int g, int b)
+{
+	return r | (g << 8) | (b << 16);
+}
+
+void JKG_DebugDrawNpcSpeech(gentity_t* ent)
+{
+	vec3_t head;
+	vec3_t top;
+	vec3_t a;
+	vec3_t b;
+	int color;
+	const jkgSpeechDbg_t* dbg;
+	const int duration = FRAMETIME * 3;
+
+	if (!g_jkgDebugNpcSpeech || !g_jkgDebugNpcSpeech->integer)
+	{
+		return;
+	}
+
+	if (!ent || !ent->NPC || !ent->client || ent->s.number <= 0 || ent->s.number >= MAX_GENTITIES)
+	{
+		return;
+	}
+
+	if (ent->health <= 0)
+	{
+		return;
+	}
+
+	dbg = &s_speechDbg[ent->s.number];
+
+	switch (dbg->reason)
+	{
+	case JKG_SPEECH_DBG_SPOKE_AWAKE:
+		color = JKG_PackSpeechDebugColor(0, 255, 0);
 		break;
-	case SPEECH_PUSHED:
-		G_AddVoiceEvent(self, Q_irand(EV_PUSHED1, EV_PUSHED3), 2000);
+	case JKG_SPEECH_DBG_SPOKE_INVESTIGATE:
+		color = JKG_PackSpeechDebugColor(0, 255, 255);
+		break;
+	case JKG_SPEECH_DBG_SPOKE_OTHER:
+		color = JKG_PackSpeechDebugColor(180, 255, 0);
+		break;
+	case JKG_SPEECH_DBG_BLOCK_SELF:
+		color = JKG_PackSpeechDebugColor(255, 0, 0);
+		break;
+	case JKG_SPEECH_DBG_BLOCK_GROUP:
+		color = JKG_PackSpeechDebugColor(255, 255, 0);
+		break;
+	case JKG_SPEECH_DBG_BLOCK_AWAKE:
+		color = JKG_PackSpeechDebugColor(255, 140, 0);
+		break;
+	case JKG_SPEECH_DBG_BLOCK_SCRIPT:
+		color = JKG_PackSpeechDebugColor(255, 0, 255);
+		break;
+	case JKG_SPEECH_DBG_BLOCK_TASK:
+		color = JKG_PackSpeechDebugColor(255, 255, 255);
+		break;
+	case JKG_SPEECH_DBG_BLOCK_VOICE:
+		color = JKG_PackSpeechDebugColor(80, 80, 255);
 		break;
 	default:
+		// Hostile or grouped, but speech was never requested. Teammate alerts do this.
+		color = JKG_PackSpeechDebugColor(140, 140, 140);
 		break;
 	}
 
-	self->NPC->blockedSpeechDebounceTime = level.time + 2000;
+	CalcEntitySpot(ent, SPOT_HEAD, head);
+	VectorCopy(head, top);
+	top[2] += 78.0f;
+	G_DebugLine(head, top, duration, color, qtrue);
+
+	VectorCopy(top, a);
+	VectorCopy(top, b);
+	a[0] += 8.0f;
+	b[0] -= 8.0f;
+	a[1] += 8.0f;
+	b[1] -= 8.0f;
+	G_DebugLine(a, b, duration, color, qtrue);
+
+	a[0] -= 16.0f;
+	b[0] += 16.0f;
+	a[1] -= 16.0f;
+	b[1] += 16.0f;
+	G_DebugLine(a, b, duration, color, qtrue);
 }
 
 void ST_MarkToCover_JKG(gentity_t* self)
@@ -517,6 +878,7 @@ void NPC_BSST_Sleep_JKG(void)
 		{
 			if (&g_entities[0] && g_entities[0].health > 0)
 			{
+				ST_BarkAwake_JKG(NPC);
 				G_SetEnemy(NPC, &g_entities[0]);
 				return;
 			}
@@ -558,6 +920,7 @@ qboolean NPC_CheckEnemyStealth_JKG(gentity_t* target)
 	//If the target is this close, then wake up regardless
 	if ((target_dist = DistanceSquared(target->currentOrigin, NPC->currentOrigin)) < (minDist * minDist) && (NPCInfo->scriptFlags & SCF_LOOK_FOR_ENEMIES))
 	{
+		ST_BarkAwake_JKG(NPC);
 		G_SetEnemy(NPC, target);
 		NPCInfo->enemyLastSeenTime = level.time;
 		TIMER_Set(NPC, "attackDelay", Q_irand(500, 2500));
@@ -587,6 +950,7 @@ qboolean NPC_CheckEnemyStealth_JKG(gentity_t* target)
 	{
 		if (target->client->NPC_class == CLASS_ATST)
 		{//can't miss 'em!
+			ST_BarkAwake_JKG(NPC);
 			G_SetEnemy(NPC, target);
 			TIMER_Set(NPC, "attackDelay", Q_irand(500, 2500));
 			return qtrue;
@@ -622,6 +986,7 @@ qboolean NPC_CheckEnemyStealth_JKG(gentity_t* target)
 		//Too close?
 		if (dist_rating < DISTANCE_THRESHOLD)
 		{
+			ST_BarkAwake_JKG(NPC);
 			G_SetEnemy(NPC, target);
 			TIMER_Set(NPC, "attackDelay", Q_irand(500, 2500));
 			return qtrue;
@@ -711,6 +1076,7 @@ qboolean NPC_CheckEnemyStealth_JKG(gentity_t* target)
 
 		if (target_rating > realize && (NPCInfo->scriptFlags & SCF_LOOK_FOR_ENEMIES))
 		{
+			ST_BarkAwake_JKG(NPC);
 			G_SetEnemy(NPC, target);
 			NPCInfo->enemyLastSeenTime = level.time;
 			TIMER_Set(NPC, "attackDelay", Q_irand(500, 2500));
@@ -737,6 +1103,7 @@ qboolean NPC_CheckEnemyStealth_JKG(gentity_t* target)
 					int	interrogateTime = Q_irand(2000, 4000);
 					ST_Speech_JKG(NPC, SPEECH_SUSPICIOUS, 0);
 					TIMER_Set(NPC, "interrogating", interrogateTime);
+					ST_BarkAwake_JKG(NPC);
 					G_SetEnemy(NPC, target);
 					NPCInfo->enemyLastSeenTime = level.time;
 					TIMER_Set(NPC, "attackDelay", interrogateTime);
@@ -744,6 +1111,7 @@ qboolean NPC_CheckEnemyStealth_JKG(gentity_t* target)
 				}
 				else
 				{
+					ST_BarkAwake_JKG(NPC);
 					G_SetEnemy(NPC, target);
 					NPCInfo->enemyLastSeenTime = level.time;
 					//FIXME: ambush guys (like those popping out of water) shouldn't delay...
@@ -809,7 +1177,8 @@ static qboolean NPC_ST_InvestigateEvent_JKG(int eventID, bool extraSuspicious)
 				return qfalse;
 			}
 			//FIXME: what if can't actually see enemy, don't know where he is... should we make them just become very alert and start looking for him?  Or just let combat AI handle this... (act as if you lost him)
-			//ST_Speech_JKG( NPC, SPEECH_CHARGE, 0 );
+			// A shot impact is AEL_DISCOVERED. That used to set the enemy with no bark.
+			ST_BarkAwake_JKG(NPC);
 			G_SetEnemy(NPC, level.alertEvents[eventID].owner);
 			NPCInfo->enemyLastSeenTime = level.time;
 			TIMER_Set(NPC, "attackDelay", Q_irand(500, 2500));
@@ -1023,7 +1392,7 @@ void NPC_BSST_Investigate_JKG(void)
 			if (NPC_CheckPlayerTeamStealth_JKG())
 			{
 				//NPCInfo->behaviorState	= BS_HUNT_AND_KILL;//should be auto now
-				ST_Speech_JKG(NPC, SPEECH_DETECTED, 0);
+				// Awake bark is played at the acquire site, before the enemy pointer is set.
 				NPCInfo->tempBehavior = BS_DEFAULT;
 				NPC_UpdateAngles(qtrue, qtrue);
 				return;

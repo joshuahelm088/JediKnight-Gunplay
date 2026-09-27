@@ -41,6 +41,8 @@ extern cvar_t *g_jkgNpcAnimMinScale;	// floor on NPC walk/run anim playback scal
 extern cvar_t *g_jkgDebugNpcMove;	// NPC locomotion debug (0=off, 1=brake events, 2=verbose)
 extern cvar_t *g_jkgDebugAimCone;	// NPC weapon spread cone (0=off, 1=draw, 2=+throttled print)
 extern cvar_t *g_jkgDebugNpcState;	// NPC AI state marker (0=off, 1=draw, 2=+throttled print)
+extern cvar_t *g_jkgDebugNpcSpeech;	// NPC alert-bark marker (0=off, 1=draw, 2=+print)
+extern cvar_t *g_jkgNpcFirstAlert;	// 1 = each NPC plays an alert the first time they notice the player
 extern cvar_t *g_jkgNoCombatPoints;	// 1 = stormtrooper commander skips point_combat selection (direct hunt/scout)
 extern cvar_t *g_jkgCombatMove;		// 1 = generic range/hunt/strafe combat movement (not combat points)
 extern cvar_t *g_jkgCombatIdealRangeMin;	// fallback min stand-off from enemy (class cfg can override)
@@ -181,6 +183,9 @@ float JKG_GetNpcWeaponSpreadDegrees( const gentity_t *ent );
 void JKG_NpcPenalizeAimOnHit( gentity_t *self, int damage, gentity_t *attacker );
 void JKG_DebugDrawNpcAimCone( gentity_t *ent );
 void JKG_DebugDrawNpcState( gentity_t *ent );
+void JKG_DebugDrawNpcSpeech( gentity_t *ent );
+void JKG_NpcFirstAlert( gentity_t *self, gentity_t *enemy );
+void JKG_NpcClearFirstAlert( gentity_t *self );
 
 qboolean JKG_ST_CombatMoveEnabled( void );
 qboolean JKG_ST_CombatMoveThink( qboolean canSee, float distSq );

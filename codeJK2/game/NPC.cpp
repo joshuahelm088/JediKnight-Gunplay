@@ -2183,6 +2183,9 @@ void NPC_Think ( gentity_t *self)//, int msec )
 	// >>> JKG HOOK: NPC AI state marker (g_jkgDebugNpcState).
 	JKG_DebugDrawNpcState( self );
 	// <<< JKG HOOK
+	// >>> JKG HOOK: NPC alert speech marker (g_jkgDebugNpcSpeech).
+	JKG_DebugDrawNpcSpeech( self );
+	// <<< JKG HOOK
 
 	//must update icarus *every* frame because of certain animation completions in the pmove stuff that can leave a 50ms gap between ICARUS animation commands
 	if( self->taskManager && !stop_icarus )
