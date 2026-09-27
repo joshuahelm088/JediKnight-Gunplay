@@ -85,14 +85,4 @@ Each override keeps the stock value in a trailing comment for easy diffing.
 #undef  ROCKET_VELOCITY
 #define ROCKET_VELOCITY				1600	// stock 900
 
-// --- Thermal Detonator ---
-#undef  TD_NPC_DAMAGE_CUT
-#define TD_NPC_DAMAGE_CUT			0.3f	// stock 0.6f
-#undef  TD_SPLASH_RAD
-#define TD_SPLASH_RAD				256		// stock 128
-#undef  TD_TIME
-#define TD_TIME						750		// stock 4000
-#undef  TD_ALT_SPLASH_RAD
-#define TD_ALT_SPLASH_RAD			256		// stock 128
-
 #endif	// JKG_TUNING_H
