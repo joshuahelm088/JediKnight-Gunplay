@@ -4688,7 +4688,7 @@ static float jkg_damageModifier[HL_MAX] =
 	1.0f,	//HL_ARM_LT,
 	1.0f,	//HL_HAND_RT,
 	1.0f,	//HL_HAND_LT,
-	3.0f,	//HL_HEAD, stock table 2.0f; JKG 1.5x headshot multiplier
+	3.0f,	//HL_HEAD, stock table 2.0f; JKG 1.5x headshot multiplier. Bryar/E-11 skip this (DF2 has no loc scale).
 	1.0f,	//HL_GENERIC1,
 	1.0f,	//HL_GENERIC2,
 	1.0f,	//HL_GENERIC3,
@@ -4827,14 +4827,160 @@ dflags		these flags are used to control how T_Damage works
 ============
 */
 
+// DF2 bolts have no hit-location scale. NPCs aim at the head, so the 3x head
+// multiplier was turning a 30-damage Bryar/E-11 into 90 on the player.
+static qboolean JKG_EnergyBoltIgnoresHitLoc( int mod )
+{
+	if ( !JKG_WEAPONS )
+	{
+		return qfalse;
+	}
+
+	if ( mod == MOD_BRYAR || mod == MOD_BRYAR_ALT || mod == MOD_BLASTER || mod == MOD_BLASTER_ALT )
+	{
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
+static const char *JKG_DamageActorName( const gentity_t *ent )
+{
+	if ( !ent )
+	{
+		return "none";
+	}
+	if ( !ent->s.number )
+	{
+		return "player";
+	}
+	if ( ent->NPC_type && ent->NPC_type[0] )
+	{
+		return ent->NPC_type;
+	}
+	if ( ent->targetname && ent->targetname[0] )
+	{
+		return ent->targetname;
+	}
+	if ( ent->classname && ent->classname[0] )
+	{
+		return ent->classname;
+	}
+	return "world";
+}
+
+static const char *JKG_DamageModName( int mod )
+{
+	switch ( mod )
+	{
+	case MOD_BRYAR: return "bryar";
+	case MOD_BRYAR_ALT: return "bryar_alt";
+	case MOD_BLASTER: return "blaster";
+	case MOD_BLASTER_ALT: return "blaster_alt";
+	case MOD_SABER: return "saber";
+	case MOD_DISRUPTOR: return "disruptor";
+	case MOD_SNIPER: return "sniper";
+	case MOD_BOWCASTER: return "bowcaster";
+	case MOD_REPEATER: return "repeater";
+	case MOD_REPEATER_ALT: return "repeater_alt";
+	case MOD_DEMP2: return "demp2";
+	case MOD_FLECHETTE: return "flechette";
+	case MOD_FLECHETTE_ALT: return "flechette_alt";
+	case MOD_ROCKET: return "rocket";
+	case MOD_THERMAL: return "thermal";
+	case MOD_MELEE: return "melee";
+	default: return "other";
+	}
+}
+
+// DF2 shields eat the whole hit until they are empty. Stock armor below half health
+// only blocks 40%, so a 29 bolt was taking 17 health while shields were still up.
+static int JKG_EnergyBoltArmorSave( gentity_t *targ, int damage )
+{
+	int armor;
+	int save;
+
+	if ( !targ || !targ->client || damage <= 0 )
+	{
+		return 0;
+	}
+
+	armor = targ->client->ps.stats[STAT_ARMOR];
+	if ( armor <= 0 )
+	{
+		return 0;
+	}
+
+	save = damage;
+	if ( save > armor )
+	{
+		save = armor;
+	}
+
+	targ->client->ps.stats[STAT_ARMOR] = armor - save;
+	return save;
+}
+
+static void JKG_LogDealtDamage( gentity_t *targ, gentity_t *attacker, int incoming, int asave, int hitLoc, int mod, float locScale, int healthBefore )
+{
+	const char *locName;
+	int healthLost;
+
+	if ( !g_jkgDamageLog || !g_jkgDamageLog->integer )
+	{
+		return;
+	}
+	if ( !targ || !targ->client )
+	{
+		return;
+	}
+	if ( targ->s.number != 0 && !targ->NPC )
+	{
+		return;
+	}
+	healthLost = healthBefore - targ->health;
+	if ( healthLost < 0 )
+	{
+		healthLost = 0;
+	}
+	if ( healthLost <= 0 && asave <= 0 )
+	{
+		return;
+	}
+
+	if ( hitLoc < 0 || hitLoc >= HL_MAX )
+	{
+		locName = "invalid";
+	}
+	else
+	{
+		locName = hitLocName[hitLoc];
+	}
+
+	gi.Printf( "JKG dmg: %s -> %s  %s  in %d  loc %s x%.2f  shield %d  hp %d (%d -> %d)\n",
+		JKG_DamageActorName( attacker ),
+		JKG_DamageActorName( targ ),
+		JKG_DamageModName( mod ),
+		incoming,
+		locName,
+		locScale,
+		asave,
+		healthLost,
+		healthBefore,
+		targ->health );
+}
+
 void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_t dir, vec3_t point, int damage, int dflags, int mod, int hitLoc )
 {
 	gclient_t	*client;
 	int			take;
 	int			asave = 0;
 	int			knockback;
+	int			healthBefore = 0;
+	float		jkgLocScale = 1.0f;
 	vec3_t		newDir;
 	qboolean	alreadyDead = qfalse;
+	qboolean	jkgNpcBoltChip = qfalse;
 
 	if (!targ->takedamage) {
 		return;
@@ -5112,7 +5258,14 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_
 	{
 		//don't lose armor if on same team
 		// save some from armor
-		asave = CheckArmor (targ, take, dflags);
+		if ( JKG_WEAPONS && JKG_EnergyBoltIgnoresHitLoc( mod ) )
+		{
+			asave = JKG_EnergyBoltArmorSave( targ, take );
+		}
+		else
+		{
+			asave = CheckArmor (targ, take, dflags);
+		}
 		if ( !asave )
 		{//all out of armor
 			targ->client->ps.powerups[PW_BATTLESUIT] = 0;
@@ -5125,10 +5278,26 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_
 	}
 	if ( !(dflags&DAMAGE_NO_HIT_LOC) || !(dflags&DAMAGE_RADIUS))
 	{
-		if ( !G_NonLocationSpecificDamage( mod ) )
+		if ( !G_NonLocationSpecificDamage( mod ) && !JKG_EnergyBoltIgnoresHitLoc( mod ) )
 		{//certain kinds of damage don't care about hitlocation
-			take = ceil( (float)take * ( JKG_COMBAT ? jkg_damageModifier[hitLoc] : damageModifier[hitLoc] ) );
+			if ( hitLoc >= 0 && hitLoc < HL_MAX )
+			{
+				jkgLocScale = JKG_COMBAT ? jkg_damageModifier[hitLoc] : damageModifier[hitLoc];
+			}
+			take = ceil( (float)take * jkgLocScale );
 		}
+	}
+
+	// DF2 actor-on-actor shots deal 10%. Shots that involve the player stay at full bolt damage.
+	if ( JKG_WEAPONS
+		&& JKG_EnergyBoltIgnoresHitLoc( mod )
+		&& targ->NPC
+		&& attacker->NPC
+		&& targ->s.number != 0
+		&& attacker->s.number != 0 )
+	{
+		take = (int)ceil( (float)take * 0.1f );
+		jkgNpcBoltChip = ( take > 0 ) ? qtrue : qfalse;
 	}
 
 	if ( g_debugDamage->integer ) {
@@ -5179,6 +5348,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_
 			}
 		}
 	}
+	healthBefore = targ->health;
+
 	if ( take || (dflags&DAMAGE_NO_DAMAGE) )
 	{
 		if ( !targ->client || !attacker->client )
@@ -5325,12 +5496,22 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_
 					}
 				}
 			}
+			else if ( jkgNpcBoltChip )
+			{
+				targ->health = targ->health - take;
+				if ( targ->health < 0 )
+				{
+					targ->health = 0;
+				}
+			}
 		}
 
 		if ( targ->client ) {
 			targ->client->ps.stats[STAT_HEALTH] = targ->health;
 			g_lastClientDamaged = targ;
 		}
+
+		JKG_LogDealtDamage( targ, attacker, damage, asave, hitLoc, mod, jkgLocScale, healthBefore );
 
 		//TEMP HACK FOR PLAYER LOOK AT ENEMY CODE
 		//FIXME: move this to a player pain func?

@@ -829,7 +829,8 @@ void NPC_Begin (gentity_t *ent)
 			&& ent->client->NPC_class != CLASS_SHADOWTROOPER
 			//&& ent->client->NPC_class != CLASS_TAVION
 			//&& ent->client->NPC_class != CLASS_DESANN
-			&& ent->client->NPC_class != CLASS_JEDI )
+			&& ent->client->NPC_class != CLASS_JEDI
+			&& ent->client->NPC_class != CLASS_IMPERIAL )
 		{// up everyone except jedi
 			if ( JKG_AI )
 			{

@@ -78,6 +78,23 @@ extern cvar_t *g_jkgBurstPauseSingle;	// ms after a 1-shot E-11 burst
 extern cvar_t *g_jkgBurstPauseDouble;	// ms after a 2-shot E-11 burst
 extern cvar_t *g_jkgBurstPauseTriple;	// ms after a 3-shot E-11 burst (most common)
 extern cvar_t *g_jkgBurstPistolPause;	// ms after a pistol burst before the next burst starts
+extern cvar_t *g_jkgBryarVelocity;	// player Bryar bolt speed (DF2 +bryarbolt 4/6 of stock blaster)
+extern cvar_t *g_jkgBlasterVelocity;	// player E-11 bolt speed (stock JKO 2300; DF2 +stlaser)
+extern cvar_t *g_jkgBlasterNpcVelocity;	// NPC E-11 bolt speed (DF2 +elaser)
+extern cvar_t *g_jkgBlasterPistolNpcVelocity;	// NPC blaster pistol (DF2 +ebolt)
+extern cvar_t *g_jkgBowcasterVelocity;	// player bowcaster (DF2 +crossbowbolt)
+extern cvar_t *g_jkgBowcasterNpcVelocity;	// NPC bowcaster (DF2 +ebow)
+extern cvar_t *g_jkgRepeaterVelocity;	// repeater primary (DF2 +repeaterball)
+extern cvar_t *g_jkgBryarDamageDecay;	// player Bryar; DF2 15 scaled to feel-tested E-11 4
+extern cvar_t *g_jkgBryarMinDamage;	// player Bryar decay floor
+extern cvar_t *g_jkgBlasterDamageDecay;	// player E-11; playtested 4 (DF2 rate 10)
+extern cvar_t *g_jkgBlasterMinDamage;	// player E-11 decay floor
+extern cvar_t *g_jkgBlasterNpcDamageDecay;	// NPC E-11; same DF2 rate as player E-11
+extern cvar_t *g_jkgBlasterNpcMinDamage;	// NPC E-11 decay floor
+extern cvar_t *g_jkgBlasterPistolNpcDamageDecay;	// NPC pistol; DF2 15 scaled like Bryar
+extern cvar_t *g_jkgBlasterPistolNpcMinDamage;	// NPC pistol decay floor
+extern cvar_t *g_jkgBlasterDamage;	// player E-11 start damage (DF2 +stlaser 30)
+extern cvar_t *g_jkgDamageLog;	// 1 = print damage dealt to the player and NPCs
 extern cvar_t *g_jkgBryarTapFireTime;	// min ms between player Bryar tap-fires; also uncharged alt recovery (0.5x fireTime)
 extern cvar_t *g_jkgBryarChargeFireTime;	// ms after a fully charged Bryar alt (1.5x fireTime); lerps from tap time by charge level
 
@@ -157,6 +174,19 @@ int JKG_ShieldStationGivePerTick( void );
 int JKG_ShieldStationTickMs( void );
 
 // Min delay between Bryar tap-fires (0 = no extra cap).
+int JKG_BryarBoltVelocity( void );
+int JKG_BlasterBoltVelocity( void );
+int JKG_BlasterNpcBoltVelocity( void );
+int JKG_BlasterPistolNpcBoltVelocity( void );
+int JKG_BowcasterBoltVelocity( void );
+int JKG_BowcasterNpcBoltVelocity( void );
+int JKG_RepeaterBoltVelocity( void );
+int JKG_BlasterBoltVelocityFor( const gentity_t *ent );
+int JKG_BryarPistolBoltVelocityFor( const gentity_t *ent );
+int JKG_BowcasterBoltVelocityFor( const gentity_t *ent );
+void JKG_GetBlasterDecay( const gentity_t *ent, float *rate, float *floorDamage );
+void JKG_GetBryarPistolDecay( const gentity_t *ent, float *rate, float *floorDamage );
+int JKG_BlasterDamage( void );
 int JKG_BryarTapFireTime( void );
 
 // Recovery after Bryar alt: tap-fire time at charge 1, charge-fire time at charge 5.
@@ -164,6 +194,15 @@ int JKG_BryarChargeFireTime( void );
 int JKG_BryarChargeRecoveryTime( int chargeCount );
 qboolean JKG_BryarChargeLocked( const gentity_t *ent );
 void JKG_BryarArmChargeLock( gentity_t *ent, int recovery );
+
+// DF2-style time decay for Bryar and E-11 bolts fired by the JKG weapon code.
+// rate and floor are stored on the missile (wait / random). Other bryar_proj
+// shots (probe, sentry) leave those at 0 and are left alone.
+void JKG_ArmEnergyBoltDecay( gentity_t *missile, float rate, float floorDamage );
+void JKG_DecayEnergyBoltDamage( gentity_t *missile );
+
+qboolean JKG_NpcBlasterBolt( const gentity_t *ent );
+qboolean JKG_NpcBlasterPistolBolt( const gentity_t *ent );
 
 // Weapon fire dispatch (implemented in wp_*_JKG.cpp).
 void WP_FireBryarPistol_JKG( gentity_t *ent, qboolean alt_fire );

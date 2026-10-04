@@ -28,6 +28,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "w_local.h"
 #include "g_functions.h"
 #include "../cgame/cg_camera.h"
+#include "jkg_local.h"
 
 //---------------
 //	Blaster
@@ -37,21 +38,17 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 static void WP_FireBlasterMissile_JKG( gentity_t *ent, vec3_t start, vec3_t dir, qboolean altFire )
 //---------------------------------------------------------
 {
-	int velocity	= BLASTER_VELOCITY;
-	int	damage		= !altFire ? weaponData[WP_BLASTER].damage : weaponData[WP_BLASTER].altDamage;
+	int velocity	= JKG_BlasterBoltVelocityFor( ent );
+	int	damage		= JKG_BlasterDamage();
+	float decayRate = 0.0f;
+	float decayFloor = 0.0f;
 
-	// If an enemy is shooting at us, lower the velocity so you have a chance to evade
-	if ( ent->client && ent->client->ps.clientNum != 0 )
+	if ( JKG_NpcBlasterBolt( ent ) )
 	{
-		if ( g_spskill->integer < 2 )
-		{
-			velocity *= BLASTER_NPC_VEL_CUT;
-		}
-		else
-		{
-			velocity *= BLASTER_NPC_HARD_VEL_CUT;
-		}
+		damage = BLASTER_NPC_DAMAGE;
 	}
+
+	JKG_GetBlasterDecay( ent, &decayRate, &decayFloor );
 
 	WP_TraceSetStart( ent, start, vec3_origin, vec3_origin );//make sure our start point isn't on the other side of a wall
 
@@ -62,23 +59,6 @@ static void WP_FireBlasterMissile_JKG( gentity_t *ent, vec3_t start, vec3_t dir,
 
 	VectorSet(missile->maxs, BLASTER_BOLT_SIZE, BLASTER_BOLT_SIZE, BLASTER_BOLT_SIZE);
 	VectorScale(missile->maxs, -1, missile->mins);
-
-	// Do the damages
-	if ( ent->s.number != 0 )
-	{
-		if ( g_spskill->integer == 0 )
-		{
-			damage = BLASTER_NPC_DAMAGE_EASY;
-		}
-		else if ( g_spskill->integer == 1 )
-		{
-			damage = BLASTER_NPC_DAMAGE_NORMAL;
-		}
-		else
-		{
-			damage = BLASTER_NPC_DAMAGE_HARD;
-		}
-	}
 
 //	if ( ent->client )
 //	{
@@ -92,6 +72,7 @@ static void WP_FireBlasterMissile_JKG( gentity_t *ent, vec3_t start, vec3_t dir,
 
 	missile->damage = damage;
 	missile->dflags = DAMAGE_DEATH_KNOCKBACK;
+	JKG_ArmEnergyBoltDecay( missile, decayRate, decayFloor );
 	if ( altFire )
 	{
 		missile->methodOfDeath = MOD_BLASTER_ALT;

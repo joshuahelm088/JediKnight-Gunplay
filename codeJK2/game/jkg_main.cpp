@@ -14,6 +14,7 @@ subsystem; set g_jkgplay 0 to disable the entire layer at once.
 
 #include "g_headers.h"
 
+#include "b_local.h"
 #include "g_local.h"
 #include "jkg_local.h"
 
@@ -43,6 +44,23 @@ cvar_t *g_jkgBurstPauseSingle;
 cvar_t *g_jkgBurstPauseDouble;
 cvar_t *g_jkgBurstPauseTriple;
 cvar_t *g_jkgBurstPistolPause;
+cvar_t *g_jkgBryarVelocity;
+cvar_t *g_jkgBlasterVelocity;
+cvar_t *g_jkgBlasterNpcVelocity;
+cvar_t *g_jkgBlasterPistolNpcVelocity;
+cvar_t *g_jkgBowcasterVelocity;
+cvar_t *g_jkgBowcasterNpcVelocity;
+cvar_t *g_jkgRepeaterVelocity;
+cvar_t *g_jkgBryarDamageDecay;
+cvar_t *g_jkgBryarMinDamage;
+cvar_t *g_jkgBlasterDamageDecay;
+cvar_t *g_jkgBlasterMinDamage;
+cvar_t *g_jkgBlasterNpcDamageDecay;
+cvar_t *g_jkgBlasterNpcMinDamage;
+cvar_t *g_jkgBlasterPistolNpcDamageDecay;
+cvar_t *g_jkgBlasterPistolNpcMinDamage;
+cvar_t *g_jkgBlasterDamage;
+cvar_t *g_jkgDamageLog;
 cvar_t *g_jkgBryarTapFireTime;
 cvar_t *g_jkgBryarChargeFireTime;
 cvar_t *g_jkgNpcAccel;
@@ -91,6 +109,24 @@ static int JKG_CvarIntegerNonNegative( cvar_t *cv )
 	return value;
 }
 
+static float JKG_CvarFloatNonNegative( cvar_t *cv )
+{
+	float value;
+
+	if ( !cv )
+	{
+		return 0.0f;
+	}
+
+	value = cv->value;
+	if ( value < 0.0f )
+	{
+		value = 0.0f;
+	}
+
+	return value;
+}
+
 void JKG_ApplyMaxArmor( gclient_t *client )
 {
 	if ( !client )
@@ -114,6 +150,126 @@ int JKG_MaxArmorCap( void )
 int JKG_ShieldStationGivePerTick( void )
 {
 	return JKG_CvarIntegerNonNegative( g_jkgShieldStationGive );
+}
+
+int JKG_BlasterBoltVelocity( void )
+{
+	return JKG_CvarIntegerNonNegative( g_jkgBlasterVelocity );
+}
+
+int JKG_BlasterNpcBoltVelocity( void )
+{
+	return JKG_CvarIntegerNonNegative( g_jkgBlasterNpcVelocity );
+}
+
+int JKG_BryarBoltVelocity( void )
+{
+	return JKG_CvarIntegerNonNegative( g_jkgBryarVelocity );
+}
+
+int JKG_BlasterPistolNpcBoltVelocity( void )
+{
+	return JKG_CvarIntegerNonNegative( g_jkgBlasterPistolNpcVelocity );
+}
+
+int JKG_BowcasterBoltVelocity( void )
+{
+	return JKG_CvarIntegerNonNegative( g_jkgBowcasterVelocity );
+}
+
+int JKG_BowcasterNpcBoltVelocity( void )
+{
+	return JKG_CvarIntegerNonNegative( g_jkgBowcasterNpcVelocity );
+}
+
+int JKG_RepeaterBoltVelocity( void )
+{
+	return JKG_CvarIntegerNonNegative( g_jkgRepeaterVelocity );
+}
+
+int JKG_BlasterBoltVelocityFor( const gentity_t *ent )
+{
+	if ( JKG_NpcBlasterBolt( ent ) )
+	{
+		return JKG_BlasterNpcBoltVelocity();
+	}
+
+	return JKG_BlasterBoltVelocity();
+}
+
+int JKG_BryarPistolBoltVelocityFor( const gentity_t *ent )
+{
+	if ( JKG_NpcBlasterPistolBolt( ent ) )
+	{
+		return JKG_BlasterPistolNpcBoltVelocity();
+	}
+
+	return JKG_BryarBoltVelocity();
+}
+
+int JKG_BowcasterBoltVelocityFor( const gentity_t *ent )
+{
+	if ( ent && ent->NPC )
+	{
+		return JKG_BowcasterNpcBoltVelocity();
+	}
+
+	return JKG_BowcasterBoltVelocity();
+}
+
+void JKG_GetBlasterDecay( const gentity_t *ent, float *rate, float *floorDamage )
+{
+	if ( JKG_NpcBlasterBolt( ent ) )
+	{
+		if ( rate )
+		{
+			*rate = JKG_CvarFloatNonNegative( g_jkgBlasterNpcDamageDecay );
+		}
+		if ( floorDamage )
+		{
+			*floorDamage = JKG_CvarFloatNonNegative( g_jkgBlasterNpcMinDamage );
+		}
+		return;
+	}
+
+	if ( rate )
+	{
+		*rate = JKG_CvarFloatNonNegative( g_jkgBlasterDamageDecay );
+	}
+	if ( floorDamage )
+	{
+		*floorDamage = JKG_CvarFloatNonNegative( g_jkgBlasterMinDamage );
+	}
+}
+
+int JKG_BlasterDamage( void )
+{
+	return JKG_CvarIntegerNonNegative( g_jkgBlasterDamage );
+}
+
+void JKG_GetBryarPistolDecay( const gentity_t *ent, float *rate, float *floorDamage )
+{
+	if ( JKG_NpcBlasterPistolBolt( ent ) )
+	{
+		if ( rate )
+		{
+			*rate = JKG_CvarFloatNonNegative( g_jkgBlasterPistolNpcDamageDecay );
+		}
+		if ( floorDamage )
+		{
+			*floorDamage = JKG_CvarFloatNonNegative( g_jkgBlasterPistolNpcMinDamage );
+		}
+		return;
+	}
+
+	if ( rate )
+	{
+		*rate = JKG_CvarFloatNonNegative( g_jkgBryarDamageDecay );
+	}
+	if ( floorDamage )
+	{
+		*floorDamage = JKG_CvarFloatNonNegative( g_jkgBryarMinDamage );
+	}
 }
 
 int JKG_BryarTapFireTime( void )
@@ -172,6 +328,42 @@ int JKG_ShieldStationTickMs( void )
 	return ( tickMs > 0 ) ? tickMs : 1;
 }
 
+qboolean JKG_NpcBlasterBolt( const gentity_t *ent )
+{
+	if ( !ent || !ent->NPC || !ent->client )
+	{
+		return qfalse;
+	}
+	if ( ent->client->ps.weapon != WP_BLASTER )
+	{
+		return qfalse;
+	}
+	if ( ent->client->NPC_class == CLASS_STORMTROOPER
+		|| ent->client->NPC_class == CLASS_SWAMPTROOPER
+		|| ent->client->NPC_class == CLASS_SHADOWTROOPER )
+	{
+		return qtrue;
+	}
+	return qfalse;
+}
+
+qboolean JKG_NpcBlasterPistolBolt( const gentity_t *ent )
+{
+	if ( !ent || !ent->NPC || !ent->client )
+	{
+		return qfalse;
+	}
+	if ( ent->client->ps.weapon != WP_BLASTER_PISTOL )
+	{
+		return qfalse;
+	}
+	if ( ent->client->NPC_class == CLASS_IMPERIAL )
+	{
+		return qtrue;
+	}
+	return qfalse;
+}
+
 void JKG_RegisterCvars( void )
 {
 	g_jkgplay    = gi.cvar( "g_jkgplay",    "1", CVAR_ARCHIVE );
@@ -198,6 +390,23 @@ void JKG_RegisterCvars( void )
 	g_jkgBurstPauseDouble = gi.cvar( "g_jkgBurstPauseDouble", "1000", CVAR_ARCHIVE );
 	g_jkgBurstPauseTriple = gi.cvar( "g_jkgBurstPauseTriple", "1500", CVAR_ARCHIVE );
 	g_jkgBurstPistolPause = gi.cvar( "g_jkgBurstPistolPause", "2000", CVAR_ARCHIVE );
+	g_jkgBryarVelocity = gi.cvar( "g_jkgBryarVelocity", "1533", CVAR_ARCHIVE );
+	g_jkgBlasterVelocity = gi.cvar( "g_jkgBlasterVelocity", "2300", CVAR_ARCHIVE );
+	g_jkgBlasterNpcVelocity = gi.cvar( "g_jkgBlasterNpcVelocity", "1533", CVAR_ARCHIVE );
+	g_jkgBlasterPistolNpcVelocity = gi.cvar( "g_jkgBlasterPistolNpcVelocity", "1342", CVAR_ARCHIVE );
+	g_jkgBowcasterVelocity = gi.cvar( "g_jkgBowcasterVelocity", "1917", CVAR_ARCHIVE );
+	g_jkgBowcasterNpcVelocity = gi.cvar( "g_jkgBowcasterNpcVelocity", "1533", CVAR_ARCHIVE );
+	g_jkgRepeaterVelocity = gi.cvar( "g_jkgRepeaterVelocity", "2300", CVAR_ARCHIVE );
+	g_jkgBryarDamageDecay = gi.cvar( "g_jkgBryarDamageDecay", "6", CVAR_ARCHIVE );
+	g_jkgBryarMinDamage = gi.cvar( "g_jkgBryarMinDamage", "10", CVAR_ARCHIVE );
+	g_jkgBlasterDamageDecay = gi.cvar( "g_jkgBlasterDamageDecay", "4", CVAR_ARCHIVE );
+	g_jkgBlasterMinDamage = gi.cvar( "g_jkgBlasterMinDamage", "10", CVAR_ARCHIVE );
+	g_jkgBlasterNpcDamageDecay = gi.cvar( "g_jkgBlasterNpcDamageDecay", "4", CVAR_ARCHIVE );
+	g_jkgBlasterNpcMinDamage = gi.cvar( "g_jkgBlasterNpcMinDamage", "5", CVAR_ARCHIVE );
+	g_jkgBlasterPistolNpcDamageDecay = gi.cvar( "g_jkgBlasterPistolNpcDamageDecay", "6", CVAR_ARCHIVE );
+	g_jkgBlasterPistolNpcMinDamage = gi.cvar( "g_jkgBlasterPistolNpcMinDamage", "5", CVAR_ARCHIVE );
+	g_jkgBlasterDamage = gi.cvar( "g_jkgBlasterDamage", "30", CVAR_ARCHIVE );
+	g_jkgDamageLog = gi.cvar( "g_jkgDamageLog", "1", CVAR_ARCHIVE );
 	g_jkgBryarTapFireTime = gi.cvar( "g_jkgBryarTapFireTime", "200", CVAR_ARCHIVE );
 	g_jkgBryarChargeFireTime = gi.cvar( "g_jkgBryarChargeFireTime", "600", CVAR_ARCHIVE );
 	g_jkgNpcAccel = gi.cvar( "g_jkgNpcAccel", "150", CVAR_ARCHIVE );

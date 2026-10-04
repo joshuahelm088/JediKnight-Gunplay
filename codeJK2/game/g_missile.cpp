@@ -469,6 +469,11 @@ void G_MissileImpacted( gentity_t *ent, gentity_t *other, vec3_t impactPos, vec3
 				velocity[2] = 1;	// stepped on a grenade
 			}
 
+			if ( JKG_WEAPONS )
+			{
+				JKG_DecayEnergyBoltDamage( ent );
+			}
+
 			int damage = ent->damage;
 
 			if( other->client )

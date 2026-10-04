@@ -24,19 +24,27 @@ Each override keeps the stock value in a trailing comment for easy diffing.
 #define JKG_TUNING_H
 
 // --- Bryar Pistol ---
-#undef  BRYAR_PISTOL_VEL
-#define BRYAR_PISTOL_VEL			3350	// stock 1800
+// Bolt speed: g_jkgBryarVelocity (player) / g_jkgBlasterPistolNpcVelocity (NPC).
 #undef  BRYAR_PISTOL_DAMAGE
-#define BRYAR_PISTOL_DAMAGE			16		// stock 14
+#define BRYAR_PISTOL_DAMAGE			30		// player Bryar only; DF2 +bryarbolt
 #define BRYAR_BOLT_SIZE				3		// new (no stock value)
+// Decay: g_jkgBryarDamageDecay / g_jkgBryarMinDamage (player),
+// g_jkgBlasterPistolNpcDamageDecay / g_jkgBlasterPistolNpcMinDamage (NPC).
 
-// --- E11 Blaster ---
+// Enemy blaster pistol (WP_BLASTER_PISTOL); DF2 +ebolt, not player Bryar.
+#define BLASTER_PISTOL_NPC_DAMAGE			10
+
+// --- E11 Blaster (WP_BLASTER) ---
 #undef  BLASTER_MAIN_SPREAD
 #define BLASTER_MAIN_SPREAD			2.75f	// stock 0.5f; was 2.25f JKG
 #undef  BLASTER_ALT_SPREAD
 #define BLASTER_ALT_SPREAD			2.75f	// stock 1.5f; was 2.25f JKG
-#undef  BLASTER_VELOCITY
-#define BLASTER_VELOCITY			3150	// stock 2300
+// Bolt speed: g_jkgBlasterVelocity (player) / g_jkgBlasterNpcVelocity (NPC).
+#undef  BLASTER_DAMAGE
+#define BLASTER_DAMAGE				30		// stock weapons.dat / fallback; player fire uses g_jkgBlasterDamage
+#define BLASTER_NPC_DAMAGE			12		// NPC E-11; DF2 +elaser
+// Decay: g_jkgBlasterDamageDecay / g_jkgBlasterMinDamage (player),
+// g_jkgBlasterNpcDamageDecay / g_jkgBlasterNpcMinDamage (NPC).
 #undef  BLASTER_NPC_SPREAD
 #define BLASTER_NPC_SPREAD			1.0f	// stock 0.5f
 #define BLASTER_NPC_AIM_SPREAD_SCALE	0.3f	// stock 0.25f per currentAim point (NPC E-11)
@@ -49,12 +57,12 @@ Each override keeps the stock value in a trailing comment for easy diffing.
 #define BOWCASTER_SIZE				3		// stock 2; same as BLASTER_BOLT_SIZE
 #undef  BOWCASTER_ALT_SPREAD
 #define BOWCASTER_ALT_SPREAD		2.2f	// stock 5.0f
+// Bolt speed: g_jkgBowcasterVelocity (player) / g_jkgBowcasterNpcVelocity (NPC).
 
 // --- Heavy Repeater ---
 #undef  REPEATER_DAMAGE
 #define REPEATER_DAMAGE				10		// stock 8
-#undef  REPEATER_VELOCITY
-#define REPEATER_VELOCITY			2000	// stock 1600
+// Primary bolt speed: g_jkgRepeaterVelocity.
 #define REPEATER_SIZE				3		// new (no stock value)
 #undef  REPEATER_ALT_SIZE
 #define REPEATER_ALT_SIZE			4		// stock 3

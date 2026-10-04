@@ -28,6 +28,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "w_local.h"
 #include "g_functions.h"
 #include "../cgame/cg_camera.h"
+#include "jkg_local.h"
 
 //---------------
 //	Bryar Pistol
@@ -38,12 +39,16 @@ void WP_FireBryarPistol_JKG( gentity_t *ent, qboolean alt_fire )
 //---------------------------------------------------------
 {
 	vec3_t	start;
-	int		damage = !alt_fire ? weaponData[ent->s.weapon].damage : weaponData[ent->s.weapon].altDamage;
+	int		damage = BRYAR_PISTOL_DAMAGE;
+	float	decayRate = 0.0f;
+	float	decayFloor = 0.0f;
 
-	if ( !ent->NPC && !alt_fire )
+	if ( JKG_NpcBlasterPistolBolt( ent ) )
 	{
-		damage = weaponData[WP_BLASTER].damage;
+		damage = BLASTER_PISTOL_NPC_DAMAGE;
 	}
+
+	JKG_GetBryarPistolDecay( ent, &decayRate, &decayFloor );
 
 	VectorCopy( wpMuzzle, start );
 	WP_TraceSetStart( ent, start, vec3_origin, vec3_origin );//make sure our start point isn't on the other side of a wall
@@ -68,7 +73,7 @@ void WP_FireBryarPistol_JKG( gentity_t *ent, qboolean alt_fire )
 		AngleVectors( angs, wpFwd, NULL, NULL );
 	}
 
-	gentity_t	*missile = CreateMissile( start, wpFwd, BRYAR_PISTOL_VEL, 10000, ent, alt_fire );
+	gentity_t	*missile = CreateMissile( start, wpFwd, JKG_BryarPistolBoltVelocityFor( ent ), 10000, ent, alt_fire );
 
 	missile->classname = "bryar_proj";
 	missile->s.weapon = WP_BRYAR_PISTOL;
@@ -112,6 +117,11 @@ void WP_FireBryarPistol_JKG( gentity_t *ent, qboolean alt_fire )
 	missile->damage = damage;
 	missile->dflags = DAMAGE_DEATH_KNOCKBACK;
 
+	{
+		const float stacks = ( alt_fire && missile->count > 1 ) ? (float)missile->count : 1.0f;
+		JKG_ArmEnergyBoltDecay( missile, decayRate * stacks, decayFloor * stacks );
+	}
+
 	if ( alt_fire )
 	{
 		missile->methodOfDeath = MOD_BRYAR_ALT;
@@ -125,4 +135,48 @@ void WP_FireBryarPistol_JKG( gentity_t *ent, qboolean alt_fire )
 
 	// we don't want it to bounce forever
 	missile->bounceCount = 8;
+}
+
+void JKG_ArmEnergyBoltDecay( gentity_t *missile, float rate, float floorDamage )
+{
+	if ( !missile || rate <= 0.0f )
+	{
+		return;
+	}
+
+	missile->wait = rate;
+	missile->random = floorDamage;
+}
+
+void JKG_DecayEnergyBoltDamage( gentity_t *missile )
+{
+	float seconds;
+	float damage;
+	int startDamage;
+
+	if ( !missile || missile->wait <= 0.0f )
+	{
+		return;
+	}
+
+	seconds = ( level.time - missile->s.pos.trTime ) * 0.001f;
+	if ( seconds < 0.0f )
+	{
+		seconds = 0.0f;
+	}
+
+	startDamage = missile->damage;
+	damage = (float)startDamage - missile->wait * seconds;
+	if ( damage < missile->random )
+	{
+		damage = missile->random;
+	}
+
+	missile->damage = (int)( damage + 0.5f );
+
+	if ( g_jkgDamageLog && g_jkgDamageLog->integer )
+	{
+		gi.Printf( "JKG decay: %d -> %d  t=%.2fs  rate=%.1f  floor=%.0f\n",
+			startDamage, missile->damage, seconds, missile->wait, missile->random );
+	}
 }

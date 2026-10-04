@@ -27,6 +27,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "wp_saber.h"
 #include "w_local.h"
 #include "g_functions.h"
+#include "jkg_local.h"
 
 //-------------------
 //	Heavy Repeater
@@ -42,7 +43,7 @@ static void WP_RepeaterMainFire_JKG( gentity_t *ent, vec3_t dir )
 	VectorCopy( wpMuzzle, start );
 	WP_TraceSetStart( ent, start, vec3_origin, vec3_origin );//make sure our start point isn't on the other side of a wall
 
-	gentity_t *missile = CreateMissile( start, dir, REPEATER_VELOCITY, 10000, ent );
+	gentity_t *missile = CreateMissile( start, dir, JKG_RepeaterBoltVelocity(), 10000, ent );
 
 	missile->classname = "repeater_proj";
 	missile->s.weapon = WP_REPEATER;

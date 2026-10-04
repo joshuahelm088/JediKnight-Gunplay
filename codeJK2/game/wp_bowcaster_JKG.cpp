@@ -38,6 +38,7 @@ static void WP_BowcasterMainFire_JKG( gentity_t *ent )
 {
 	int			damage	= weaponData[WP_BOWCASTER].damage, count;
 	float		vel;
+	const int	bowcasterVel = JKG_BowcasterBoltVelocityFor( ent );
 	vec3_t		angs, dir, start;
 	gentity_t	*missile;
 
@@ -94,7 +95,7 @@ static void WP_BowcasterMainFire_JKG( gentity_t *ent )
 	for ( int i = 0; i < count; i++ )
 	{
 		// create a range of different velocities
-		vel = BOWCASTER_VELOCITY * ( Q_flrand(-1.0f, 1.0f) * BOWCASTER_VEL_RANGE + 1.0f );
+		vel = (float)bowcasterVel * ( Q_flrand(-1.0f, 1.0f) * BOWCASTER_VEL_RANGE + 1.0f );
 
 		vectoangles( wpFwd, angs );
 
@@ -148,7 +149,7 @@ static void WP_BowcasterAltFire_JKG( gentity_t *ent )
 	VectorCopy( wpMuzzle, start );
 	WP_TraceSetStart( ent, start, vec3_origin, vec3_origin );//make sure our start point isn't on the other side of a wall
 
-	gentity_t *missile = CreateMissile( start, wpFwd, BOWCASTER_VELOCITY, 10000, ent, qtrue );
+	gentity_t *missile = CreateMissile( start, wpFwd, JKG_BowcasterBoltVelocityFor( ent ), 10000, ent, qtrue );
 
 	missile->classname = "bowcaster_alt_proj";
 	missile->s.weapon = WP_BOWCASTER;
