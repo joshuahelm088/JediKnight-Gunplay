@@ -39,6 +39,7 @@ cvar_t *g_jkgHitTintShieldScale;
 cvar_t *g_jkgHitTintDecay;
 cvar_t *g_jkgHitTintMax;
 cvar_t *g_jkgHitTintAlphaScale;
+cvar_t *g_jkgPickupTintAlphaScale;
 cvar_t *g_jkgHitTintHealthR;
 cvar_t *g_jkgHitTintHealthG;
 cvar_t *g_jkgHitTintHealthB;
@@ -409,6 +410,7 @@ void JKG_RegisterCvars( void )
 	g_jkgHitTintDecay = gi.cvar( "g_jkgHitTintDecay", "0.4", CVAR_ARCHIVE );
 	g_jkgHitTintMax = gi.cvar( "g_jkgHitTintMax", "1", CVAR_ARCHIVE );
 	g_jkgHitTintAlphaScale = gi.cvar( "g_jkgHitTintAlphaScale", "0.5", CVAR_ARCHIVE );
+	g_jkgPickupTintAlphaScale = gi.cvar( "g_jkgPickupTintAlphaScale", "0.5", CVAR_ARCHIVE );
 	g_jkgHitTintHealthR = gi.cvar( "g_jkgHitTintHealthR", "1", CVAR_ARCHIVE );
 	g_jkgHitTintHealthG = gi.cvar( "g_jkgHitTintHealthG", "0", CVAR_ARCHIVE );
 	g_jkgHitTintHealthB = gi.cvar( "g_jkgHitTintHealthB", "0", CVAR_ARCHIVE );

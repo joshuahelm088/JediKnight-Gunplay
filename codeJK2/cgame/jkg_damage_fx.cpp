@@ -17,7 +17,6 @@ static vec3_t s_pickupTint;
 #define JKG_DF2_PICKUP_TINT_G		0.0f
 #define JKG_DF2_PICKUP_TINT_B		0.2f
 #define JKG_DF2_PICKUP_TINT_DECAY	0.4f
-#define JKG_DF2_PICKUP_OVERLAY_ALPHA	0.1f	// one pickup: 0.2 * ApplyTint 0.5
 
 static float JKG_ClampFloat( float value, float low, float high )
 {
@@ -43,6 +42,65 @@ static float JKG_CvarFloatNonNegative( cvar_t *cv )
 		return 0.0f;
 	}
 	return cv->value;
+}
+
+static float JKG_TintMaxChannel( float r, float g, float b )
+{
+	float strength;
+
+	strength = r;
+	if ( g > strength )
+	{
+		strength = g;
+	}
+	if ( b > strength )
+	{
+		strength = b;
+	}
+	return strength;
+}
+
+static float JKG_TintOverlayAlpha( float strength, float alphaScale )
+{
+	return JKG_ClampFloat( strength * alphaScale, 0.0f, 1.0f );
+}
+
+// Linear mix matches one pulse; extra stacks compress so FillRect does not fog the view.
+static float JKG_TintOverlayAlphaDiminished( float strength, float alphaScale, float onePulse )
+{
+	const float linear = JKG_TintOverlayAlpha( strength, alphaScale );
+	float extra;
+
+	if ( linear <= onePulse )
+	{
+		return linear;
+	}
+
+	extra = linear - onePulse;
+	return JKG_ClampFloat( onePulse + extra / ( 1.0f + extra * 8.0f ), 0.0f, 1.0f );
+}
+
+static void JKG_DrawTintOverlay( float r, float g, float b, float alpha )
+{
+	float color[4];
+	float strength;
+
+	if ( alpha <= 0.0f )
+	{
+		return;
+	}
+
+	strength = JKG_TintMaxChannel( r, g, b );
+	if ( strength <= 0.0f )
+	{
+		return;
+	}
+
+	color[0] = r / strength;
+	color[1] = g / strength;
+	color[2] = b / strength;
+	color[3] = alpha;
+	CG_FillRect( 0.0f, 0.0f, 640.0f, 480.0f, color );
 }
 
 static void JKG_HitTintDecay( void )
@@ -120,7 +178,6 @@ void JKG_HitTintAdd( int healthDmg, int armorDmg )
 
 void JKG_HitTintDraw( void )
 {
-	float color[4];
 	qboolean drawHitTint;
 
 	if ( !JKG_HUD )
@@ -156,61 +213,29 @@ void JKG_HitTintDraw( void )
 		rgb[2] = s_hitTint[0] * ( g_jkgHitTintHealthB ? g_jkgHitTintHealthB->value : 0.0f )
 			+ s_hitTint[1] * ( g_jkgHitTintShieldB ? g_jkgHitTintShieldB->value : 0.0f );
 
-		strength = rgb[0];
-		if ( rgb[1] > strength )
-		{
-			strength = rgb[1];
-		}
-		if ( rgb[2] > strength )
-		{
-			strength = rgb[2];
-		}
+		strength = JKG_TintMaxChannel( rgb[0], rgb[1], rgb[2] );
 		if ( strength > 0.0f )
 		{
 			alphaScale = JKG_CvarFloatNonNegative( g_jkgHitTintAlphaScale );
-			color[0] = rgb[0] / strength;
-			color[1] = rgb[1] / strength;
-			color[2] = rgb[2] / strength;
-			color[3] = JKG_ClampFloat( strength * alphaScale, 0.0f, 1.0f );
-			CG_FillRect( 0.0f, 0.0f, 640.0f, 480.0f, color );
+			JKG_DrawTintOverlay( rgb[0], rgb[1], rgb[2], JKG_TintOverlayAlpha( strength, alphaScale ) );
 		}
 	}
 
 	if ( s_pickupTint[0] > 0.0f || s_pickupTint[1] > 0.0f || s_pickupTint[2] > 0.0f )
 	{
 		float strength;
-		float linear;
-		float extra;
+		float alphaScale;
+		float onePulse;
 
-		strength = s_pickupTint[0];
-		if ( s_pickupTint[1] > strength )
-		{
-			strength = s_pickupTint[1];
-		}
-		if ( s_pickupTint[2] > strength )
-		{
-			strength = s_pickupTint[2];
-		}
+		strength = JKG_TintMaxChannel( s_pickupTint[0], s_pickupTint[1], s_pickupTint[2] );
 		if ( strength <= 0.0f )
 		{
 			return;
 		}
 
-		// DF2 ApplyTint is multiplicative (dark stays dark). Linear alpha
-		// (tint*0.5) matches one pickup (~0.1) but 5 stacks become 50% fog.
-		linear = strength * 0.5f;
-		if ( linear <= JKG_DF2_PICKUP_OVERLAY_ALPHA )
-		{
-			color[3] = linear;
-		}
-		else
-		{
-			extra = linear - JKG_DF2_PICKUP_OVERLAY_ALPHA;
-			color[3] = JKG_DF2_PICKUP_OVERLAY_ALPHA + extra / ( 1.0f + extra * 8.0f );
-		}
-		color[0] = s_pickupTint[0] / strength;
-		color[1] = s_pickupTint[1] / strength;
-		color[2] = s_pickupTint[2] / strength;
-		CG_FillRect( 0.0f, 0.0f, 640.0f, 480.0f, color );
+		alphaScale = JKG_CvarFloatNonNegative( g_jkgPickupTintAlphaScale );
+		onePulse = JKG_DF2_PICKUP_TINT_B * alphaScale;
+		JKG_DrawTintOverlay( s_pickupTint[0], s_pickupTint[1], s_pickupTint[2],
+			JKG_TintOverlayAlphaDiminished( strength, alphaScale, onePulse ) );
 	}
 }
