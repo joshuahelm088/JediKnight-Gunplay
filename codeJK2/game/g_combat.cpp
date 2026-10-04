@@ -4298,6 +4298,10 @@ void PlayerPain( gentity_t *self, gentity_t *inflictor, gentity_t *other, vec3_t
 				self->painDebounceTime = level.time + self->client->ps.torsoAnimTimer;
 			}
 		}
+		if ( JKG_COMBAT )
+		{
+			JKG_PlayerTryPainAnim( self, other, point, damage, mod, hitLoc );
+		}
 	}
 	if ( self->painDebounceTime <= level.time )
 	{
@@ -5311,6 +5315,10 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_
 		client->ps.persistant[PERS_ATTACKER] = attacker->s.number;	//attack can be the world ent
 		client->damage_armor += asave;
 		client->damage_blood += take;
+		if ( targ->s.number == 0 && take > 0 )
+		{
+			JKG_SetPlayerPainChanceDamage( take + asave );
+		}
 		client->damage_knockback += knockback;
 		if ( dir ) {	//can't check newdir since it's local, newdir is dir normalized
 			VectorCopy ( newDir, client->damage_from );

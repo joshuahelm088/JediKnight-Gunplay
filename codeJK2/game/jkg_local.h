@@ -64,6 +64,7 @@ extern cvar_t *g_jkgMaxArmor;	// player shield cap when g_jkgArmor is on (STAT_M
 extern cvar_t *g_jkgShieldStationGive;	// shield points per tick (stock 4; default 12 = 3x)
 extern cvar_t *g_jkgShieldStationTickMs;	// ms between ticks (stock 100; default 33 = 3x faster)
 extern cvar_t *g_jkgCombat;		// custom damage tables / pain timing / hit locations
+extern cvar_t *g_jkgPlayerPainChance;	// DF2-style 3p hit-react chance scale (damage * value); 0 disables
 extern cvar_t *g_jkgCamera;		// weapon-fire camera kickback
 extern cvar_t *g_jkgHUD;		// custom HUD / view / weapon-draw tweaks
 extern cvar_t *g_jkgHitTint;	// DF2-style full-screen hit tint (0=off)
@@ -129,6 +130,9 @@ typedef enum {
 float JKG_GetNpcHitboxScale( const gentity_t *ent );	// per-NPC override when client->jkgHitboxScale > 0
 void JKG_GetNpcShotAbsBounds( const gentity_t *ent, vec3_t absmin, vec3_t absmax );
 void JKG_MissileClipToNpcShotHitboxes( gentity_t *missile, const vec3_t start, const vec3_t end, int passEntityNum, int contentmask, trace_t *tr );
+
+void JKG_SetPlayerPainChanceDamage( int damage );
+void JKG_PlayerTryPainAnim( gentity_t *self, gentity_t *other, vec3_t point, int damage, int mod, int hitLoc );
 
 void JKG_ApplyNpcBurstFireMode( gentity_t *ent );
 qboolean JKG_NpcBurstShootThink( void );

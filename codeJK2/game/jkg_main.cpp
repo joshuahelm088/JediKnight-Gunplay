@@ -30,6 +30,7 @@ cvar_t *g_jkgMaxArmor;
 cvar_t *g_jkgShieldStationGive;
 cvar_t *g_jkgShieldStationTickMs;
 cvar_t *g_jkgCombat;
+cvar_t *g_jkgPlayerPainChance;
 cvar_t *g_jkgCamera;
 cvar_t *g_jkgHUD;
 cvar_t *g_jkgHitTint;
@@ -398,6 +399,7 @@ void JKG_RegisterCvars( void )
 	g_jkgShieldStationGive = gi.cvar( "g_jkgShieldStationGive", "4", CVAR_ARCHIVE );
 	g_jkgShieldStationTickMs = gi.cvar( "g_jkgShieldStationTickMs", "33", CVAR_ARCHIVE );
 	g_jkgCombat  = gi.cvar( "g_jkgCombat",  "1", CVAR_ARCHIVE );
+	g_jkgPlayerPainChance = gi.cvar( "g_jkgPlayerPainChance", "0.05", CVAR_ARCHIVE );
 	g_jkgCamera  = gi.cvar( "g_jkgCamera",  "1", CVAR_ARCHIVE );
 	g_jkgHUD     = gi.cvar( "g_jkgHUD",     "1", CVAR_ARCHIVE );
 	g_jkgHitTint = gi.cvar( "g_jkgHitTint", "1", CVAR_ARCHIVE );

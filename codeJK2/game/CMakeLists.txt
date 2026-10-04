@@ -89,6 +89,7 @@ set(JK2SPGameGameFiles
 	"${JK2SPDir}/game/g_main.cpp"
 	"${JK2SPDir}/game/jkg_main.cpp"
 	"${JK2SPDir}/game/jkg_hitbox.cpp"
+	"${JK2SPDir}/game/jkg_player_pain.cpp"
 	"${JK2SPDir}/game/jkg_npc_fire.cpp"
 	"${JK2SPDir}/game/jkg_npc_bowcaster_fire.cpp"
 	"${JK2SPDir}/game/jkg_npc_move.cpp"
