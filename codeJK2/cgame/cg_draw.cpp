@@ -2595,6 +2595,11 @@ static void CG_Draw2D( void )
 	//		}
 		}
 	}
+
+	if ( cg.snap->ps.stats[STAT_HEALTH] > 0 )
+	{
+		JKG_HitTintDraw();
+	}
 }
 
 

@@ -356,6 +356,23 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 	// damage events (player is getting wounded)
 	if ( ps->damageEvent != ops->damageEvent && ps->damageCount ) {
 		CG_DamageFeedback( ps->damageYaw, ps->damagePitch, ps->damageCount );
+		if ( JKG_HUD )
+		{
+			int healthDmg;
+			int armorDmg;
+
+			healthDmg = ops->stats[STAT_HEALTH] - ps->stats[STAT_HEALTH];
+			armorDmg = ops->stats[STAT_ARMOR] - ps->stats[STAT_ARMOR];
+			if ( healthDmg < 0 )
+			{
+				healthDmg = 0;
+			}
+			if ( armorDmg < 0 )
+			{
+				armorDmg = 0;
+			}
+			JKG_HitTintAdd( healthDmg, armorDmg );
+		}
 	}
 
 	// respawning

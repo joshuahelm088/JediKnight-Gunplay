@@ -66,6 +66,28 @@ extern cvar_t *g_jkgShieldStationTickMs;	// ms between ticks (stock 100; default
 extern cvar_t *g_jkgCombat;		// custom damage tables / pain timing / hit locations
 extern cvar_t *g_jkgCamera;		// weapon-fire camera kickback
 extern cvar_t *g_jkgHUD;		// custom HUD / view / weapon-draw tweaks
+extern cvar_t *g_jkgHitTint;	// DF2-style full-screen hit tint (0=off)
+extern cvar_t *g_jkgHitTintHealthScale;	// red channel per health damage point
+extern cvar_t *g_jkgHitTintShieldScale;	// green channel per armor damage point
+extern cvar_t *g_jkgHitTintDecay;	// tint units faded per second
+extern cvar_t *g_jkgHitTintMax;	// max stacked tint per channel
+extern cvar_t *g_jkgHitTintHealthR;
+extern cvar_t *g_jkgHitTintHealthG;
+extern cvar_t *g_jkgHitTintHealthB;
+extern cvar_t *g_jkgHitTintShieldR;
+extern cvar_t *g_jkgHitTintShieldG;
+extern cvar_t *g_jkgHitTintShieldB;
+extern cvar_t *g_jkgDamageBlobScale;	// radius multiplier (0.34 = 66% smaller)
+extern cvar_t *g_jkgDamageBlobHealthSize;
+extern cvar_t *g_jkgDamageBlobShieldSize;
+extern cvar_t *g_jkgDamageBlobArmorThreshold;
+extern cvar_t *g_jkgDamageBlobTime;	// blob fade duration (ms)
+extern cvar_t *g_jkgDamageBlobHealthR;
+extern cvar_t *g_jkgDamageBlobHealthG;
+extern cvar_t *g_jkgDamageBlobHealthB;
+extern cvar_t *g_jkgDamageBlobShieldR;
+extern cvar_t *g_jkgDamageBlobShieldG;
+extern cvar_t *g_jkgDamageBlobShieldB;
 extern cvar_t *g_jkgGunSwayAmount;	// first-person weapon sway strength (degrees per degree turned)
 extern cvar_t *g_jkgGunSwayReturn;	// weapon sway return speed (lower = slower recenter)
 extern cvar_t *g_jkgDebugProjectile;	// projectile spawn debug (0=off, 1=server, 2=+client, 3=+NPC)
@@ -142,6 +164,10 @@ struct centity_s;
 
 // Registers all g_jkg* cvars. Called from G_InitCvars().
 void JKG_RegisterCvars( void );
+
+// Client hit feedback (cgame); gated by JKG_HUD / g_jkgHitTint.
+void JKG_HitTintAdd( int healthDmg, int armorDmg );
+void JKG_HitTintDraw( void );
 
 #define JKG_COMBAT_CLASS_NAME_LEN	32
 

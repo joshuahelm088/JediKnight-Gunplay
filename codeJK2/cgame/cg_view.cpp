@@ -1479,7 +1479,18 @@ static void CG_DamageBlendBlob( void )
 		return;
 	}
 
-	maxTime = DAMAGE_TIME;
+	if ( JKG_HUD && g_jkgDamageBlobTime )
+	{
+		maxTime = g_jkgDamageBlobTime->integer;
+		if ( maxTime <= 0 )
+		{
+			maxTime = DAMAGE_TIME;
+		}
+	}
+	else
+	{
+		maxTime = DAMAGE_TIME;
+	}
 	t = cg.time - cg.damageTime;
 	if ( t <= 0 || t >= maxTime ) {
 		return;
@@ -1495,24 +1506,40 @@ static void CG_DamageBlendBlob( void )
 
 	if ( JKG_HUD )
 	{
-		int r = 180;
-		int g = 50;
-		int b = 50;
-		float scale = 3.0f;
+		int r;
+		int g;
+		int b;
+		float scale;
+		float blobScale;
+		float fade;
+		int armorThreshold;
 
-		if ( ps->stats[STAT_ARMOR] > 50 )
+		r = g_jkgDamageBlobHealthR ? g_jkgDamageBlobHealthR->integer : 0;
+		g = g_jkgDamageBlobHealthG ? g_jkgDamageBlobHealthG->integer : 0;
+		b = g_jkgDamageBlobHealthB ? g_jkgDamageBlobHealthB->integer : 0;
+		scale = g_jkgDamageBlobHealthSize ? g_jkgDamageBlobHealthSize->value : 0.0f;
+		armorThreshold = g_jkgDamageBlobArmorThreshold ? g_jkgDamageBlobArmorThreshold->integer : 0;
+
+		if ( ps->stats[STAT_ARMOR] > armorThreshold )
 		{
-			r = 40;
-			g = 220;
-			b = 60;
-			scale = 5.0f;
+			r = g_jkgDamageBlobShieldR ? g_jkgDamageBlobShieldR->integer : 0;
+			g = g_jkgDamageBlobShieldG ? g_jkgDamageBlobShieldG->integer : 0;
+			b = g_jkgDamageBlobShieldB ? g_jkgDamageBlobShieldB->integer : 0;
+			scale = g_jkgDamageBlobShieldSize ? g_jkgDamageBlobShieldSize->value : 0.0f;
 		}
 
-		ent.radius = cg.damageValue * scale * ( 1.0 - ((float)t / maxTime) );
+		blobScale = g_jkgDamageBlobScale ? g_jkgDamageBlobScale->value : 1.0f;
+		if ( blobScale < 0.0f )
+		{
+			blobScale = 0.0f;
+		}
+		fade = 1.0f - ( (float)t / maxTime );
+
+		ent.radius = cg.damageValue * scale * blobScale * fade;
 		ent.customShader = cgs.media.damageBlendBlobShader;
-		ent.shaderRGBA[0] = r * ( 1.0 - ((float)t / maxTime) );
-		ent.shaderRGBA[1] = g * ( 1.0 - ((float)t / maxTime) );
-		ent.shaderRGBA[2] = b * ( 1.0 - ((float)t / maxTime) );
+		ent.shaderRGBA[0] = (byte)( r * fade );
+		ent.shaderRGBA[1] = (byte)( g * fade );
+		ent.shaderRGBA[2] = (byte)( b * fade );
 	}
 	else
 	{
