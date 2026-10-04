@@ -455,8 +455,6 @@ typedef struct {
 	// blend blobs
 	float		damageTime;
 	float		damageX, damageY, damageValue;
-	float		pickupFlashTime;
-	itemType_t	pickupFlashType;
 
 	// status bar head
 	float		headYaw;

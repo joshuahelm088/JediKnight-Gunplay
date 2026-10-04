@@ -172,6 +172,7 @@ void JKG_RegisterCvars( void );
 // Client hit feedback (cgame); gated by JKG_HUD / g_jkgHitTint.
 void JKG_HitTintAdd( int healthDmg, int armorDmg );
 void JKG_HitTintDraw( void );
+void JKG_PickupTintAdd( void );
 
 #define JKG_COMBAT_CLASS_NAME_LEN	32
 

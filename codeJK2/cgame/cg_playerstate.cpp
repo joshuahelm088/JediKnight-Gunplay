@@ -215,7 +215,7 @@ CG_PickupFlashFeedback
 void CG_PickupFlashFeedback(int yawByte, int pitchByte) {
 	if ( JKG_HUD )
 	{
-		cg.pickupFlashTime = cg.snap->serverTime;
+		JKG_PickupTintAdd();
 	}
 }
 

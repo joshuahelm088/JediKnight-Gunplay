@@ -96,8 +96,7 @@ void CG_ItemPickup( int itemNum, qboolean bHadItem ) {
 	cg.itemPickupBlendTime = cg.time;
 	if ( JKG_HUD )
 	{
-		cg.pickupFlashTime = cg.time;
-		cg.pickupFlashType = bg_itemlist[itemNum].giType;
+		JKG_PickupTintAdd();
 	}
 
 	if (bg_itemlist[itemNum].classname && bg_itemlist[itemNum].classname[0])
