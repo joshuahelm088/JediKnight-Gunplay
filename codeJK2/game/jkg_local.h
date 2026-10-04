@@ -72,6 +72,7 @@ extern cvar_t *g_jkgHitTintHealthScale;	// red channel per health damage point
 extern cvar_t *g_jkgHitTintShieldScale;	// green channel per armor damage point
 extern cvar_t *g_jkgHitTintDecay;	// tint units faded per second
 extern cvar_t *g_jkgHitTintMax;	// max stacked tint per channel
+extern cvar_t *g_jkgHitTintAlphaScale;	// overlay alpha = strength * this (DF2 ApplyTint ~0.5)
 extern cvar_t *g_jkgHitTintHealthR;
 extern cvar_t *g_jkgHitTintHealthG;
 extern cvar_t *g_jkgHitTintHealthB;

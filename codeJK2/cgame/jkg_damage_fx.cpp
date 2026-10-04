@@ -143,22 +143,37 @@ void JKG_HitTintDraw( void )
 		return;
 	}
 
-	if ( drawHitTint && s_hitTint[0] > 0.0f )
+	if ( drawHitTint && ( s_hitTint[0] > 0.0f || s_hitTint[1] > 0.0f ) )
 	{
-		color[0] = g_jkgHitTintHealthR ? g_jkgHitTintHealthR->value : 0.0f;
-		color[1] = g_jkgHitTintHealthG ? g_jkgHitTintHealthG->value : 0.0f;
-		color[2] = g_jkgHitTintHealthB ? g_jkgHitTintHealthB->value : 0.0f;
-		color[3] = s_hitTint[0];
-		CG_FillRect( 0.0f, 0.0f, 640.0f, 480.0f, color );
-	}
+		float rgb[3];
+		float strength;
+		float alphaScale;
 
-	if ( drawHitTint && s_hitTint[1] > 0.0f )
-	{
-		color[0] = g_jkgHitTintShieldR ? g_jkgHitTintShieldR->value : 0.0f;
-		color[1] = g_jkgHitTintShieldG ? g_jkgHitTintShieldG->value : 0.0f;
-		color[2] = g_jkgHitTintShieldB ? g_jkgHitTintShieldB->value : 0.0f;
-		color[3] = s_hitTint[1];
-		CG_FillRect( 0.0f, 0.0f, 640.0f, 480.0f, color );
+		rgb[0] = s_hitTint[0] * ( g_jkgHitTintHealthR ? g_jkgHitTintHealthR->value : 0.0f )
+			+ s_hitTint[1] * ( g_jkgHitTintShieldR ? g_jkgHitTintShieldR->value : 0.0f );
+		rgb[1] = s_hitTint[0] * ( g_jkgHitTintHealthG ? g_jkgHitTintHealthG->value : 0.0f )
+			+ s_hitTint[1] * ( g_jkgHitTintShieldG ? g_jkgHitTintShieldG->value : 0.0f );
+		rgb[2] = s_hitTint[0] * ( g_jkgHitTintHealthB ? g_jkgHitTintHealthB->value : 0.0f )
+			+ s_hitTint[1] * ( g_jkgHitTintShieldB ? g_jkgHitTintShieldB->value : 0.0f );
+
+		strength = rgb[0];
+		if ( rgb[1] > strength )
+		{
+			strength = rgb[1];
+		}
+		if ( rgb[2] > strength )
+		{
+			strength = rgb[2];
+		}
+		if ( strength > 0.0f )
+		{
+			alphaScale = JKG_CvarFloatNonNegative( g_jkgHitTintAlphaScale );
+			color[0] = rgb[0] / strength;
+			color[1] = rgb[1] / strength;
+			color[2] = rgb[2] / strength;
+			color[3] = JKG_ClampFloat( strength * alphaScale, 0.0f, 1.0f );
+			CG_FillRect( 0.0f, 0.0f, 640.0f, 480.0f, color );
+		}
 	}
 
 	if ( s_pickupTint[0] > 0.0f || s_pickupTint[1] > 0.0f || s_pickupTint[2] > 0.0f )
