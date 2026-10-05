@@ -31,13 +31,18 @@ extern cvar_t *g_jkgplay;
 // Per-system toggles.
 extern cvar_t *g_jkgAI;			// custom NPC AI (stormtrooper, probe, sentry, reactions, spawn scaling)
 extern cvar_t *g_jkgWeapons;	// custom weapon fire behavior + tuning
-extern cvar_t *g_jkgMovement;	// NPC locomotion ramp/blend; player pmove is stock JK2
+extern cvar_t *g_jkgMovement;	// NPC speed ramp; player and NPC ground anims follow speed
 extern cvar_t *g_jkgNpcAccel;	// NPC speed-up ramp rate (units/sec)
 extern cvar_t *g_jkgNpcDecel;	// NPC slow-down ramp rate (units/sec)
 extern cvar_t *g_jkgNpcStopDecel;	// decel for goal approach cap v=sqrt(2*a*d); independent of ramp feel
 extern cvar_t *g_jkgNpcTurnRate;	// max NPC moveDir heading change (deg/sec)
 extern cvar_t *g_jkgNpcSpeedScale;	// multiplier on NPC desired walk/run speed
-extern cvar_t *g_jkgNpcAnimMinScale;	// floor on NPC walk/run anim playback scale
+extern cvar_t *g_jkgNpcAnimMinScale;	// floor on walk/run anim playback scale; 0 = no floor
+extern cvar_t *g_jkgLocomotionStandSpeed;	// horizontal speed at or below this stays on stand
+extern cvar_t *g_jkgLocomotionBlend;	// ms to crossfade when the locomotion anim changes
+extern cvar_t *g_jkgLocomotionRunThreshold;	// walk anim until xySpeed exceeds walk cap times this (mid-speed band)
+extern cvar_t *g_jkgLocomotionRunRate;	// extra playback multiplier on run locomotion anims only
+extern cvar_t *g_jkgLocomotionWalkRate;	// extra playback multiplier on walk locomotion anims only
 extern cvar_t *g_jkgDebugNpcMove;	// NPC locomotion debug (0=off, 1=brake events, 2=verbose)
 extern cvar_t *g_jkgDebugAimCone;	// NPC weapon spread cone (0=off, 1=draw, 2=+throttled print)
 extern cvar_t *g_jkgDebugNpcState;	// NPC AI state marker (0=off, 1=draw, 2=+throttled print)
@@ -149,6 +154,9 @@ void JKG_NpcApplyMovementCoast( gentity_t *ent, usercmd_t *ucmd );
 void JKG_NPCRampSpeed( gentity_t *ent, int msec );
 void JKG_NpcApplyMoveDir( gentity_t *self, usercmd_t *cmd, vec3_t dir );
 float JKG_NpcLocomotionAnimScale( gentity_t *ent, int anim );
+qboolean JKG_ShouldCoastLocomotion( gentity_t *ent, playerState_t *ps, float xySpeed );
+qboolean JKG_LocomotionUseWalkAnim( gentity_t *ent, const usercmd_t *cmd, float xySpeed );
+int JKG_LocomotionBlendTime( void );
 
 struct centity_s;
 

@@ -2213,6 +2213,26 @@ float PM_GetTimeScaleMod( gentity_t *gent )
 	return 1.0f;
 }
 
+#define JKG_LOCOMOTION_SPEED_EPSILON	0.05f
+
+static qboolean JKG_LocomotionAnimSpeedChanged( int anim, float oldSpeed, float newSpeed )
+{
+	float diff;
+
+	if ( !JKG_MOVEMENT || ( !PM_WalkingAnim( anim ) && !PM_RunningAnim( anim ) ) )
+	{
+		return ( oldSpeed != newSpeed ) ? qtrue : qfalse;
+	}
+
+	diff = oldSpeed - newSpeed;
+	if ( diff < 0.0f )
+	{
+		diff = -diff;
+	}
+
+	return ( diff > JKG_LOCOMOTION_SPEED_EPSILON ) ? qtrue : qfalse;
+}
+
 /*
 -------------------------
 PM_SetAnimFinal
@@ -2238,12 +2258,13 @@ void PM_SetAnimFinal(int *torsoAnim,int *legsAnim,
 	}
 	animation_t *animations = level.knownAnimFileSets[gent->client->clientInfo.animFileIndex].animations;
 	float		timeScaleMod = PM_GetTimeScaleMod( gent );
-	// >>> JKG HOOK: scale walk/run playback to NPC currentSpeed when enabled (g_jkgMovement).
+	// >>> JKG HOOK: scale walk/run playback to horizontal speed when enabled (g_jkgMovement).
 	if ( JKG_MOVEMENT )
 	{
 		timeScaleMod *= JKG_NpcLocomotionAnimScale( gent, anim );
 	}
 	// <<< JKG HOOK
+	const int	requestedBlend = blendTime;
 	float		animSpeed, oldAnimSpeed;
 	int			actualTime = (cg.time?cg.time:level.time);
 
@@ -2271,20 +2292,32 @@ void PM_SetAnimFinal(int *torsoAnim,int *legsAnim,
 			goto setAnimLegs;
 		}
 
+		// >>> JKG HOOK: crossfade only when the locomotion anim id changes (g_jkgMovement).
+		if ( JKG_MOVEMENT && *torsoAnim != anim
+			&& ( PM_WalkingAnim( anim ) || PM_RunningAnim( anim ) || PM_WalkingAnim( *torsoAnim ) || PM_RunningAnim( *torsoAnim ) ) )
+		{
+			blendTime = JKG_LocomotionBlendTime();
+		}
+		else
+		{
+			blendTime = requestedBlend;
+		}
+		// <<< JKG HOOK
+
 		// animSpeed is 1.0 if the frameLerp (ms/frame) is 50 (20 fps).
 		animSpeed = oldAnimSpeed = 50.0f / animations[anim].frameLerp * timeScaleMod;
 
+		float torsoCurrentFrame = -1.0f;
 		if ( gi.G2API_HaveWeGhoul2Models(gent->ghoul2) && gent->lowerLumbarBone != -1 )//gent->upperLumbarBone
 		{//see if we need to tell ghoul2 to play it again because of a animSpeed change
 			int		blah;
-			float	junk;
-			if (!gi.G2API_GetBoneAnimIndex( &gent->ghoul2[gent->playerModel], gent->lowerLumbarBone, actualTime, &junk, &blah, &blah, &blah, &oldAnimSpeed, NULL ))
+			if (!gi.G2API_GetBoneAnimIndex( &gent->ghoul2[gent->playerModel], gent->lowerLumbarBone, actualTime, &torsoCurrentFrame, &blah, &blah, &blah, &oldAnimSpeed, NULL ))
 			{
 				animSpeed = oldAnimSpeed;
 			}
 		}
 
-		if ( oldAnimSpeed == animSpeed )
+		if ( !JKG_LocomotionAnimSpeedChanged( anim, oldAnimSpeed, animSpeed ) )
 		{//animSpeed has not changed
 			// Don't reset if it's already running the anim
 			if( !(setAnimFlags & SETANIM_FLAG_RESTART) && *torsoAnim == anim )
@@ -2373,7 +2406,7 @@ void PM_SetAnimFinal(int *torsoAnim,int *legsAnim,
 								currentFrame,
 								blendTime);
 #endif
-							if ( oldAnimSpeed != animSpeed
+							if ( JKG_LocomotionAnimSpeedChanged( anim, oldAnimSpeed, animSpeed )
 								&& ((oldAnimSpeed>0&&animSpeed>0) || (oldAnimSpeed<0&&animSpeed<0)) )
 							{//match the new speed, actually
 								legAnimSpeed = animSpeed;
@@ -2442,24 +2475,61 @@ void PM_SetAnimFinal(int *torsoAnim,int *legsAnim,
 						}
 						else
 						{
+							// >>> JKG HOOK: skip Ghoul2 reset on tiny locomotion speed jitter (g_jkgMovement).
+							if ( JKG_MOVEMENT
+								&& ( PM_WalkingAnim( anim ) || PM_RunningAnim( anim ) )
+								&& animatingTorso
+								&& firstFrame == startFrame && lastFrame == endFrame )
+							{
+								float	queryFrame = 0.0f;
+								float	torsoPlaySpeed = 0.0f;
+								int		queryStart = 0;
+								int		queryEnd = 0;
+								int		queryFlags = 0;
+
+								if ( gi.G2API_GetBoneAnimIndex( &gent->ghoul2[gent->playerModel], gent->lowerLumbarBone, actualTime,
+									&queryFrame, &queryStart, &queryEnd, &queryFlags, &torsoPlaySpeed, NULL )
+									&& !JKG_LocomotionAnimSpeedChanged( anim, torsoPlaySpeed, animSpeed ) )
+								{
+									goto setAnimLegs;
+								}
+							}
+							// <<< JKG HOOK
+
 							// no, ok, no blend then because we are either looping on the same anim, or starting from no anim
+							float setFrame = -1.0f;
+							int useFlags = animFlags & ~BONE_ANIM_BLEND;
+							int useBlend = -1;
+							int useTime = cg.time;
+
+							// >>> JKG HOOK: speed-only locomotion updates keep the cycle phase (g_jkgMovement).
+							if ( JKG_MOVEMENT
+								&& ( PM_WalkingAnim( anim ) || PM_RunningAnim( anim ) )
+								&& animatingTorso
+								&& firstFrame == startFrame && lastFrame == endFrame )
+							{
+								setFrame = torsoCurrentFrame;
+								useBlend = 0;
+								useTime = actualTime;
+							}
+							// <<< JKG HOOK
 #if G2_DEBUG_TIMING
 							Com_Printf("trson %d     %d %d %4.2f %4.2f %d\n",
 								actualTime,
 								firstFrame,
 								lastFrame,
 								animSpeed,
-								-1,
-								-1);
+								setFrame,
+								useBlend);
 #endif
 							gi.G2API_SetBoneAnimIndex(&gent->ghoul2[gent->playerModel], gent->lowerLumbarBone, //gent->upperLumbarBone
-								firstFrame, lastFrame, animFlags&~BONE_ANIM_BLEND,
-								animSpeed, cg.time, -1, -1);
+								firstFrame, lastFrame, useFlags,
+								animSpeed, useTime, setFrame, useBlend);
 							if ( gent->motionBone != -1 )
 							{
 								gi.G2API_SetBoneAnimIndex(&gent->ghoul2[gent->playerModel], gent->motionBone,
-									firstFrame, lastFrame, animFlags&~BONE_ANIM_BLEND,
-									animSpeed, cg.time, -1, -1);
+									firstFrame, lastFrame, useFlags,
+									animSpeed, useTime, setFrame, useBlend);
 							}
 						}
 					}
@@ -2519,6 +2589,18 @@ setAnimLegs:
 			goto setAnimDone;
 		}
 
+		// >>> JKG HOOK: crossfade only when the locomotion anim id changes (g_jkgMovement).
+		if ( JKG_MOVEMENT && *legsAnim != anim
+			&& ( PM_WalkingAnim( anim ) || PM_RunningAnim( anim ) || PM_WalkingAnim( *legsAnim ) || PM_RunningAnim( *legsAnim ) ) )
+		{
+			blendTime = JKG_LocomotionBlendTime();
+		}
+		else
+		{
+			blendTime = requestedBlend;
+		}
+		// <<< JKG HOOK
+
 		// animSpeed is 1.0 if the frameLerp (ms/frame) is 50 (20 fps).
 		animSpeed = oldAnimSpeed = 50.0f / animations[anim].frameLerp * timeScaleMod;
 
@@ -2532,39 +2614,12 @@ setAnimLegs:
 			}
 		}
 
-		if ( oldAnimSpeed == animSpeed )
+		if ( !JKG_LocomotionAnimSpeedChanged( anim, oldAnimSpeed, animSpeed ) )
 		{//animSpeed has not changed
 			// Don't reset if it's already running the anim
 			if( !(setAnimFlags & SETANIM_FLAG_RESTART) && *legsAnim == anim )
 			{
-				qboolean skipLegsUpdate = qtrue;
-
-				// >>> JKG HOOK: still refresh G2 playback when locomotion scale changes (g_jkgMovement).
-				if ( JKG_MOVEMENT && gent->NPC
-					&& ( PM_WalkingAnim( anim ) || PM_RunningAnim( anim ) )
-					&& gi.G2API_HaveWeGhoul2Models( gent->ghoul2 ) && gent->rootBone != -1 )
-				{
-					float	junk;
-					float	legAnimSpeed;
-					int		sb;
-					int		eb;
-					int		flags;
-
-					if ( gi.G2API_GetBoneAnimIndex( &gent->ghoul2[gent->playerModel], gent->rootBone, actualTime,
-						&junk, &sb, &eb, &flags, &legAnimSpeed, NULL ) )
-					{
-						if ( legAnimSpeed != animSpeed )
-						{
-							skipLegsUpdate = qfalse;
-						}
-					}
-				}
-				// <<< JKG HOOK
-
-				if ( skipLegsUpdate )
-				{
-					goto setAnimDone;
-				}
+				goto setAnimDone;
 			}
 		}
 
@@ -2643,7 +2698,7 @@ setAnimLegs:
 						currentFrame,
 						blendTime);
 #endif
-					if ( oldAnimSpeed != animSpeed
+					if ( JKG_LocomotionAnimSpeedChanged( anim, oldAnimSpeed, animSpeed )
 						&& ((oldAnimSpeed>0&&animSpeed>0) || (oldAnimSpeed<0&&animSpeed<0)) )
 					{//match the new speed, actually
 						torsoAnimSpeed = animSpeed;
@@ -2674,7 +2729,8 @@ setAnimLegs:
 										&startFrame, &endFrame, &flags, &legAnimSpeed, NULL );
 					// lets see if a) we are already animating and b) we aren't going to do the same animation again
 					if (animatingLegs
-						&& ( (legAnimSpeed!=animSpeed) || (firstFrame != startFrame) || (lastFrame != endFrame) ) )
+						&& ( JKG_LocomotionAnimSpeedChanged( anim, legAnimSpeed, animSpeed )
+							|| (firstFrame != startFrame) || (lastFrame != endFrame) ) )
 					{
 #if G2_DEBUG_TIMING
 						Com_Printf("legsb %d     %d %d %4.2f %4.2f %d\n",
@@ -2687,20 +2743,24 @@ setAnimLegs:
 #endif
 						{
 							float setFrame = -1;
+							int useFlags = animFlags;
+							int useBlend = blendTime;
 
 							// >>> JKG HOOK: keep cycle phase when only locomotion speed changes (g_jkgMovement).
-							if ( JKG_MOVEMENT && gent->NPC
+							if ( JKG_MOVEMENT
 								&& ( PM_WalkingAnim( anim ) || PM_RunningAnim( anim ) )
 								&& firstFrame == startFrame && lastFrame == endFrame
-								&& legAnimSpeed != animSpeed )
+								&& JKG_LocomotionAnimSpeedChanged( anim, legAnimSpeed, animSpeed ) )
 							{
 								setFrame = currentFrame;
+								useBlend = 0;
+								useFlags &= ~BONE_ANIM_BLEND;
 							}
 							// <<< JKG HOOK
 
 							gi.G2API_SetBoneAnimIndex(&gent->ghoul2[gent->playerModel], gent->rootBone,
-								firstFrame, lastFrame, animFlags,
-								animSpeed, actualTime, setFrame, blendTime);
+								firstFrame, lastFrame, useFlags,
+								animSpeed, actualTime, setFrame, useBlend);
 						}
 					}
 					else

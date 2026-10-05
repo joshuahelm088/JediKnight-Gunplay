@@ -12,6 +12,10 @@ JKGunplay mod layer - NPC locomotion (speed ramp + move direction blend)
 
 extern qboolean PM_WalkingAnim( int anim );
 extern qboolean PM_RunningAnim( int anim );
+extern qboolean PM_InSaberAnim( int anim );
+extern qboolean PM_PainAnim( int anim );
+extern qboolean PM_ForceAnim( int anim );
+extern qboolean PM_LandingAnim( int anim );
 extern void G_UcmdMoveForDir( gentity_t *self, usercmd_t *cmd, vec3_t dir );
 
 static int JKG_CvarIntegerNonNegative( cvar_t *cv )
@@ -432,14 +436,180 @@ void JKG_NpcApplyMoveDir( gentity_t *self, usercmd_t *cmd, vec3_t dir )
 	cmd->rightmove = floor( rDot );
 }
 
+static float JKG_ActorHorizontalSpeed( gentity_t *ent )
+{
+	float x;
+	float y;
+
+	if ( !ent || !ent->client )
+	{
+		return 0.0f;
+	}
+
+	x = ent->client->ps.velocity[0];
+	y = ent->client->ps.velocity[1];
+	return sqrt( x * x + y * y );
+}
+
+static float JKG_LocomotionWalkNominal( gentity_t *ent )
+{
+	if ( ent && ent->NPC )
+	{
+		return (float)JKG_NpcScaleDesiredSpeed( ent->NPC->stats.walkSpeed );
+	}
+
+	if ( !g_speed || g_speed->value <= 0.0f )
+	{
+		return 0.0f;
+	}
+
+	return g_speed->value * ( 64.0f / 127.0f );
+}
+
+static float JKG_LocomotionRunNominal( gentity_t *ent )
+{
+	if ( ent && ent->NPC )
+	{
+		return (float)JKG_NpcScaleDesiredSpeed( ent->NPC->stats.runSpeed );
+	}
+
+	if ( !g_speed || g_speed->value <= 0.0f )
+	{
+		return 0.0f;
+	}
+
+	return g_speed->value;
+}
+
+static float JKG_LocomotionStandSpeedValue( void )
+{
+	if ( !g_jkgLocomotionStandSpeed || g_jkgLocomotionStandSpeed->value < 0.0f )
+	{
+		return 0.0f;
+	}
+
+	return g_jkgLocomotionStandSpeed->value;
+}
+
+int JKG_LocomotionBlendTime( void )
+{
+	if ( !g_jkgLocomotionBlend || g_jkgLocomotionBlend->integer < 0 )
+	{
+		return 0;
+	}
+
+	return g_jkgLocomotionBlend->integer;
+}
+
+static float JKG_LocomotionRunThresholdMultiplier( void )
+{
+	float mult;
+
+	if ( !g_jkgLocomotionRunThreshold )
+	{
+		return 1.0f;
+	}
+
+	mult = g_jkgLocomotionRunThreshold->value;
+	if ( mult <= 0.0f )
+	{
+		return 1.0f;
+	}
+
+	return mult;
+}
+
+static qboolean JKG_LocomotionPlayerWantsRun( const usercmd_t *cmd )
+{
+	int fwd;
+
+	if ( !cmd )
+	{
+		return qfalse;
+	}
+
+	fwd = cmd->forwardmove;
+	if ( fwd < 0 )
+	{
+		fwd = -fwd;
+	}
+
+	return ( fwd >= 127 ) ? qtrue : qfalse;
+}
+
+qboolean JKG_LocomotionUseWalkAnim( gentity_t *ent, const usercmd_t *cmd, float xySpeed )
+{
+	float walkCap;
+	float runSplit;
+	float runCap;
+
+	if ( ent && !ent->NPC && cmd )
+	{
+		if ( cmd->buttons & BUTTON_WALKING )
+		{
+			return qtrue;
+		}
+
+		if ( JKG_LocomotionPlayerWantsRun( cmd ) )
+		{
+			return qfalse;
+		}
+	}
+
+	runCap = JKG_LocomotionRunNominal( ent );
+	if ( runCap > 0.0f && xySpeed >= runCap )
+	{
+		return qfalse;
+	}
+
+	walkCap = JKG_LocomotionWalkNominal( ent );
+	if ( walkCap <= 0.0f )
+	{
+		return qtrue;
+	}
+
+	runSplit = walkCap * JKG_LocomotionRunThresholdMultiplier();
+	return ( xySpeed <= runSplit ) ? qtrue : qfalse;
+}
+
+qboolean JKG_ShouldCoastLocomotion( gentity_t *ent, playerState_t *ps, float xySpeed )
+{
+	if ( !JKG_MOVEMENT || !ent || !ent->client || !ps )
+	{
+		return qfalse;
+	}
+
+	if ( ent->client->NPC_class == CLASS_ATST )
+	{
+		return qfalse;
+	}
+
+	if ( ps->pm_flags & PMF_DUCKED )
+	{
+		return qfalse;
+	}
+
+	if ( PM_InSaberAnim( ps->legsAnim ) || PM_PainAnim( ps->legsAnim ) || PM_ForceAnim( ps->legsAnim ) || PM_LandingAnim( ps->legsAnim ) )
+	{
+		return qfalse;
+	}
+
+	if ( xySpeed <= JKG_LocomotionStandSpeedValue() )
+	{
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
 float JKG_NpcLocomotionAnimScale( gentity_t *ent, int anim )
 {
-	int walkNominal;
-	int runNominal;
+	float nominal;
 	float scale;
 	float minScale;
+	float xySpeed;
 
-	if ( !JKG_MOVEMENT || !ent || !ent->NPC || !ent->client )
+	if ( !JKG_MOVEMENT || !ent || !ent->client )
 	{
 		return 1.0f;
 	}
@@ -449,26 +619,30 @@ float JKG_NpcLocomotionAnimScale( gentity_t *ent, int anim )
 		return 1.0f;
 	}
 
-	walkNominal = ent->NPC->stats.walkSpeed;
-	runNominal = ent->NPC->stats.runSpeed;
-	walkNominal = JKG_NpcScaleDesiredSpeed( walkNominal );
-	runNominal = JKG_NpcScaleDesiredSpeed( runNominal );
-
 	if ( PM_WalkingAnim( anim ) )
 	{
-		if ( walkNominal <= 0 )
-		{
-			return 1.0f;
-		}
-		scale = (float)ent->NPC->currentSpeed / (float)walkNominal;
+		nominal = JKG_LocomotionWalkNominal( ent );
 	}
 	else
 	{
-		if ( runNominal <= 0 )
-		{
-			return 1.0f;
-		}
-		scale = (float)ent->NPC->currentSpeed / (float)runNominal;
+		nominal = JKG_LocomotionRunNominal( ent );
+	}
+
+	if ( nominal <= 0.0f )
+	{
+		return 1.0f;
+	}
+
+	xySpeed = JKG_ActorHorizontalSpeed( ent );
+	scale = xySpeed / nominal;
+
+	if ( PM_WalkingAnim( anim ) && g_jkgLocomotionWalkRate && g_jkgLocomotionWalkRate->value > 0.0f )
+	{
+		scale *= g_jkgLocomotionWalkRate->value;
+	}
+	else if ( PM_RunningAnim( anim ) && g_jkgLocomotionRunRate && g_jkgLocomotionRunRate->value > 0.0f )
+	{
+		scale *= g_jkgLocomotionRunRate->value;
 	}
 
 	minScale = JKG_CvarFloatPositive( g_jkgNpcAnimMinScale );
@@ -476,9 +650,9 @@ float JKG_NpcLocomotionAnimScale( gentity_t *ent, int anim )
 	{
 		scale = minScale;
 	}
-	if ( scale > 1.0f )
+	if ( scale > 3.0f )
 	{
-		scale = 1.0f;
+		scale = 3.0f;
 	}
 
 	return scale;

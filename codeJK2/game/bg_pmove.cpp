@@ -5038,6 +5038,9 @@ static void PM_Footsteps( void )
 	// if not trying to move
 	if ( !pm->cmd.forwardmove && !pm->cmd.rightmove )
 	{
+		// >>> JKG HOOK: keep walk/run while horizontal speed is still above the stand deadzone (g_jkgMovement).
+		if ( !JKG_ShouldCoastLocomotion( pm->gent, pm->ps, pm->xyspeed ) )
+		{
 		if ( pm->gent && pm->gent->client && pm->gent->client->NPC_class == CLASS_ATST )
 		{
 			if ( !PM_AdjustStandAnimForSlope() )
@@ -5145,6 +5148,8 @@ static void PM_Footsteps( void )
 			}
 		}
 		return;
+		}
+		// <<< JKG HOOK
 	}
 
 	//maybe call this every frame, even when moving?
@@ -5179,6 +5184,19 @@ static void PM_Footsteps( void )
 		}
 	}
 
+	// >>> JKG HOOK: walk vs run from horizontal speed, not the walk button (g_jkgMovement).
+	qboolean speedLocomotion = qfalse;
+	qboolean playWalk = ( pm->cmd.buttons & BUTTON_WALKING ) ? qtrue : qfalse;
+	if ( JKG_MOVEMENT && pm->gent && pm->gent->client
+		&& pm->gent->client->NPC_class != CLASS_ATST
+		&& pm->gent->client->NPC_class != CLASS_GALAKMECH
+		&& !( pm->ps->pm_flags & PMF_DUCKED ) )
+	{
+		speedLocomotion = qtrue;
+		playWalk = JKG_LocomotionUseWalkAnim( pm->gent, &pm->cmd, pm->xyspeed );
+	}
+	// <<< JKG HOOK
+
 	if ( pm->ps->pm_flags & PMF_DUCKED )
 	{
 		bobmove = 0.5;	// ducked characters bob much faster
@@ -5205,7 +5223,7 @@ static void PM_Footsteps( void )
 	}
 	else if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN )
 	{//Moving backwards
-		if ( !( pm->cmd.buttons & BUTTON_WALKING ) )
+		if ( speedLocomotion ? !playWalk : !( pm->cmd.buttons & BUTTON_WALKING ) )
 		{//running backwards
 			bobmove = 0.4F;	// faster speeds bob faster
 			PM_SetAnim(pm,SETANIM_LEGS,BOTH_RUNBACK1,setAnimFlags);
@@ -5231,7 +5249,7 @@ static void PM_Footsteps( void )
 				PM_SetAnim( pm, SETANIM_BOTH, BOTH_WALK2, SETANIM_FLAG_NORMAL );
 			}
 		}
-		else if ( !( pm->cmd.buttons & BUTTON_WALKING ) )
+		else if ( speedLocomotion ? !playWalk : !( pm->cmd.buttons & BUTTON_WALKING ) )
 		{
 			bobmove = 0.4F;	// faster speeds bob faster
 			if ( pm->ps->weapon == WP_SABER && pm->ps->saberActive )
