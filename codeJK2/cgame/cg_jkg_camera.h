@@ -10,6 +10,7 @@ JKGunplay tight first/third-person camera
 qboolean JKG_TightCamActive( void );
 void JKG_OffsetTightCamera( void );
 qboolean JKG_ShowPlayerBody( void );
+qboolean JKG_ViewWeaponReady( void );
 
 void CG_OffsetFirstPersonView( qboolean firstPersonSaber );
 

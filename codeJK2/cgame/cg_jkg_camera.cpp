@@ -397,3 +397,19 @@ qboolean JKG_ShowPlayerBody( void )
 
 	return s_showBody;
 }
+
+qboolean JKG_ViewWeaponReady( void )
+{
+	if ( s_showBodyFrame != cg.clientFrame )
+	{
+		return qtrue;
+	}
+
+	// Hide the first-person gun until a blend into first person has finished.
+	if ( s_toThird || s_legT < 1.0f )
+	{
+		return qfalse;
+	}
+
+	return qtrue;
+}

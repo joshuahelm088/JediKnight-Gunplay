@@ -26,6 +26,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "FxScheduler.h"
 #include "../game/wp_saber.h"
 #include "../game/jkg_local.h"
+#include "cg_jkg_camera.h"
 #include "../game/g_local.h"
 #include "../game/anims.h"
 
@@ -1091,8 +1092,8 @@ void CG_AddViewWeapon( playerState_t *ps )
 	else if (cgFov > 130)
 		cgFov = 130;
 
-	// no gun if in third person view
-	if ( cg.renderingThirdPerson )
+	// no gun in third person, or until a blend into first person has finished
+	if ( cg.renderingThirdPerson || !JKG_ViewWeaponReady() )
 		return;
 
 	if ( ps->pm_type == PM_INTERMISSION )
