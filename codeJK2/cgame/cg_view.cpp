@@ -29,6 +29,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "FxScheduler.h"
 #include "../game/wp_saber.h"
 #include "../game/jkg_local.h"
+#include "cg_jkg_camera.h"
 #include "../game/anims.h"
 #include "../game/g_functions.h"
 
@@ -1006,7 +1007,7 @@ extern qboolean PM_InForceGetUp( playerState_t *ps );
 extern qboolean PM_InGetUp( playerState_t *ps );
 extern qboolean PM_InKnockDown( playerState_t *ps );
 extern int PM_AnimLength( int index, animNumber_t anim );
-static void CG_OffsetFirstPersonView( qboolean firstPersonSaber ) {
+void CG_OffsetFirstPersonView( qboolean firstPersonSaber ) {
 	float			*origin;
 	float			*angles;
 	float			bob;
@@ -1738,7 +1739,24 @@ static qboolean CG_CalcViewValues( void ) {
 		}
 	}
 
-	if ( (cg.renderingThirdPerson||cg.snap->ps.weapon == WP_SABER||cg.snap->ps.weapon == WP_MELEE)
+	if ( JKG_TightCamActive() )
+	{
+		centity_t *playerCent;
+
+		JKG_OffsetTightCamera();
+		if ( !JKG_ShowPlayerBody() )
+		{
+			playerCent = &cg_entities[0];
+			if ( playerCent && playerCent->gent && playerCent->gent->client )
+			{
+				VectorCopy( cg.refdef.vieworg, playerCent->gent->client->renderInfo.eyePoint );
+				VectorCopy( cg.refdefViewAngles, playerCent->gent->client->renderInfo.eyeAngles );
+				VectorCopy( playerCent->gent->client->renderInfo.eyePoint, playerCent->gent->client->renderInfo.headPoint );
+				playerCent->gent->client->renderInfo.headPoint[2] -= 8;
+			}
+		}
+	}
+	else if ( (cg.renderingThirdPerson||cg.snap->ps.weapon == WP_SABER||cg.snap->ps.weapon == WP_MELEE)
 		&& !cg.zoomMode
 		&& !viewEntIsCam )
 	{

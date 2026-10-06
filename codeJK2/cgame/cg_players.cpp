@@ -30,6 +30,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "../game/ghoul2_shared.h"
 #include "../game/anims.h"
 #include "../game/wp_saber.h"
+#include "cg_jkg_camera.h"
 
 #define	LOOK_SWING_SCALE	0.5
 
@@ -4811,7 +4812,7 @@ void CG_Player( centity_t *cent ) {
 		return;
 	}
 
-	if(cent->currentState.number == 0 && !cg.renderingThirdPerson )//!cg_thirdPerson.integer )
+	if(cent->currentState.number == 0 && !cg.renderingThirdPerson && !JKG_ShowPlayerBody() )//!cg_thirdPerson.integer )
 	{
 		calcedMp = qtrue;
 	}
@@ -4977,7 +4978,7 @@ Ghoul2 Insert Start
 			{//no viewentity
 				if ( cent->currentState.number == cg.snap->ps.clientNum )
 				{//I am the player
-					if ( cg.snap->ps.weapon != WP_SABER && cg.snap->ps.weapon != WP_MELEE )
+					if ( cg.snap->ps.weapon != WP_SABER && cg.snap->ps.weapon != WP_MELEE && !JKG_ShowPlayerBody() )
 					{//not using saber or fists
 						ent.renderfx = RF_THIRD_PERSON;			// only draw in mirrors
 					}
@@ -5631,7 +5632,7 @@ Ghoul2 Insert End
 		{//no viewentity
 			if ( cent->currentState.number == cg.snap->ps.clientNum )
 			{//I am the player
-				if ( cg.snap->ps.weapon != WP_SABER && cg.snap->ps.weapon != WP_MELEE )
+				if ( cg.snap->ps.weapon != WP_SABER && cg.snap->ps.weapon != WP_MELEE && !JKG_ShowPlayerBody() )
 				{//not using saber or fists
 					renderfx = RF_THIRD_PERSON;			// only draw in mirrors
 				}

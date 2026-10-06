@@ -71,6 +71,12 @@ extern cvar_t *g_jkgShieldStationTickMs;	// ms between ticks (stock 100; default
 extern cvar_t *g_jkgCombat;		// custom damage tables / pain timing / hit locations
 extern cvar_t *g_jkgPlayerPainChance;	// DF2-style 3p hit-react chance scale (damage * value); 0 disables
 extern cvar_t *g_jkgCamera;		// weapon-fire camera kickback
+extern cvar_t *g_jkgCam;			// tight over-the-shoulder camera (0 = stock chase cam)
+extern cvar_t *g_jkgCamBlend;		// ms to blend first and third person
+extern cvar_t *g_jkgCamRange;		// third-person distance back from the eye
+extern cvar_t *g_jkgCamShoulder;	// horizontal shoulder offset (negative = left)
+extern cvar_t *g_jkgCamHeight;		// vertical offset in view space
+extern cvar_t *g_jkgCamRecover;		// ms to ease the arm back out after a collision pull-in
 extern cvar_t *g_jkgHUD;		// custom HUD / view / weapon-draw tweaks
 extern cvar_t *g_jkgHitTint;	// DF2-style full-screen hit tint (0=off)
 extern cvar_t *g_jkgHitTintHealthScale;	// red channel per health damage point
@@ -171,6 +177,7 @@ struct centity_s;
 #define JKG_ARMOR		JKG_ON( g_jkgArmor )
 #define JKG_COMBAT		JKG_ON( g_jkgCombat )
 #define JKG_CAMERA		JKG_ON( g_jkgCamera )
+#define JKG_TIGHT_CAM	JKG_ON( g_jkgCam )
 #define JKG_HUD			JKG_ON( g_jkgHUD )
 
 // Armor clamp limit: separate max-armor stat when JKG_ARMOR is on, else stock max-health cap.

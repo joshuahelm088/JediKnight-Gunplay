@@ -233,6 +233,8 @@ set(JK2SPGameCGameFiles
 	"${JK2SPDir}/cgame/cg_syscalls.cpp"
 	"${JK2SPDir}/cgame/cg_text.cpp"
 	"${JK2SPDir}/cgame/cg_view.cpp"
+	"${JK2SPDir}/cgame/cg_jkg_camera.h"
+	"${JK2SPDir}/cgame/cg_jkg_camera.cpp"
 	"${JK2SPDir}/cgame/cg_weapons.cpp"
 	"${JK2SPDir}/cgame/strip_objectives.h"
 	)
