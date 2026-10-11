@@ -23,6 +23,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "cg_local.h"
 #include "../game/g_local.h"
+#include "../game/jkg_local.h"
 #include "../game/b_local.h"
 #define	CG_PLAYERS_CPP
 #include "cg_media.h"
@@ -2173,7 +2174,11 @@ void CG_G2PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t angles )
 				const qboolean animatingHips = gi.G2API_GetAnimRangeIndex( &cent->gent->ghoul2[cent->gent->playerModel], cent->gent->hipsBone, &startFrame, &endFrame );
 
 				//FIXME: make legs lag behind when turning in place, only play turn anim when legs have to catch up
-				if ( angles[YAW] == cent->pe.legs.yawAngle )
+				if ( JKG_MOVEMENT && JKG_LocomotionCycleHeld( cent->gent ) )
+				{
+					gi.G2API_StopBoneAnimIndex( &cent->gent->ghoul2[cent->gent->playerModel], cent->gent->hipsBone );
+				}
+				else if ( angles[YAW] == cent->pe.legs.yawAngle )
 				{
 					gi.G2API_StopBoneAnimIndex( &cent->gent->ghoul2[cent->gent->playerModel], cent->gent->hipsBone );
 				}

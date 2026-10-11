@@ -4896,6 +4896,24 @@ static void PM_Footsteps( void )
 	pm->xyspeed = sqrt( pm->ps->velocity[0] * pm->ps->velocity[0]
 		+  pm->ps->velocity[1] * pm->ps->velocity[1] );
 
+	if ( pm->ps->clientNum == 0 && pm->gent )
+	{
+		static int s_nextLocoBeat;
+
+		if ( level.time >= s_nextLocoBeat )
+		{
+			const int legsAnim = pm->ps->legsAnim;
+
+			s_nextLocoBeat = level.time + 1000;
+			gi.Printf( "JKG loco beat t=%d ent=%d legs=%s fwd=%d xy=%.1f\n",
+				level.time,
+				pm->gent->s.number,
+				( legsAnim >= 0 && legsAnim < MAX_ANIMATIONS ) ? animTable[legsAnim].name : "?",
+				pm->cmd.forwardmove,
+				pm->xyspeed );
+		}
+	}
+
 	if ( pm->ps->legsAnim == BOTH_FLIP_F ||
 		pm->ps->legsAnim == BOTH_FLIP_B ||
 		pm->ps->legsAnim == BOTH_FLIP_L ||
@@ -5041,6 +5059,10 @@ static void PM_Footsteps( void )
 		// >>> JKG HOOK: keep walk/run while horizontal speed is still above the stand deadzone (g_jkgMovement).
 		if ( !JKG_ShouldCoastLocomotion( pm->gent, pm->ps, pm->xyspeed ) )
 		{
+		if ( JKG_LocomotionHoldCycle( pm->gent, pm->ps ) )
+		{
+			return;
+		}
 		if ( pm->gent && pm->gent->client && pm->gent->client->NPC_class == CLASS_ATST )
 		{
 			if ( !PM_AdjustStandAnimForSlope() )
@@ -5151,6 +5173,8 @@ static void PM_Footsteps( void )
 		}
 		// <<< JKG HOOK
 	}
+
+	JKG_LocomotionResumeCycle( pm->gent );
 
 	//maybe call this every frame, even when moving?
 	if ( pm->gent && pm->gent->client && pm->gent->client->NPC_class == CLASS_ATST )

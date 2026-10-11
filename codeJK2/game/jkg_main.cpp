@@ -105,6 +105,7 @@ cvar_t *g_jkgLocomotionBlend;
 cvar_t *g_jkgLocomotionRunThreshold;
 cvar_t *g_jkgLocomotionRunRate;
 cvar_t *g_jkgLocomotionWalkRate;
+cvar_t *g_jkgLocomotionIdleHold;
 cvar_t *g_jkgDebugNpcMove;
 cvar_t *g_jkgDebugAimCone;
 cvar_t *g_jkgDebugNpcState;
@@ -487,6 +488,7 @@ void JKG_RegisterCvars( void )
 	g_jkgLocomotionRunThreshold = gi.cvar( "g_jkgLocomotionRunThreshold", "1.5", CVAR_ARCHIVE );
 	g_jkgLocomotionRunRate = gi.cvar( "g_jkgLocomotionRunRate", "1.25", CVAR_ARCHIVE );
 	g_jkgLocomotionWalkRate = gi.cvar( "g_jkgLocomotionWalkRate", "2", CVAR_ARCHIVE );
+	g_jkgLocomotionIdleHold = gi.cvar( "g_jkgLocomotionIdleHold", "500", CVAR_ARCHIVE );
 	g_jkgDebugNpcMove = gi.cvar( "g_jkgDebugNpcMove", "0", CVAR_CHEAT );
 	g_jkgDebugAimCone = gi.cvar( "g_jkgDebugAimCone", "0", CVAR_CHEAT );
 	g_jkgDebugNpcState = gi.cvar( "g_jkgDebugNpcState", "0", CVAR_CHEAT );

@@ -572,6 +572,238 @@ qboolean JKG_LocomotionUseWalkAnim( gentity_t *ent, const usercmd_t *cmd, float 
 	return ( xySpeed <= runSplit ) ? qtrue : qfalse;
 }
 
+static float s_locoPhase[MAX_GENTITIES];
+static qboolean s_locoPhaseValid[MAX_GENTITIES];
+static int s_locoIdleSince[MAX_GENTITIES];
+static qboolean s_locoHolding[MAX_GENTITIES];
+static int s_locoLogAnim[MAX_GENTITIES];
+static qboolean s_locoLogBanner;
+
+void JKG_LocomotionLog( gentity_t *ent, const char *msg )
+{
+	if ( !ent || ent->s.number != 0 || !msg || !msg[0] )
+	{
+		return;
+	}
+
+	if ( !s_locoLogBanner )
+	{
+		s_locoLogBanner = qtrue;
+		gi.Printf( "JKG loco log g_jkgplay=%d g_jkgMovement=%d idleHold=%d\n",
+			g_jkgplay ? g_jkgplay->integer : -1,
+			g_jkgMovement ? g_jkgMovement->integer : -1,
+			g_jkgLocomotionIdleHold ? g_jkgLocomotionIdleHold->integer : -1 );
+	}
+
+	gi.Printf( "JKG loco %d %s\n", level.time, msg );
+}
+
+void JKG_LocomotionStorePhase( gentity_t *ent, int anim )
+{
+	float currentFrame;
+	float animSpeed;
+	float span;
+	int startFrame;
+	int endFrame;
+	int flags;
+	int entNum;
+
+	if ( !ent || !ent->client || ent->rootBone < 0 )
+	{
+		return;
+	}
+	if ( !PM_WalkingAnim( anim ) && !PM_RunningAnim( anim ) )
+	{
+		return;
+	}
+
+	entNum = ent->s.number;
+	if ( entNum < 0 || entNum >= MAX_GENTITIES )
+	{
+		return;
+	}
+	if ( !gi.G2API_HaveWeGhoul2Models( ent->ghoul2 ) )
+	{
+		return;
+	}
+	if ( !gi.G2API_GetBoneAnimIndex( &ent->ghoul2[ent->playerModel], ent->rootBone, level.time,
+		&currentFrame, &startFrame, &endFrame, &flags, &animSpeed, NULL ) )
+	{
+		return;
+	}
+
+	span = (float)( endFrame - startFrame );
+	if ( span < 1.0f )
+	{
+		return;
+	}
+
+	s_locoPhase[entNum] = ( currentFrame - (float)startFrame ) / span;
+	if ( s_locoPhase[entNum] < 0.0f )
+	{
+		s_locoPhase[entNum] = 0.0f;
+	}
+	else if ( s_locoPhase[entNum] > 0.999f )
+	{
+		s_locoPhase[entNum] = 0.999f;
+	}
+	s_locoPhaseValid[entNum] = qtrue;
+}
+
+float JKG_LocomotionStoredPhase( gentity_t *ent )
+{
+	int entNum;
+
+	if ( !ent )
+	{
+		return -1.0f;
+	}
+
+	entNum = ent->s.number;
+	if ( entNum < 0 || entNum >= MAX_GENTITIES || !s_locoPhaseValid[entNum] )
+	{
+		return -1.0f;
+	}
+
+	return s_locoPhase[entNum];
+}
+
+qboolean JKG_LocomotionCycleHeld( gentity_t *ent )
+{
+	int entNum;
+
+	if ( !ent )
+	{
+		return qfalse;
+	}
+
+	entNum = ent->s.number;
+	if ( entNum < 0 || entNum >= MAX_GENTITIES )
+	{
+		return qfalse;
+	}
+
+	return s_locoHolding[entNum];
+}
+
+static void JKG_LocomotionPauseRoot( gentity_t *ent )
+{
+	if ( !ent || ent->rootBone < 0 || !gi.G2API_HaveWeGhoul2Models( ent->ghoul2 ) )
+	{
+		return;
+	}
+	if ( gi.G2API_IsPaused( &ent->ghoul2[ent->playerModel], "model_root" ) )
+	{
+		return;
+	}
+	gi.G2API_PauseBoneAnimIndex( &ent->ghoul2[ent->playerModel], ent->rootBone, level.time );
+}
+
+static void JKG_LocomotionUnpauseRoot( gentity_t *ent )
+{
+	if ( !ent || ent->rootBone < 0 || !gi.G2API_HaveWeGhoul2Models( ent->ghoul2 ) )
+	{
+		return;
+	}
+	if ( !gi.G2API_IsPaused( &ent->ghoul2[ent->playerModel], "model_root" ) )
+	{
+		return;
+	}
+	gi.G2API_PauseBoneAnimIndex( &ent->ghoul2[ent->playerModel], ent->rootBone, level.time );
+}
+
+qboolean JKG_LocomotionHoldCycle( gentity_t *ent, playerState_t *ps )
+{
+	int entNum;
+	int holdMs;
+	int anim;
+
+	if ( !JKG_MOVEMENT || !ent || !ent->client || !ps )
+	{
+		if ( ent && ent->s.number == 0 && !s_locoLogBanner )
+		{
+			JKG_LocomotionLog( ent, "hold skip: movement off or no client" );
+		}
+		return qfalse;
+	}
+
+	entNum = ent->s.number;
+	if ( entNum < 0 || entNum >= MAX_GENTITIES )
+	{
+		return qfalse;
+	}
+
+	anim = ps->legsAnim;
+	if ( !PM_WalkingAnim( anim ) && !PM_RunningAnim( anim ) )
+	{
+		if ( s_locoLogAnim[entNum] != anim )
+		{
+			s_locoLogAnim[entNum] = anim;
+			JKG_LocomotionLog( ent, va( "hold skip: legs %s (%d) is not walk/run", animTable[anim].name, anim ) );
+		}
+		s_locoIdleSince[entNum] = 0;
+		s_locoHolding[entNum] = qfalse;
+		return qfalse;
+	}
+	s_locoLogAnim[entNum] = anim;
+
+	holdMs = JKG_CvarIntegerNonNegative( g_jkgLocomotionIdleHold );
+	JKG_LocomotionStorePhase( ent, anim );
+	if ( holdMs <= 0 )
+	{
+		s_locoIdleSince[entNum] = 0;
+		s_locoHolding[entNum] = qfalse;
+		return qfalse;
+	}
+
+	if ( !s_locoIdleSince[entNum] )
+	{
+		s_locoIdleSince[entNum] = level.time;
+		JKG_LocomotionPauseRoot( ent );
+		s_locoHolding[entNum] = qtrue;
+		JKG_LocomotionLog( ent, va( "hold start %s phase %.3f paused %d",
+			animTable[anim].name,
+			s_locoPhaseValid[entNum] ? s_locoPhase[entNum] : -1.0f,
+			( ent->rootBone >= 0 && gi.G2API_HaveWeGhoul2Models( ent->ghoul2 ) && gi.G2API_IsPaused( &ent->ghoul2[ent->playerModel], "model_root" ) ) ? 1 : 0 ) );
+	}
+
+	if ( level.time - s_locoIdleSince[entNum] < holdMs )
+	{
+		return qtrue;
+	}
+
+	JKG_LocomotionLog( ent, va( "hold expire %s -> stand", animTable[anim].name ) );
+	s_locoHolding[entNum] = qfalse;
+	s_locoIdleSince[entNum] = 0;
+	return qfalse;
+}
+
+void JKG_LocomotionResumeCycle( gentity_t *ent )
+{
+	int entNum;
+
+	if ( !ent )
+	{
+		return;
+	}
+
+	entNum = ent->s.number;
+	if ( entNum < 0 || entNum >= MAX_GENTITIES )
+	{
+		return;
+	}
+
+	s_locoIdleSince[entNum] = 0;
+	if ( !s_locoHolding[entNum] )
+	{
+		return;
+	}
+
+	s_locoHolding[entNum] = qfalse;
+	JKG_LocomotionUnpauseRoot( ent );
+	JKG_LocomotionLog( ent, "hold resume" );
+}
+
 qboolean JKG_ShouldCoastLocomotion( gentity_t *ent, playerState_t *ps, float xySpeed )
 {
 	if ( !JKG_MOVEMENT || !ent || !ent->client || !ps )

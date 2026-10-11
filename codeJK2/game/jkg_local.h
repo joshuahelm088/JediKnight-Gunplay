@@ -43,6 +43,7 @@ extern cvar_t *g_jkgLocomotionBlend;	// ms to crossfade when the locomotion anim
 extern cvar_t *g_jkgLocomotionRunThreshold;	// walk anim until xySpeed exceeds walk cap times this (mid-speed band)
 extern cvar_t *g_jkgLocomotionRunRate;	// extra playback multiplier on run locomotion anims only
 extern cvar_t *g_jkgLocomotionWalkRate;	// extra playback multiplier on walk locomotion anims only
+extern cvar_t *g_jkgLocomotionIdleHold;	// ms to keep the walk/run cycle after input stops, before stand
 extern cvar_t *g_jkgDebugNpcMove;	// NPC locomotion debug (0=off, 1=brake events, 2=verbose)
 extern cvar_t *g_jkgDebugAimCone;	// NPC weapon spread cone (0=off, 1=draw, 2=+throttled print)
 extern cvar_t *g_jkgDebugNpcState;	// NPC AI state marker (0=off, 1=draw, 2=+throttled print)
@@ -163,6 +164,12 @@ float JKG_NpcLocomotionAnimScale( gentity_t *ent, int anim );
 qboolean JKG_ShouldCoastLocomotion( gentity_t *ent, playerState_t *ps, float xySpeed );
 qboolean JKG_LocomotionUseWalkAnim( gentity_t *ent, const usercmd_t *cmd, float xySpeed );
 int JKG_LocomotionBlendTime( void );
+qboolean JKG_LocomotionHoldCycle( gentity_t *ent, playerState_t *ps );
+void JKG_LocomotionResumeCycle( gentity_t *ent );
+qboolean JKG_LocomotionCycleHeld( gentity_t *ent );
+void JKG_LocomotionLog( gentity_t *ent, const char *msg );
+void JKG_LocomotionStorePhase( gentity_t *ent, int anim );
+float JKG_LocomotionStoredPhase( gentity_t *ent );
 
 struct centity_s;
 

@@ -2233,6 +2233,80 @@ static qboolean JKG_LocomotionAnimSpeedChanged( int anim, float oldSpeed, float 
 	return ( diff > JKG_LOCOMOTION_SPEED_EPSILON ) ? qtrue : qfalse;
 }
 
+static float JKG_LocomotionCycleSeedFrame( int anim, const animation_t *animations, int setAnimFlags, float timeScaleMod, int actualTime, int firstFrame, int lastFrame, gentity_t *gent )
+{
+	float frameLerp;
+	float cycleMs;
+	float storedPhase;
+	int phase;
+	float seedFrame;
+	float span;
+
+	if ( !JKG_MOVEMENT || ( setAnimFlags & SETANIM_FLAG_RESTART ) )
+	{
+		return -1.0f;
+	}
+	if ( !PM_WalkingAnim( anim ) && !PM_RunningAnim( anim ) )
+	{
+		return -1.0f;
+	}
+	if ( animations[anim].numFrames <= 0 )
+	{
+		return -1.0f;
+	}
+
+	span = (float)( lastFrame - firstFrame );
+	if ( span < 1.0f )
+	{
+		return -1.0f;
+	}
+
+	storedPhase = JKG_LocomotionStoredPhase( gent );
+	if ( storedPhase >= 0.0f )
+	{
+		if ( storedPhase > 0.999f )
+		{
+			storedPhase = 0.999f;
+		}
+		return (float)firstFrame + storedPhase * span;
+	}
+
+	if ( animations[anim].loopFrames == -1 || timeScaleMod <= 0.0f )
+	{
+		return -1.0f;
+	}
+
+	frameLerp = (float)fabs( (double)animations[anim].frameLerp );
+	if ( frameLerp <= 0.0f )
+	{
+		return -1.0f;
+	}
+
+	cycleMs = (float)animations[anim].numFrames * frameLerp / timeScaleMod;
+	if ( cycleMs < 1.0f )
+	{
+		return -1.0f;
+	}
+
+	phase = actualTime % (int)cycleMs;
+	if ( phase < 0 )
+	{
+		phase = -phase;
+	}
+
+	seedFrame = (float)firstFrame + ( (float)phase * timeScaleMod / frameLerp );
+	if ( seedFrame < (float)firstFrame )
+	{
+		seedFrame = (float)firstFrame;
+	}
+	else if ( seedFrame >= (float)lastFrame )
+	{
+		seedFrame = (float)lastFrame - 0.001f;
+	}
+
+	return seedFrame;
+}
+
 /*
 -------------------------
 PM_SetAnimFinal
@@ -2462,15 +2536,20 @@ void PM_SetAnimFinal(int *torsoAnim,int *legsAnim,
 								-1,
 								blendTime);
 #endif
-							gi.G2API_SetBoneAnimIndex(&gent->ghoul2[gent->playerModel], gent->lowerLumbarBone, //gent->upperLumbarBone
-								firstFrame, lastFrame, animFlags,
-								animSpeed, actualTime, -1, blendTime);
-
-							if ( gent->motionBone != -1 )
 							{
-								gi.G2API_SetBoneAnimIndex(&gent->ghoul2[gent->playerModel], gent->motionBone,
+								float setFrame = -1.0f;
+
+								setFrame = JKG_LocomotionCycleSeedFrame( anim, animations, setAnimFlags, timeScaleMod, actualTime, firstFrame, lastFrame, gent );
+								gi.G2API_SetBoneAnimIndex(&gent->ghoul2[gent->playerModel], gent->lowerLumbarBone, //gent->upperLumbarBone
 									firstFrame, lastFrame, animFlags,
-									animSpeed, actualTime, -1, blendTime);
+									animSpeed, actualTime, setFrame, blendTime);
+
+								if ( gent->motionBone != -1 )
+								{
+									gi.G2API_SetBoneAnimIndex(&gent->ghoul2[gent->playerModel], gent->motionBone,
+										firstFrame, lastFrame, animFlags,
+										animSpeed, actualTime, setFrame, blendTime);
+								}
 							}
 						}
 						else
@@ -2513,6 +2592,17 @@ void PM_SetAnimFinal(int *torsoAnim,int *legsAnim,
 								useTime = actualTime;
 							}
 							// <<< JKG HOOK
+
+							if ( setFrame < 0.0f )
+							{
+								setFrame = JKG_LocomotionCycleSeedFrame( anim, animations, setAnimFlags, timeScaleMod, actualTime, firstFrame, lastFrame, gent );
+								if ( setFrame >= 0.0f )
+								{
+									useTime = actualTime;
+									useBlend = blendTime;
+									useFlags = animFlags;
+								}
+							}
 #if G2_DEBUG_TIMING
 							Com_Printf("trson %d     %d %d %4.2f %4.2f %d\n",
 								actualTime,
@@ -2621,6 +2711,11 @@ setAnimLegs:
 			{
 				goto setAnimDone;
 			}
+		}
+
+		if ( *legsAnim != anim )
+		{
+			JKG_LocomotionStorePhase( gent, *legsAnim );
 		}
 
 		*legsAnim = anim;
@@ -2758,6 +2853,17 @@ setAnimLegs:
 							}
 							// <<< JKG HOOK
 
+							if ( setFrame < 0.0f )
+							{
+								setFrame = JKG_LocomotionCycleSeedFrame( anim, animations, setAnimFlags, timeScaleMod, actualTime, firstFrame, lastFrame, gent );
+							}
+
+							if ( gent->s.number == 0 && ( PM_WalkingAnim( anim ) || PM_RunningAnim( anim ) || PM_WalkingAnim( *legsAnim ) || PM_RunningAnim( *legsAnim ) || anim == BOTH_STAND1 || anim == BOTH_STAND2 ) )
+							{
+								JKG_LocomotionLog( gent, va( "G2 legsb %s setFrame %.2f range %d-%d bone %d-%d blend %d speed %.2f",
+									animTable[anim].name, setFrame, firstFrame, lastFrame, startFrame, endFrame, useBlend, animSpeed ) );
+							}
+
 							gi.G2API_SetBoneAnimIndex(&gent->ghoul2[gent->playerModel], gent->rootBone,
 								firstFrame, lastFrame, useFlags,
 								animSpeed, actualTime, setFrame, useBlend);
@@ -2765,6 +2871,11 @@ setAnimLegs:
 					}
 					else
 					{
+						float setFrame;
+						int useBlend;
+						int useTime;
+						int useFlags;
+
 						// no, ok, no blend then because we are either looping on the same anim, or starting from no anim
 #if G2_DEBUG_TIMING
 						Com_Printf("legsn %d     %d %d %4.2f %4.2f %d\n",
@@ -2775,9 +2886,28 @@ setAnimLegs:
 							-1,
 							-1);
 #endif
+						setFrame = JKG_LocomotionCycleSeedFrame( anim, animations, setAnimFlags, timeScaleMod, actualTime, firstFrame, lastFrame, gent );
+						if ( setFrame >= 0.0f )
+						{
+							useTime = actualTime;
+							useBlend = blendTime;
+							useFlags = animFlags;
+						}
+						else
+						{
+							setFrame = -1.0f;
+							useTime = cg.time;
+							useBlend = -1;
+							useFlags = animFlags & ~BONE_ANIM_BLEND;
+						}
+						if ( gent->s.number == 0 && ( PM_WalkingAnim( anim ) || PM_RunningAnim( anim ) || anim == BOTH_STAND1 || anim == BOTH_STAND2 ) )
+						{
+							JKG_LocomotionLog( gent, va( "G2 legsn %s setFrame %.2f range %d-%d blend %d speed %.2f",
+								animTable[anim].name, setFrame, firstFrame, lastFrame, useBlend, animSpeed ) );
+						}
 						gi.G2API_SetBoneAnimIndex(&gent->ghoul2[gent->playerModel], gent->rootBone,
-							firstFrame, lastFrame, animFlags&~BONE_ANIM_BLEND,
-							animSpeed, cg.time, -1, -1);
+							firstFrame, lastFrame, useFlags,
+							animSpeed, useTime, setFrame, useBlend);
 					}
 				}
 			}
@@ -2828,6 +2958,14 @@ void PM_SetAnim(pmove_t	*pm,int setAnimParts,int anim,int setAnimFlags, int blen
 	if ( pm->ps->pm_type >= PM_DEAD )
 	{//FIXME: sometimes we'll want to set anims when your dead... twitches, impacts, etc.
 		return;
+	}
+
+	if ( pm->ps->clientNum == 0 && ( setAnimParts & SETANIM_LEGS ) && pm->ps->legsAnim != anim
+		&& anim >= 0 && anim < MAX_ANIMATIONS )
+	{
+		JKG_LocomotionLog( pm->gent, va( "request %s -> %s flags 0x%x fwd %d xy %.1f",
+			( pm->ps->legsAnim >= 0 && pm->ps->legsAnim < MAX_ANIMATIONS ) ? animTable[pm->ps->legsAnim].name : "?",
+			animTable[anim].name, setAnimFlags, pm->cmd.forwardmove, pm->xyspeed ) );
 	}
 
 	if ( pm->gent == NULL )
