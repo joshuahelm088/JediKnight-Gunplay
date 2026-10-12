@@ -112,6 +112,184 @@ Toss the weapon and powerups for the killed player
 */
 extern gentity_t *WP_DropThermal( gentity_t *ent );
 extern qboolean WP_SaberLose( gentity_t *self, vec3_t throwDir );
+
+static qboolean G_IsDroppablePlayerWeapon( int weapon )
+{
+	if ( weapon == WP_SABER )
+	{
+		return qfalse;
+	}
+	if ( weapon > WP_SABER && weapon <= MAX_PLAYER_WEAPONS )
+	{
+		return qtrue;
+	}
+	if ( weapon == WP_BLASTER_PISTOL )
+	{
+		return qtrue;
+	}
+	return qfalse;
+}
+
+static int G_NpcDroppedWeaponAmmoCount( int weapon )
+{
+	switch ( weapon )
+	{
+	case WP_BRYAR_PISTOL:
+		return 20;
+	case WP_BLASTER_PISTOL:
+		return 20;
+	case WP_BLASTER:
+		return 15;
+	case WP_DISRUPTOR:
+		return 20;
+	case WP_BOWCASTER:
+		return 5;
+	case WP_REPEATER:
+		return 20;
+	case WP_DEMP2:
+		return 10;
+	case WP_FLECHETTE:
+		return 30;
+	case WP_ROCKET_LAUNCHER:
+		return 3;
+	case WP_THERMAL:
+		return 4;
+	case WP_TRIP_MINE:
+		return 3;
+	case WP_DET_PACK:
+		return 1;
+	case WP_STUN_BATON:
+		return 20;
+	default:
+		return 0;
+	}
+}
+
+static gentity_t *G_DropWeaponPickup( gentity_t *self, int weapon )
+{
+	gitem_t		*item;
+	gentity_t	*dropped;
+
+	if ( !self || !self->client )
+	{
+		return NULL;
+	}
+	if ( !G_IsDroppablePlayerWeapon( weapon ) )
+	{
+		return NULL;
+	}
+	if ( !( self->client->ps.stats[STAT_WEAPONS] & ( 1 << weapon ) ) )
+	{
+		return NULL;
+	}
+
+	if ( weapon == WP_THERMAL )
+	{
+		item = FindItemForAmmo( AMMO_THERMAL );
+	}
+	else
+	{
+		item = FindItemForWeapon( (weapon_t) weapon );
+	}
+	if ( !item )
+	{
+		return NULL;
+	}
+
+	dropped = Drop_Item( self, item, 0, qtrue );
+	if ( !dropped )
+	{
+		return NULL;
+	}
+
+	dropped->e_ThinkFunc = thinkF_NULL;
+	dropped->nextthink = -1;
+
+	if ( !self->s.number )
+	{
+		dropped->count = 0;
+	}
+	else
+	{
+		dropped->count = G_NpcDroppedWeaponAmmoCount( weapon );
+	}
+
+	if ( weapon != WP_THERMAL
+		&& weapon != WP_TRIP_MINE
+		&& weapon != WP_DET_PACK )
+	{
+		const char *dropModel = item->world_model;
+		if ( weapon == WP_BLASTER_PISTOL )
+		{
+			gitem_t *bryarItem = FindItemForWeapon( WP_BRYAR_PISTOL );
+			if ( bryarItem && bryarItem->world_model )
+			{
+				dropModel = bryarItem->world_model;
+			}
+		}
+		gi.G2API_InitGhoul2Model( dropped->ghoul2, dropModel, G_ModelIndex( dropModel ), NULL_HANDLE, NULL_HANDLE, 0, 0 );
+		dropped->s.radius = 10;
+	}
+
+	return dropped;
+}
+
+static void G_DropNpcCarriedWeapons( gentity_t *self, int weaponInHand )
+{
+	int weapon;
+
+	if ( !self || !self->client || !self->NPC )
+	{
+		return;
+	}
+
+	for ( weapon = WP_SABER + 1; weapon < WP_NUM_WEAPONS; weapon++ )
+	{
+		if ( !G_IsDroppablePlayerWeapon( weapon ) )
+		{
+			continue;
+		}
+		if ( weapon == weaponInHand )
+		{
+			if ( weapon == WP_THERMAL && self->client->ps.torsoAnim == BOTH_ATTACK10 )
+			{
+				G_DropWeaponPickup( self, weapon );
+			}
+			continue;
+		}
+		G_DropWeaponPickup( self, weapon );
+	}
+}
+
+static void G_ClearNpcWeaponModelsOnDeath( gentity_t *self )
+{
+	int i;
+
+	if ( !self || !self->client )
+	{
+		return;
+	}
+
+	self->client->ps.weapon = WP_NONE;
+	self->s.weapon = WP_NONE;
+
+	if ( self->ghoul2.size() )
+	{
+		for ( i = (int)self->ghoul2.size() - 1; i >= 0; i-- )
+		{
+			if ( i == self->playerModel )
+			{
+				continue;
+			}
+			if ( self->ghoul2[i].mModelindex >= 0 )
+			{
+				gi.G2API_RemoveGhoul2Model( self->ghoul2, i );
+			}
+		}
+	}
+	self->weaponModel = -1;
+}
+
 gentity_t *TossClientItems( gentity_t *self )
 {
 	gentity_t	*dropped = NULL;
@@ -148,83 +326,7 @@ gentity_t *TossClientItems( gentity_t *self )
 		}
 		if ( item && !dropped )
 		{
-			// spawn the item
-			dropped = Drop_Item( self, item, 0, qtrue );
-			//TEST: dropped items never go away
-			dropped->e_ThinkFunc = thinkF_NULL;
-			dropped->nextthink = -1;
-
-			if ( !self->s.number )
-			{//player's dropped items never go away
-				//dropped->e_ThinkFunc = thinkF_NULL;
-				//dropped->nextthink = -1;
-				dropped->count = 0;//no ammo
-			}
-			else
-			{//FIXME: base this on the NPC's actual amount of ammo he's used up...
-				switch ( weapon )
-				{
-				case WP_BRYAR_PISTOL:
-					dropped->count = 20;
-					break;
-				case WP_BLASTER_PISTOL:
-					dropped->count = 20;
-					break;
-				case WP_BLASTER:
-					dropped->count = 15;
-					break;
-				case WP_DISRUPTOR:
-					dropped->count = 20;
-					break;
-				case WP_BOWCASTER:
-					dropped->count = 5;
-					break;
-				case WP_REPEATER:
-					dropped->count = 20;
-					break;
-				case WP_DEMP2:
-					dropped->count = 10;
-					break;
-				case WP_FLECHETTE:
-					dropped->count = 30;
-					break;
-				case WP_ROCKET_LAUNCHER:
-					dropped->count = 3;
-					break;
-				case WP_THERMAL:
-					dropped->count = 4;
-					break;
-				case WP_TRIP_MINE:
-					dropped->count = 3;
-					break;
-				case WP_DET_PACK:
-					dropped->count = 1;
-					break;
-				case WP_STUN_BATON:
-					dropped->count = 20;
-					break;
-				default:
-					dropped->count = 0;
-					break;
-				}
-			}
-			// well, dropped weapons are G2 models, so they have to be initialised if they want to draw..give us a radius so we don't get prematurely culled
-			if ( weapon != WP_THERMAL
-				&& weapon != WP_TRIP_MINE
-				&& weapon != WP_DET_PACK )
-			{
-				const char *dropModel = item->world_model;
-				if ( weapon == WP_BLASTER_PISTOL )
-				{//JK2 has no blaster_pistol world mesh; officers use the Bryar glm
-					gitem_t *bryarItem = FindItemForWeapon( WP_BRYAR_PISTOL );
-					if ( bryarItem && bryarItem->world_model )
-					{
-						dropModel = bryarItem->world_model;
-					}
-				}
-				gi.G2API_InitGhoul2Model( dropped->ghoul2, dropModel, G_ModelIndex( dropModel ), NULL_HANDLE, NULL_HANDLE, 0, 0);
-				dropped->s.radius = 10;
-			}
+			dropped = G_DropWeaponPickup( self, weapon );
 		}
 	}
 //	else if (( self->client->NPC_class == CLASS_SENTRY ) || ( self->client->NPC_class == CLASS_PROBE )) // Looks dumb, Steve told us to take it out.
@@ -3614,7 +3716,13 @@ extern void RunEmplacedWeapon( gentity_t *ent, usercmd_t **ucmd );
 		&& meansOfDeath != MOD_SNIPER
 		&& (!self->client||self->client->NPC_class!=CLASS_GALAKMECH))
 	{
+		const int weaponInHand = self->s.weapon;
+
 		TossClientItems( self );
+		if ( self->NPC )
+		{
+			G_DropNpcCarriedWeapons( self, weaponInHand );
+		}
 	}
 
 	if ( meansOfDeath == MOD_SNIPER )
@@ -3643,11 +3751,18 @@ extern void RunEmplacedWeapon( gentity_t *ent, usercmd_t **ucmd );
 	}
 	else
 	{// Sigh...borg shouldn't drop their weapon attachments when they die..
-		self->s.weapon = WP_NONE;
-		if ( self->weaponModel >= 0 && self->ghoul2.size())
+		if ( self->NPC )
 		{
-			gi.G2API_RemoveGhoul2Model( self->ghoul2, self->weaponModel );
-			self->weaponModel = -1;
+			G_ClearNpcWeaponModelsOnDeath( self );
+		}
+		else
+		{
+			self->s.weapon = WP_NONE;
+			if ( self->weaponModel >= 0 && self->ghoul2.size() )
+			{
+				gi.G2API_RemoveGhoul2Model( self->ghoul2, self->weaponModel );
+				self->weaponModel = -1;
+			}
 		}
 	}
 

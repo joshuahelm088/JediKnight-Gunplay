@@ -832,9 +832,10 @@ void NPC_ChangeWeapon( int newWeapon )
 	{
 		changing = qtrue;
 	}
-	if ( changing && NPC->weaponModel >= 9 )
+	if ( changing && NPC->weaponModel >= 0 )
 	{
 		gi.G2API_RemoveGhoul2Model( NPC->ghoul2, NPC->weaponModel );
+		NPC->weaponModel = -1;
 	}
 	ChangeWeapon( NPC, newWeapon );
 	if ( changing && NPC->client->ps.weapon != WP_NONE )
