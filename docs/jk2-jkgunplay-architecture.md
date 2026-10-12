@@ -168,7 +168,7 @@ flowchart LR
 
 ### Third-person torso / legs yaw (cgame)
 
-Client-only presentation: upper body follows the camera while legs lag, then catch up when the offset exceeds a threshold.
+Client-only presentation: upper body follows the camera while legs lag, then catch up when the offset exceeds a threshold. With `g_jkgMovement` on, stopping syncs stored `moveYaw` to the current leg yaw (so a strafe release keeps leg facing); while idle, if view-vs-`moveYaw` exceeds `cg_torsoYawMax`, `moveYaw` snaps to view and legs rotate to face the actor.
 
 **G2 path (humanoid player, third person):** `CG_G2PlayerAngles` → `CG_PlayerLegsYawFromMovement` (leg lag + snap) + `CG_G2ClientSpineAngles` (splits view-vs-legs delta across spine bones). This is what you see on the local player.
 

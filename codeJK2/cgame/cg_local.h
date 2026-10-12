@@ -175,6 +175,8 @@ struct centity_s
 	vec3_t			lerpOrigin;
 	vec3_t			lerpAngles;
 	float			moveYaw;
+	qboolean		moveYawSet;
+	qboolean		jkgWasMoving;
 
 	//Pointer to corresponding gentity
 	gentity_t		*gent;

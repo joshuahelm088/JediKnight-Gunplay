@@ -1725,9 +1725,19 @@ qboolean CG_PlayerLegsYawFromMovement( centity_t *cent, const vec3_t velocity, f
 	//figure out what the offset, if any, should be
 	if ( velocity[0] || velocity[1] )
 	{
-		float	moveYaw;
-		moveYaw = vectoyaw( velocity );
-		addAngle = AngleDelta( cent->lerpAngles[YAW], moveYaw )*-1;
+		if ( JKG_MOVEMENT )
+		{
+			cent->jkgWasMoving = qtrue;
+			cent->moveYaw = vectoyaw( velocity );
+			cent->moveYawSet = qtrue;
+			addAngle = AngleDelta( cent->lerpAngles[YAW], cent->moveYaw ) * -1;
+		}
+		else
+		{
+			float	moveYaw;
+			moveYaw = vectoyaw( velocity );
+			addAngle = AngleDelta( cent->lerpAngles[YAW], moveYaw ) * -1;
+		}
 		if ( addAngle > 150 || addAngle < -150 )
 		{
 			addAngle = 0;
@@ -1735,6 +1745,46 @@ qboolean CG_PlayerLegsYawFromMovement( centity_t *cent, const vec3_t velocity, f
 		else
 		{
 			//FIXME: use actual swing/clamp tolerances
+			if ( addAngle > swingTolMax )
+			{
+				addAngle = swingTolMax;
+			}
+			else if ( addAngle < swingTolMin )
+			{
+				addAngle = swingTolMin;
+			}
+			if ( cent->gent->client->ps.pm_flags&PMF_BACKWARDS_RUN )
+			{
+				addAngle *= -1;
+			}
+			turnRate = maxTurnRate * 0.5f;
+		}
+	}
+	else if ( JKG_MOVEMENT )
+	{
+		if ( cent->jkgWasMoving )
+		{
+			cent->moveYaw = cent->pe.legs.yawAngle;
+			cent->moveYawSet = qtrue;
+			cent->jkgWasMoving = qfalse;
+		}
+		else if ( !cent->moveYawSet )
+		{
+			cent->moveYaw = cent->pe.legs.yawAngle;
+			cent->moveYawSet = qtrue;
+		}
+		addAngle = AngleDelta( cent->lerpAngles[YAW], cent->moveYaw ) * -1;
+		if ( addAngle > swingTolMax || addAngle < swingTolMin )
+		{
+			cent->moveYaw = cent->lerpAngles[YAW];
+			addAngle = 0;
+		}
+		else if ( addAngle > 150 || addAngle < -150 )
+		{
+			addAngle = 0;
+		}
+		else
+		{
 			if ( addAngle > swingTolMax )
 			{
 				addAngle = swingTolMax;
