@@ -347,6 +347,7 @@ Ghoul2 Insert Start
 
 	void		(*G2API_AddSkinGore)(CGhoul2Info_v &ghoul2,void *gore);
 	void		(*G2API_ClearSkinGore)( CGhoul2Info_v &ghoul2 );
+	int			(*G2API_GetNumGoreMarks)(CGhoul2Info_v &ghoul2, int modelIndex);
 
 	void		(*RMG_Init)(int terrainID);
 

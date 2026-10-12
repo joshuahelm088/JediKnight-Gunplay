@@ -45,6 +45,7 @@ extern cvar_t *g_jkgLocomotionRunRate;	// extra playback multiplier on run locom
 extern cvar_t *g_jkgLocomotionWalkRate;	// extra playback multiplier on walk locomotion anims only
 extern cvar_t *g_jkgLocomotionIdleHold;	// ms to keep the walk/run cycle after input stops, before stand
 extern cvar_t *g_jkgDebugNpcMove;	// NPC locomotion debug (0=off, 1=brake events, 2=verbose)
+extern cvar_t *g_jkgDebugLocomotion;	// 1 = print player walk/run anim changes and the once-a-second beat
 extern cvar_t *g_jkgDebugAimCone;	// NPC weapon spread cone (0=off, 1=draw, 2=+throttled print)
 extern cvar_t *g_jkgDebugNpcState;	// NPC AI state marker (0=off, 1=draw, 2=+throttled print)
 extern cvar_t *g_jkgDebugNpcSpeech;	// NPC alert-bark marker (0=off, 1=draw, 2=+print)
@@ -134,6 +135,11 @@ extern cvar_t *g_jkgBlasterDamage;	// player E-11 start damage (DF2 +stlaser 30)
 extern cvar_t *g_jkgDamageLog;	// 1 = print damage dealt to the player and NPCs
 extern cvar_t *g_jkgBryarTapFireTime;	// min ms between player Bryar tap-fires; also uncharged alt recovery (0.5x fireTime)
 extern cvar_t *g_jkgBryarChargeFireTime;	// ms after a fully charged Bryar alt (1.5x fireTime); lerps from tap time by charge level
+extern cvar_t *g_jkgGhoul2Marks;	// max shots kept on one Ghoul2 model; 0 disables. Oldest shot is removed past this.
+extern cvar_t *g_jkgGhoul2MarkLife;	// ms a Ghoul2 blast mark lasts; 0 keeps it until the shot cap recycles it
+extern cvar_t *g_jkgGhoul2MarkSize;	// bolt scorch radius on a Ghoul2 model, in world units
+extern cvar_t *g_jkgGhoul2BlastSize;	// explosion scorch radius on a Ghoul2 model, in world units
+extern cvar_t *g_jkgGhoul2MarkDebug;	// 1 = print Ghoul2 mark traces and draw the hit line
 
 typedef enum {
 	JKG_FIREMODE_DEFAULT = 0,
@@ -272,6 +278,9 @@ void JKG_DebugProjectile_TraceSetStart( gentity_t *ent, const vec3_t before, con
 void JKG_DebugProjectile_CreateMissile( gentity_t *owner, gentity_t *missile, const vec3_t org, float vel );
 void JKG_DebugProjectile_ClientMuzzle( gentity_t *ent, const char *source, const vec3_t muzzlePoint, const vec3_t viewOrg );
 void JKG_DebugProjectile_ClientRender( struct centity_s *cent );
+
+// Ghoul2 skin scorch from a missile impact. directHit is the entity that was struck, or NULL on a wall miss.
+void JKG_Ghoul2MarkMissile( struct centity_s *cent, gentity_t *directHit, vec3_t origin, vec3_t dir );
 
 float JKG_GetNpcWeaponSpreadDegrees( const gentity_t *ent );
 void JKG_NpcPenalizeAimOnHit( gentity_t *self, int damage, gentity_t *attacker );

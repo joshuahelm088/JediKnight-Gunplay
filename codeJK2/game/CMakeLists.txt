@@ -217,6 +217,7 @@ set(JK2SPGameCGameFiles
 	"${JK2SPDir}/cgame/cg_event.cpp"
 	"${JK2SPDir}/cgame/cg_info.cpp"
 	"${JK2SPDir}/cgame/jkg_damage_fx.cpp"
+	"${JK2SPDir}/cgame/jkg_g2marks.cpp"
 	"${JK2SPDir}/cgame/cg_lights.cpp"
 	"${JK2SPDir}/cgame/cg_local.h"
 	"${JK2SPDir}/cgame/cg_localents.cpp"

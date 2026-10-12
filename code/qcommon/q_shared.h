@@ -60,10 +60,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #endif
 
-//rww - conveniently toggle "gore" code, for model decals and stuff.
-#ifndef JK2_MODE
+// Skin decals on Ghoul2 (blast marks, saber burns). On for JK2 as well.
+// JK2 saves must not write mGoreSetTag; see CGhoul2Info::sg_export.
 #define _G2_GORE
-#endif // !JK2_MODE
 
 #if JK2_MODE
 #define PRODUCT_NAME			"openjo_sp"
@@ -2614,7 +2613,8 @@ typedef struct SSkinGoreData_s
 
 	int				shader; // shader handle
 
-	int				myIndex; // used internally
+	int				myIndex; // groups every surface from one shot
+	int				maxMarks; // if > 0, drop the oldest shots until only this many remain
 
 } SSkinGoreData;
 

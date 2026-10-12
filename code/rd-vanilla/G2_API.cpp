@@ -2156,6 +2156,31 @@ void G2API_ClearSkinGore ( CGhoul2Info_v &ghoul2 )
 	}
 }
 
+int G2API_GetNumGoreMarks( CGhoul2Info_v &ghoul2, int modelIndex )
+{
+	CGhoul2Info *g2;
+	CGoreSet *goreSet;
+
+	if ( modelIndex < 0 || modelIndex >= ghoul2.size() )
+	{
+		return 0;
+	}
+
+	g2 = &ghoul2[modelIndex];
+	if ( !g2->mGoreSetTag )
+	{
+		return 0;
+	}
+
+	goreSet = FindGoreSet( g2->mGoreSetTag );
+	if ( !goreSet )
+	{
+		return 0;
+	}
+
+	return (int)goreSet->mGoreRecords.size();
+}
+
 extern int		G2_DecideTraceLod(CGhoul2Info &ghoul2, int useLod);
 void G2API_AddSkinGore(CGhoul2Info_v &ghoul2,SSkinGoreData &gore)
 {
@@ -2197,6 +2222,79 @@ void G2API_AddSkinGore(CGhoul2Info_v &ghoul2,SSkinGoreData &gore)
 		// now walk each model and compute new texture coordinates
 		G2_TraceModels(ghoul2, transHitLocation, transRayDirection, 0, gore.entNum, G2_NOCOLLIDE,lod,1.0f,gore.SSize,gore.TSize,gore.theta,gore.shader,&gore,qtrue);
 	}
+
+	if ( gore.maxMarks > 0 )
+	{
+		int model;
+
+		for ( model = 0; model < ghoul2.size(); model++ )
+		{
+			CGoreSet *goreSet;
+			CGhoul2Info &g2 = ghoul2[model];
+
+			if ( !g2.mGoreSetTag )
+			{
+				continue;
+			}
+			goreSet = FindGoreSet( g2.mGoreSetTag );
+			if ( !goreSet )
+			{
+				continue;
+			}
+
+			for ( ;; )
+			{
+				int shots = 0;
+				int oldest = 0;
+				bool haveOldest = false;
+				std::multimap<int, SGoreSurface>::iterator it;
+
+				for ( it = goreSet->mGoreRecords.begin(); it != goreSet->mGoreRecords.end(); ++it )
+				{
+					const int shotId = it->second.mShotId;
+					bool seen = false;
+					std::multimap<int, SGoreSurface>::iterator prev;
+
+					for ( prev = goreSet->mGoreRecords.begin(); prev != it; ++prev )
+					{
+						if ( prev->second.mShotId == shotId )
+						{
+							seen = true;
+							break;
+						}
+					}
+					if ( seen )
+					{
+						continue;
+					}
+					shots++;
+					if ( !haveOldest || shotId < oldest )
+					{
+						oldest = shotId;
+						haveOldest = true;
+					}
+				}
+
+				if ( shots <= gore.maxMarks || !haveOldest )
+				{
+					break;
+				}
+
+				for ( it = goreSet->mGoreRecords.begin(); it != goreSet->mGoreRecords.end(); )
+				{
+					if ( it->second.mShotId == oldest )
+					{
+						DeleteGoreRecord( it->second.mGoreTag );
+						it = goreSet->mGoreRecords.erase( it );
+					}
+					else
+					{
+						++it;
+					}
+				}
+			}
+		}
+	}
  }
 #else
 void G2API_ClearSkinGore ( CGhoul2Info_v &ghoul2 )
@@ -2205,6 +2303,13 @@ void G2API_ClearSkinGore ( CGhoul2Info_v &ghoul2 )
 
 void G2API_AddSkinGore(CGhoul2Info_v &ghoul2,SSkinGoreData &gore)
 {
+}
+
+int G2API_GetNumGoreMarks( CGhoul2Info_v &ghoul2, int modelIndex )
+{
+	static_cast<void>(ghoul2);
+	static_cast<void>(modelIndex);
+	return 0;
 }
 #endif
 

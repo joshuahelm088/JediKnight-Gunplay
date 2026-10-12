@@ -2169,6 +2169,7 @@ extern "C" Q_EXPORT refexport_t* QDECL GetRefAPI ( int apiVersion, refimport_t *
 #ifdef _G2_GORE
 	G2EX(AddSkinGore);
 	G2EX(ClearSkinGore);
+	G2EX(GetNumGoreMarks);
 #endif
 
 #ifdef G2_PERFORMANCE_ANALYSIS

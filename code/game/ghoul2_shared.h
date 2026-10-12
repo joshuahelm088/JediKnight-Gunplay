@@ -529,9 +529,9 @@ public:
 		saved_game.write<int32_t>(mLodBias);
 		saved_game.write<int32_t>(mNewOrigin);
 
-#ifdef _G2_GORE
+#if defined(_G2_GORE) && !defined(JK2_MODE)
 		saved_game.write<int32_t>(mGoreSetTag);
-#endif // _G2_GORE
+#endif // _G2_GORE && !JK2_MODE
 
 		saved_game.write<int32_t>(mModel);
 		saved_game.write<int8_t>(mFileName);
@@ -557,9 +557,12 @@ public:
 		saved_game.read<int32_t>(mLodBias);
 		saved_game.read<int32_t>(mNewOrigin);
 
-#ifdef _G2_GORE
+#if defined(_G2_GORE) && !defined(JK2_MODE)
 		saved_game.read<int32_t>(mGoreSetTag);
-#endif // _G2_GORE
+#elif defined(_G2_GORE)
+		// Renderer-only. A loaded tag would point at a gore set that was not saved.
+		mGoreSetTag = 0;
+#endif // _G2_GORE && !JK2_MODE
 
 		saved_game.read<int32_t>(mModel);
 		saved_game.read<int8_t>(mFileName);

@@ -2955,6 +2955,8 @@ void CG_MissileHitWall( centity_t *cent, int weapon, vec3_t origin, vec3_t dir, 
 {
 	int parm;
 
+	JKG_Ghoul2MarkMissile( cent, NULL, origin, dir );
+
 	switch( weapon )
 	{
 	case WP_BRYAR_PISTOL:
@@ -3071,6 +3073,7 @@ void CG_MissileHitPlayer( centity_t *cent, int weapon, vec3_t origin, vec3_t dir
 	if ( cent->gent )
 	{
 		other = &g_entities[cent->gent->s.otherEntityNum];
+		JKG_Ghoul2MarkMissile( cent, other, origin, dir );
 		if( other->client )
 		{
 			class_t	npc_class = other->client->NPC_class;

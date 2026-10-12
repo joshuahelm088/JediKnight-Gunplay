@@ -370,6 +370,7 @@ typedef struct {
 #ifdef _G2_GORE
 	void		(*G2API_AddSkinGore)(CGhoul2Info_v &ghoul2, SSkinGoreData &gore);
 	void		(*G2API_ClearSkinGore)(CGhoul2Info_v &ghoul2);
+	int			(*G2API_GetNumGoreMarks)(CGhoul2Info_v &ghoul2, int modelIndex);
 #endif
 
 	// Performance analysis (perform anal)

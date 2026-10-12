@@ -807,6 +807,11 @@ static void  SV_G2API_ClearSkinGore( CGhoul2Info_v &ghoul2 )
 {
 	return re.G2API_ClearSkinGore( ghoul2 );
 }
+
+static int SV_G2API_GetNumGoreMarks( CGhoul2Info_v &ghoul2, int modelIndex )
+{
+	return re.G2API_GetNumGoreMarks( ghoul2, modelIndex );
+}
 #else
 static void SV_G2API_AddSkinGore(
     CGhoul2Info_v &ghoul2,
@@ -820,6 +825,13 @@ static void SV_G2API_ClearSkinGore(
     CGhoul2Info_v &ghoul2)
 {
     static_cast<void>(ghoul2);
+}
+
+static int SV_G2API_GetNumGoreMarks( CGhoul2Info_v &ghoul2, int modelIndex )
+{
+	static_cast<void>(ghoul2);
+	static_cast<void>(modelIndex);
+	return 0;
 }
 #endif
 
@@ -1033,6 +1045,7 @@ void SV_InitGameProgs (void) {
 
 	import.G2API_AddSkinGore = SV_G2API_AddSkinGore;
 	import.G2API_ClearSkinGore = SV_G2API_ClearSkinGore;
+	import.G2API_GetNumGoreMarks = SV_G2API_GetNumGoreMarks;
 
 	import.SetActiveSubBSP = SV_SetActiveSubBSP;
 

@@ -4896,7 +4896,8 @@ static void PM_Footsteps( void )
 	pm->xyspeed = sqrt( pm->ps->velocity[0] * pm->ps->velocity[0]
 		+  pm->ps->velocity[1] * pm->ps->velocity[1] );
 
-	if ( pm->ps->clientNum == 0 && pm->gent )
+	if ( pm->ps->clientNum == 0 && pm->gent
+		&& g_jkgDebugLocomotion && g_jkgDebugLocomotion->integer )
 	{
 		static int s_nextLocoBeat;
 

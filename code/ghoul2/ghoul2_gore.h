@@ -67,6 +67,7 @@ struct SGoreSurface
 
 	int			mGoreGrowStartTime;
 	int			mGoreGrowEndTime;    // set this to -1 to disable growing
+	int			mShotId;             // surfaces from one AddSkinGore call share this
 	//curscale = (curtime-mGoreGrowStartTime)*mGoreGrowFactor + mGoreGrowOffset;
 	float		mGoreGrowFactor;
 	float		mGoreGrowOffset;

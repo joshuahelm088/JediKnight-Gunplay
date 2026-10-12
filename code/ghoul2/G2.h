@@ -221,6 +221,7 @@ bool G2_SetupModelPointers(CGhoul2Info *ghlInfo); // returns true if the model i
 //#ifdef _G2_GORE	// These exist regardless, non-gore versions are empty
 void		G2API_AddSkinGore(CGhoul2Info_v &ghoul2,SSkinGoreData &gore);
 void		G2API_ClearSkinGore ( CGhoul2Info_v &ghoul2 );
+int			G2API_GetNumGoreMarks(CGhoul2Info_v &ghoul2, int modelIndex);
 //#endif
 
 #endif // G2_H_INC

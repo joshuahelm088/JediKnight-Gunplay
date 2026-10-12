@@ -581,6 +581,12 @@ static qboolean s_locoLogBanner;
 
 void JKG_LocomotionLog( gentity_t *ent, const char *msg )
 {
+	if ( !g_jkgDebugLocomotion || !g_jkgDebugLocomotion->integer )
+	{
+		s_locoLogBanner = qfalse;
+		return;
+	}
+
 	if ( !ent || ent->s.number != 0 || !msg || !msg[0] )
 	{
 		return;

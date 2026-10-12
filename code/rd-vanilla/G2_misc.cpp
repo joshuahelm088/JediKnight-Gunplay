@@ -578,7 +578,6 @@ void G2_TransformModel(CGhoul2Info_v &ghoul2, const int frameNum, vec3_t scale, 
 	qboolean		firstModelOnly = qfalse;
 #endif // !JK2_MODE || _G2_GORE
 
-#ifndef JK2_MODE
 	if ( cg_g2MarksAllModels == NULL )
 	{
 		cg_g2MarksAllModels = ri.Cvar_Get( "cg_g2MarksAllModels", "0", 0 );
@@ -589,7 +588,6 @@ void G2_TransformModel(CGhoul2Info_v &ghoul2, const int frameNum, vec3_t scale, 
 	{
 		firstModelOnly = qtrue;
 	}
-#endif // !JK2_MODE
 
 #ifdef _G2_GORE
 	if ( gore
@@ -1035,6 +1033,7 @@ static void G2_GorePolys( const mdxmSurface_t *surface, CTraceSurface &TS, const
 		assert(TS.gore->growDuration != 0);
 		add.mGoreGrowFactor = ( 1.0f - TS.gore->goreScaleStartFraction) / (float)(TS.gore->growDuration);	//curscale = (curtime-mGoreGrowStartTime)*mGoreGrowFactor;
 		add.mGoreGrowOffset = TS.gore->goreScaleStartFraction;
+		add.mShotId = TS.gore->myIndex;
 
 		goreSet->mGoreRecords.insert(std::make_pair(TS.surfaceNum,add));
 		GoreTagsTemp[std::make_pair(goreModelIndex,TS.surfaceNum)]=newTag;
@@ -1568,7 +1567,6 @@ void G2_TraceModels(CGhoul2Info_v &ghoul2, vec3_t rayStart, vec3_t rayEnd, CColl
 #endif // !JK2_MODE || _G2_GORE
 	int				firstModel = 0;
 
-#ifndef JK2_MODE
 	if ( cg_g2MarksAllModels == NULL )
 	{
 		cg_g2MarksAllModels = ri.Cvar_Get( "cg_g2MarksAllModels", "0", 0 );
@@ -1579,7 +1577,6 @@ void G2_TraceModels(CGhoul2Info_v &ghoul2, vec3_t rayStart, vec3_t rayEnd, CColl
 	{
 		firstModelOnly = qtrue;
 	}
-#endif // !JK2_MODE
 
 #ifdef _G2_GORE
 	if ( gore
@@ -1882,6 +1879,11 @@ void G2_LoadGhoul2Model(
 
 	ojk::SavedGameHelper saved_game(
 		::ri.saved_game);
+
+#ifdef _G2_GORE
+	// Gore sets are renderer state. Drop them before the model list is replaced.
+	G2API_ClearSkinGore( ghoul2 );
+#endif
 
 	// first thing, lets see how many ghoul2 models we have, and resize our buffers accordingly
 	int model_count = 0;

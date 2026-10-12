@@ -94,6 +94,11 @@ cvar_t *g_jkgBlasterDamage;
 cvar_t *g_jkgDamageLog;
 cvar_t *g_jkgBryarTapFireTime;
 cvar_t *g_jkgBryarChargeFireTime;
+cvar_t *g_jkgGhoul2Marks;
+cvar_t *g_jkgGhoul2MarkLife;
+cvar_t *g_jkgGhoul2MarkSize;
+cvar_t *g_jkgGhoul2BlastSize;
+cvar_t *g_jkgGhoul2MarkDebug;
 cvar_t *g_jkgNpcAccel;
 cvar_t *g_jkgNpcDecel;
 cvar_t *g_jkgNpcStopDecel;
@@ -107,6 +112,7 @@ cvar_t *g_jkgLocomotionRunRate;
 cvar_t *g_jkgLocomotionWalkRate;
 cvar_t *g_jkgLocomotionIdleHold;
 cvar_t *g_jkgDebugNpcMove;
+cvar_t *g_jkgDebugLocomotion;
 cvar_t *g_jkgDebugAimCone;
 cvar_t *g_jkgDebugNpcState;
 cvar_t *g_jkgDebugNpcSpeech;
@@ -490,6 +496,7 @@ void JKG_RegisterCvars( void )
 	g_jkgLocomotionWalkRate = gi.cvar( "g_jkgLocomotionWalkRate", "2", CVAR_ARCHIVE );
 	g_jkgLocomotionIdleHold = gi.cvar( "g_jkgLocomotionIdleHold", "500", CVAR_ARCHIVE );
 	g_jkgDebugNpcMove = gi.cvar( "g_jkgDebugNpcMove", "0", CVAR_CHEAT );
+	g_jkgDebugLocomotion = gi.cvar( "g_jkgDebugLocomotion", "0", CVAR_CHEAT );
 	g_jkgDebugAimCone = gi.cvar( "g_jkgDebugAimCone", "0", CVAR_CHEAT );
 	g_jkgDebugNpcState = gi.cvar( "g_jkgDebugNpcState", "0", CVAR_CHEAT );
 	g_jkgDebugNpcSpeech = gi.cvar( "g_jkgDebugNpcSpeech", "0", CVAR_CHEAT );
@@ -510,4 +517,19 @@ void JKG_RegisterCvars( void )
 	g_jkgBowcasterAimDelayTriple = gi.cvar( "g_jkgBowcasterAimDelayTriple", "2000", CVAR_ARCHIVE );
 	g_jkgBowcasterAimDelayFive = gi.cvar( "g_jkgBowcasterAimDelayFive", "4000", CVAR_ARCHIVE );
 	g_jkgBowcasterRepause = gi.cvar( "g_jkgBowcasterRepause", "1000", CVAR_ARCHIVE );
+	g_jkgGhoul2Marks = gi.cvar( "g_jkgGhoul2Marks", "64", CVAR_ARCHIVE );
+	// 16 was the first built-in default and is already saved in configs.
+	if ( g_jkgGhoul2Marks->integer == 16 )
+	{
+		gi.cvar_set( "g_jkgGhoul2Marks", "64" );
+	}
+	g_jkgGhoul2MarkLife = gi.cvar( "g_jkgGhoul2MarkLife", "0", CVAR_ARCHIVE );
+	// 20000 was the first built-in default and is already saved in configs. Marks stay unless a lifetime is set.
+	if ( g_jkgGhoul2MarkLife->integer == 20000 )
+	{
+		gi.cvar_set( "g_jkgGhoul2MarkLife", "0" );
+	}
+	g_jkgGhoul2MarkSize = gi.cvar( "g_jkgGhoul2MarkSize", "4", CVAR_ARCHIVE );
+	g_jkgGhoul2BlastSize = gi.cvar( "g_jkgGhoul2BlastSize", "24", CVAR_ARCHIVE );
+	g_jkgGhoul2MarkDebug = gi.cvar( "g_jkgGhoul2MarkDebug", "1", CVAR_ARCHIVE );
 }

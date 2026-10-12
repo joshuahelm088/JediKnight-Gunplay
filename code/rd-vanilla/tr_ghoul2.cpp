@@ -2394,6 +2394,10 @@ void RenderSurfaces(CRenderSurface &RS)
 						{
 							gshader=R_GetShaderByHandle(goreShader);
 						}
+						if (gshader)
+						{
+							gshader->polygonOffset = true;
+						}
 
 						// Set fade on surf.
 						//Only if we have a fade time set, and let us fade on rgb if we want -rww
@@ -2618,7 +2622,13 @@ void R_AddGhoulSurfaces( trRefEntity_t *ent ) {
 #ifdef _G2_GORE
 	if (goreShader == -1)
 	{
+		shader_t *burn;
 		goreShader=RE_RegisterShader("gfx/damage/burnmark1");
+		burn = R_GetShaderByHandle(goreShader);
+		if (burn)
+		{
+			burn->polygonOffset = true;
+		}
 	}
 #endif
 
