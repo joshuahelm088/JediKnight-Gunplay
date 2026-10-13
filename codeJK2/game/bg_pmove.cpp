@@ -7049,7 +7049,6 @@ void PM_WeaponLightsaber(void)
 				break;
 			case BLOCKED_UPPER_RIGHT_PROJ:
 				PM_SetSaberMove( LS_REFLECT_UR );
-				pm->ps->weaponTime = pm->ps->torsoAnimTimer;
 
 				if ( cg_debugSaber.integer >= 2 )
 				{
@@ -7075,7 +7074,6 @@ void PM_WeaponLightsaber(void)
 				break;
 			case BLOCKED_UPPER_LEFT_PROJ:
 				PM_SetSaberMove( LS_REFLECT_UL );
-				pm->ps->weaponTime = pm->ps->torsoAnimTimer;
 
 				if ( cg_debugSaber.integer >= 2 )
 				{
@@ -7101,7 +7099,6 @@ void PM_WeaponLightsaber(void)
 				break;
 			case BLOCKED_LOWER_RIGHT_PROJ:
 				PM_SetSaberMove( LS_REFLECT_LR );
-				pm->ps->weaponTime = pm->ps->torsoAnimTimer;
 
 				if ( cg_debugSaber.integer >= 2 )
 				{
@@ -7127,7 +7124,6 @@ void PM_WeaponLightsaber(void)
 				break;
 			case BLOCKED_LOWER_LEFT_PROJ:
 				PM_SetSaberMove( LS_REFLECT_LL);
-				pm->ps->weaponTime = pm->ps->torsoAnimTimer;
 
 				if ( cg_debugSaber.integer >= 2 )
 				{
@@ -7153,7 +7149,6 @@ void PM_WeaponLightsaber(void)
 				break;
 			case BLOCKED_TOP_PROJ:
 				PM_SetSaberMove( LS_REFLECT_UP );
-				pm->ps->weaponTime = pm->ps->torsoAnimTimer;
 
 				if ( cg_debugSaber.integer >= 2 )
 				{

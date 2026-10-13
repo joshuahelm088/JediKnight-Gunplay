@@ -3040,17 +3040,6 @@ void PM_TorsoAnimLightsaber()
 		return;
 	}
 
-	if ( PM_SaberInReflect( pm->ps->saberMove )
-		|| PM_SaberInParry( pm->ps->saberMove )
-		|| PM_SaberInKnockaway( pm->ps->saberMove ) )
-	{
-		return;
-	}
-	if ( pm->ps->saberBlocked >= BLOCKED_UPPER_RIGHT_PROJ && pm->ps->saberBlocked <= BLOCKED_TOP_PROJ )
-	{
-		return;
-	}
-
 	if (pm->ps->weaponTime > 0)
 	{	// weapon is already busy.
 		return;

@@ -49,7 +49,6 @@ extern qboolean PM_SaberInIdle( int move );
 extern qboolean PM_SaberInAttack( int move );
 extern qboolean PM_SaberInTransitionAny( int move );
 extern qboolean PM_SaberInSpecialAttack( int anim );
-extern void WP_SaberBlockNonRandom( gentity_t *self, vec3_t hitloc, qboolean missileBlock );
 
 //-------------------------------------------------------------------------
 void G_MissileBounceEffect( gentity_t *ent, vec3_t org, vec3_t dir )
@@ -759,9 +758,9 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace, int hitLoc=HL_NONE )
 					VectorNormalize(diff);
 					//FIXME: take other's owner's FP_SABER_DEFENSE into account here somehow?
 					G_ReflectMissile( other, ent, diff);
+					//WP_SaberBlock( other, ent->currentOrigin, qtrue );
 					if ( other->owner && other->owner->client )
 					{
-						WP_SaberBlockNonRandom( other->owner, trace->endpos, qtrue );
 						other->owner->client->ps.saberEventFlags |= SEF_DEFLECTED;
 					}
 					//do the effect
