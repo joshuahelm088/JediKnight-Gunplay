@@ -8244,6 +8244,19 @@ static void PM_Weapon( void )
 							anim = BOTH_MELEE1;
 						}
 					}
+					else if ( JKG_AI && pm->gent->client->NPC_class == CLASS_GRAN )
+					{
+						int swing = 1;
+						if ( pm->gent->NPC && pm->gent->NPC->burstMax > 0 )
+						{
+							swing = pm->gent->NPC->burstMax - pm->gent->NPC->burstCount;
+						}
+						if ( swing < 1 )
+						{
+							swing = 1;
+						}
+						anim = ( swing & 1 ) ? BOTH_MELEE1 : BOTH_MELEE2;
+					}
 					else
 					{
 						anim = PM_PickAnim( pm->gent, BOTH_MELEE1, BOTH_MELEE2 );

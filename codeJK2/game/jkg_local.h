@@ -116,6 +116,9 @@ extern cvar_t *g_jkgBurstPauseSingle;	// ms after a 1-shot E-11 burst
 extern cvar_t *g_jkgBurstPauseDouble;	// ms after a 2-shot E-11 burst
 extern cvar_t *g_jkgBurstPauseTriple;	// ms after a 3-shot E-11 burst (most common)
 extern cvar_t *g_jkgBurstPistolPause;	// ms after a pistol burst before the next burst starts
+extern cvar_t *g_jkgMeleeComboShots;	// punches in a gran melee combo (DF2 burst count is shots-1)
+extern cvar_t *g_jkgMeleePunchGap;	// ms between punches in a gran melee combo
+extern cvar_t *g_jkgMeleeComboPause;	// ms standing still after a gran melee combo
 extern cvar_t *g_jkgBryarVelocity;	// player Bryar bolt speed (DF2 +bryarbolt 4/6 of stock blaster)
 extern cvar_t *g_jkgBlasterVelocity;	// player E-11 bolt speed (stock JKO 2300; DF2 +stlaser)
 extern cvar_t *g_jkgBlasterNpcVelocity;	// NPC E-11 bolt speed (DF2 +elaser)
@@ -156,6 +159,7 @@ void JKG_PlayerTryPainAnim( gentity_t *self, gentity_t *other, vec3_t point, int
 
 void JKG_ApplyNpcBurstFireMode( gentity_t *ent );
 qboolean JKG_NpcBurstShootThink( void );
+qboolean JKG_NpcMeleeComboShootThink( void );
 qboolean JKG_NpcBowcasterShootThink( void );
 void JKG_NpcBowcasterMaintainAttack( gentity_t *ent, usercmd_t *ucmd );
 int JKG_NpcBowcasterVolleyShotsForFire( gentity_t *ent );

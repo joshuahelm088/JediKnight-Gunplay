@@ -25,6 +25,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "g_nav.h"
 #include "anims.h"
 #include "g_navigator.h"
+#include "jkg_local.h"
 
 extern void CG_DrawAlert( vec3_t origin, float rating );
 extern void G_AddVoiceEvent( gentity_t *self, int event, int speakDebounceTime );
@@ -532,7 +533,8 @@ void NPC_BSGrenadier_Attack( void )
 	}
 	else if ( enemyDist > 65536 || (NPC->enemy->client && NPC->enemy->client->ps.weapon == WP_SABER && NPC->enemy->client->ps.saberActive) )//256
 	{//enemy is far or using saber
-		if ( NPC->client->ps.weapon == WP_MELEE && (NPC->client->ps.stats[STAT_WEAPONS]&(1<<WP_THERMAL)) )
+		if ( NPC->client->ps.weapon == WP_MELEE && (NPC->client->ps.stats[STAT_WEAPONS]&(1<<WP_THERMAL))
+			&& !( JKG_AI && NPC->client->NPC_class == CLASS_GRAN && NPCInfo->burstCount > 0 ) )
 		{//fisticuffs, make switch to thermal if have it
 			//reset fire-timing variables
 			NPC_ChangeWeapon( WP_THERMAL );
@@ -606,6 +608,19 @@ void NPC_BSGrenadier_Attack( void )
 		}
 	}//this should make him chase enemy when out of range...?
 
+	// >>> JKG HOOK: gran melee stands for the combo and the recovery (g_jkgAI).
+	if ( JKG_AI
+		&& NPC->client->NPC_class == CLASS_GRAN
+		&& NPC->client->ps.weapon == WP_MELEE
+		&& ( enemyDist <= 4096
+			|| NPC->client->ps.torsoAnim == BOTH_MELEE1
+			|| NPC->client->ps.torsoAnim == BOTH_MELEE2
+			|| level.time < NPCInfo->shotTime ) )
+	{
+		AImove = qfalse;
+	}
+	// <<< JKG HOOK
+
 	//Check for movement to take care of
 	Grenadier_CheckMoveState();
 
@@ -656,6 +671,22 @@ void NPC_BSGrenadier_Attack( void )
 	{
 		shoot = qfalse;
 	}
+
+	// >>> JKG HOOK: once a gran melee combo starts, throw every remaining swing (g_jkgAI).
+	if ( JKG_AI
+		&& NPC->client->NPC_class == CLASS_GRAN
+		&& NPC->client->ps.weapon == WP_MELEE
+		&& NPCInfo->burstCount > 0 )
+	{
+		shoot = qtrue;
+		AImove = qfalse;
+		if ( !faceEnemy )
+		{
+			faceEnemy = qtrue;
+			NPC_FaceEnemy();
+		}
+	}
+	// <<< JKG HOOK
 
 	//FIXME: don't shoot right away!
 	if ( shoot )

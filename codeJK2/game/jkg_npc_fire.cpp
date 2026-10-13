@@ -272,3 +272,77 @@ qboolean JKG_NpcBurstShootThink( void )
 
 	return qtrue;
 }
+
+static int JKG_MeleeComboShots( void )
+{
+	int shots;
+
+	shots = JKG_CvarIntegerNonNegative( g_jkgMeleeComboShots );
+	if ( shots < 1 )
+	{
+		shots = 1;
+	}
+	return shots;
+}
+
+static int JKG_MeleeComboPauseMs( void )
+{
+	int pause;
+	int jitter;
+
+	pause = JKG_CvarIntegerNonNegative( g_jkgMeleeComboPause );
+	jitter = ( pause * Q_irand( -20, 20 ) ) / 100;
+	pause += jitter;
+	if ( pause < 0 )
+	{
+		pause = 0;
+	}
+	return pause;
+}
+
+qboolean JKG_NpcMeleeComboShootThink( void )
+{
+	int delay;
+	int shots;
+
+	if ( !NPC || !NPC->NPC || !NPC->client )
+	{
+		return qfalse;
+	}
+	if ( NPC->client->NPC_class != CLASS_GRAN || NPC->client->ps.weapon != WP_MELEE )
+	{
+		return qfalse;
+	}
+
+	ucmd.buttons |= BUTTON_ATTACK;
+	NPCInfo->currentAmmo = client->ps.ammo[weaponData[client->ps.weapon].ammoIndex];
+	NPC_ApplyWeaponFireDelay();
+
+	shots = JKG_MeleeComboShots();
+	if ( NPCInfo->burstCount <= 0 )
+	{
+		NPCInfo->burstCount = shots;
+		NPCInfo->burstMax = shots;
+	}
+	else if ( client->ps.weaponTime > 0 )
+	{
+		// The previous swing's weaponTime is the full anim length. Clear it so
+		// the follow-up punch is not swallowed before it can start.
+		client->ps.weaponTime = 0;
+	}
+
+	NPCInfo->burstCount--;
+	if ( NPCInfo->burstCount > 0 )
+	{
+		delay = JKG_CvarIntegerNonNegative( g_jkgMeleePunchGap );
+	}
+	else
+	{
+		delay = JKG_MeleeComboPauseMs();
+	}
+
+	NPCInfo->shotTime = level.time + delay;
+	JKG_AdjustNpcShotTimeForFireDelay( NPC );
+	NPC->attackDebounceTime = level.time + NPC_AttackDebounceForWeapon();
+	return qtrue;
+}

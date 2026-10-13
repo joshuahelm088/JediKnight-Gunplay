@@ -918,6 +918,11 @@ void ShootThink( void )
 	{
 		return;
 	}
+	// >>> JKG HOOK: JKG gran melee combo (g_jkgAI).
+	if ( JKG_AI && JKG_NpcMeleeComboShootThink() )
+	{
+		return;
+	}
 	// >>> JKG HOOK: JKG burst fire (g_jkgAI).
 	if ( JKG_AI && JKG_NpcBurstShootThink() )
 	{
