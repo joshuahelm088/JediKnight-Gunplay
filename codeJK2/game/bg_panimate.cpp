@@ -3040,6 +3040,17 @@ void PM_TorsoAnimLightsaber()
 		return;
 	}
 
+	if ( PM_SaberInReflect( pm->ps->saberMove )
+		|| PM_SaberInParry( pm->ps->saberMove )
+		|| PM_SaberInKnockaway( pm->ps->saberMove ) )
+	{
+		return;
+	}
+	if ( pm->ps->saberBlocked >= BLOCKED_UPPER_RIGHT_PROJ && pm->ps->saberBlocked <= BLOCKED_TOP_PROJ )
+	{
+		return;
+	}
+
 	if (pm->ps->weaponTime > 0)
 	{	// weapon is already busy.
 		return;
@@ -3062,6 +3073,12 @@ void PM_TorsoAnimLightsaber()
 			{
 				PM_SetSaberMove( LS_READY );
 			}
+		}
+		else if ( pm->ps->weapon == WP_SABER && pm->ps->saberActive
+			&& ( PM_WalkingAnim( pm->ps->legsAnim ) || PM_RunningAnim( pm->ps->legsAnim ) ) )
+		{
+			PM_SetSaberMove( LS_READY );
+			pm->ps->saberMove = LS_READY;
 		}
 		else if( pm->ps->legsAnim == BOTH_RUN1 )
 		{
@@ -3235,14 +3252,7 @@ void PM_TorsoAnimLightsaber()
 						}
 						else
 						{
-							if ( PM_RunningAnim( pm->ps->legsAnim ) )
-							{//running w/1-handed weapon uses full-body anim
-								PM_SetAnim(pm,SETANIM_TORSO,pm->ps->legsAnim,SETANIM_FLAG_NORMAL);
-							}
-							else
-							{
-								PM_SetSaberMove(LS_READY);
-							}
+							PM_SetSaberMove( LS_READY );
 						}
 					}
 				}
@@ -3363,7 +3373,15 @@ void PM_TorsoAnimation( void )
 					}
 					else
 					{
-						PM_SetAnim(pm,SETANIM_TORSO,pm->ps->legsAnim,SETANIM_FLAG_NORMAL);
+						if ( pm->ps->saberActive
+							&& ( PM_WalkingAnim( pm->ps->legsAnim ) || PM_RunningAnim( pm->ps->legsAnim ) ) )
+						{
+							PM_SetSaberMove( LS_READY );
+						}
+						else
+						{
+							PM_SetAnim(pm,SETANIM_TORSO,pm->ps->legsAnim,SETANIM_FLAG_NORMAL);
+						}
 					}
 				}
 			}

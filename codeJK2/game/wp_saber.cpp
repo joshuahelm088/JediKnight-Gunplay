@@ -262,11 +262,23 @@ float saberAnimSpeedMod[NUM_FORCE_POWER_LEVELS] =
 };
 //SABER INITIALIZATION======================================================================
 
+int WP_SetSaberModel( gclient_t *client, class_t npcClass );
+
 void G_CreateG2AttachedWeaponModel( gentity_t *ent, const char *psWeaponModel )
 {
-	if (!psWeaponModel)
+	if ( !psWeaponModel && ent && ent->client )
 	{
-		assert (psWeaponModel);
+		class_t	saberClass = ent->client->NPC_class;
+
+		if ( saberClass == CLASS_NONE )
+		{
+			saberClass = CLASS_KYLE;
+		}
+		WP_SetSaberModel( ent->client, saberClass );
+		psWeaponModel = ent->client->ps.saberModel;
+	}
+	if ( !psWeaponModel )
+	{
 		return;
 	}
 	if ( ent && ent->client && ent->client->NPC_class == CLASS_GALAKMECH )
@@ -409,6 +421,17 @@ void WP_SaberInitBladeData( gentity_t *ent )
 
 	if ( ent->client )
 	{
+		if ( !ent->client->ps.saberModel )
+		{
+			class_t	saberClass = ent->client->NPC_class;
+
+			if ( saberClass == CLASS_NONE )
+			{
+				saberClass = CLASS_KYLE;
+			}
+			WP_SetSaberModel( ent->client, saberClass );
+		}
+
 		VectorClear( ent->client->renderInfo.muzzlePoint );
 		VectorClear( ent->client->renderInfo.muzzlePointOld );
 		//VectorClear( ent->client->renderInfo.muzzlePointNext );

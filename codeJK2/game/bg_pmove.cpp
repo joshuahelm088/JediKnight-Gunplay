@@ -5685,6 +5685,11 @@ static void PM_FinishWeaponChange( void ) {
 			}
 		}
 
+		if ( pm->gent )
+		{
+			WP_SaberInitBladeData( pm->gent );
+		}
+
 		if ( !pm->ps->saberInFlight )
 		{//if it's not in flight or lying around, turn it on!
 			//FIXME: AddSound/Sight Event
@@ -5706,7 +5711,6 @@ static void PM_FinishWeaponChange( void ) {
 
 		if ( pm->gent )
 		{
-			WP_SaberInitBladeData( pm->gent );
 			if ( !pm->ps->clientNum && cg_saberAutoThird.value )
 			{
 				gi.cvar_set( "cg_thirdperson", "1" );
@@ -5811,25 +5815,6 @@ void PM_SetSaberMove(short newMove)
 		setflags |= SETANIM_FLAG_RESTART;
 	}
 
-	if ( anim == BOTH_STAND2
-		|| anim == BOTH_SABERFAST_STANCE
-		|| anim == BOTH_SABERSLOW_STANCE )
-	{
-		//FIXME: play both_stand2_random1 when you've been idle for a while
-		if( pm->ps->legsAnim == BOTH_WALK1 )
-		{
-			anim = BOTH_WALK1;
-		}
-		else if( pm->ps->legsAnim == BOTH_RUN2 )
-		{
-			anim = BOTH_RUN2;
-		}
-		else if( pm->ps->legsAnim == BOTH_WALK2 )
-		{
-			anim = BOTH_WALK2;
-		}
-	}
-
 	if ( newMove == LS_A_LUNGE
 		|| newMove == LS_A_JUMP_T__B_
 		|| newMove == LS_A_BACKSTAB
@@ -5859,6 +5844,11 @@ void PM_SetSaberMove(short newMove)
 		{
 			parts = SETANIM_BOTH;
 		}
+	}
+	if ( ( PM_WalkingAnim( pm->ps->legsAnim ) || PM_RunningAnim( pm->ps->legsAnim ) )
+		&& ( anim == BOTH_STAND2 || anim == BOTH_SABERFAST_STANCE || anim == BOTH_SABERSLOW_STANCE ) )
+	{
+		parts = SETANIM_TORSO;
 	}
 	PM_SetAnim( pm, parts, anim, setflags, saberMoveData[newMove].blendTime );
 
@@ -7059,6 +7049,7 @@ void PM_WeaponLightsaber(void)
 				break;
 			case BLOCKED_UPPER_RIGHT_PROJ:
 				PM_SetSaberMove( LS_REFLECT_UR );
+				pm->ps->weaponTime = pm->ps->torsoAnimTimer;
 
 				if ( cg_debugSaber.integer >= 2 )
 				{
@@ -7084,6 +7075,7 @@ void PM_WeaponLightsaber(void)
 				break;
 			case BLOCKED_UPPER_LEFT_PROJ:
 				PM_SetSaberMove( LS_REFLECT_UL );
+				pm->ps->weaponTime = pm->ps->torsoAnimTimer;
 
 				if ( cg_debugSaber.integer >= 2 )
 				{
@@ -7109,6 +7101,7 @@ void PM_WeaponLightsaber(void)
 				break;
 			case BLOCKED_LOWER_RIGHT_PROJ:
 				PM_SetSaberMove( LS_REFLECT_LR );
+				pm->ps->weaponTime = pm->ps->torsoAnimTimer;
 
 				if ( cg_debugSaber.integer >= 2 )
 				{
@@ -7134,6 +7127,7 @@ void PM_WeaponLightsaber(void)
 				break;
 			case BLOCKED_LOWER_LEFT_PROJ:
 				PM_SetSaberMove( LS_REFLECT_LL);
+				pm->ps->weaponTime = pm->ps->torsoAnimTimer;
 
 				if ( cg_debugSaber.integer >= 2 )
 				{
@@ -7159,6 +7153,7 @@ void PM_WeaponLightsaber(void)
 				break;
 			case BLOCKED_TOP_PROJ:
 				PM_SetSaberMove( LS_REFLECT_UP );
+				pm->ps->weaponTime = pm->ps->torsoAnimTimer;
 
 				if ( cg_debugSaber.integer >= 2 )
 				{

@@ -29,6 +29,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "wp_saber.h"
 
 extern	bool		in_camera;
+extern void WP_SaberInitBladeData( gentity_t *ent );
 
 extern void ForceThrow( gentity_t *self, qboolean pull );
 extern void ForceLevitation( gentity_t *self );
@@ -212,19 +213,30 @@ void G_Give( gentity_t *ent, const char *name, const char *args, int argc )
 	if ( give_all || !Q_stricmp( name, "weapons" ) )
 	{
 		ent->client->ps.stats[STAT_WEAPONS] = (1 << (MAX_PLAYER_WEAPONS+1)) - ( 1 << WP_NONE );
+		if ( ent->client->ps.stats[STAT_WEAPONS] & ( 1 << WP_SABER ) )
+		{
+			WP_SaberInitBladeData( ent );
+		}
 		if ( !give_all )
 			return;
 	}
 
 	if ( !give_all && !Q_stricmp( name, "weaponnum" ) )
 	{
-		ent->client->ps.stats[STAT_WEAPONS] |= (1 << atoi( args ));
+		const int weap = atoi( args );
+
+		ent->client->ps.stats[STAT_WEAPONS] |= (1 << weap);
+		if ( weap == WP_SABER )
+		{
+			WP_SaberInitBladeData( ent );
+		}
 		return;
 	}
 
 	if ( !give_all && !Q_stricmp( name, "eweaps" ) )	//for developing, gives you all the weapons, including enemy
 	{
 		ent->client->ps.stats[STAT_WEAPONS] = (unsigned)(1 << WP_NUM_WEAPONS) - ( 1 << WP_NONE ); // NOTE: this wasn't giving the last weapon in the list
+		WP_SaberInitBladeData( ent );
 		return;
 	}
 
