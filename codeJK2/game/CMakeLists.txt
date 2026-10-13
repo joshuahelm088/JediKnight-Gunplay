@@ -88,6 +88,7 @@ set(JK2SPGameGameFiles
 	"${JK2SPDir}/game/g_items.cpp"
 	"${JK2SPDir}/game/g_main.cpp"
 	"${JK2SPDir}/game/jkg_main.cpp"
+	"${JK2SPDir}/game/jkg_turret.cpp"
 	"${JK2SPDir}/game/jkg_hitbox.cpp"
 	"${JK2SPDir}/game/jkg_player_pain.cpp"
 	"${JK2SPDir}/game/jkg_npc_fire.cpp"

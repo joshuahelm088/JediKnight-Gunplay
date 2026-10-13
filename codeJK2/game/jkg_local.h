@@ -71,6 +71,10 @@ extern cvar_t *g_jkgMaxArmor;	// player shield cap when g_jkgArmor is on (STAT_M
 extern cvar_t *g_jkgShieldStationGive;	// shield points per tick (stock 4; default 12 = 3x)
 extern cvar_t *g_jkgShieldStationTickMs;	// ms between ticks (stock 100; default 33 = 3x faster)
 extern cvar_t *g_jkgCombat;		// custom damage tables / pain timing / hit locations
+extern cvar_t *g_jkgTurretDeathMs;		// mounted turret DF2 death spin duration in ms (default 3000; 0 = stock instant explode)
+extern cvar_t *g_jkgTurretDeathYawSpeed;	// yaw spin deg/sec during turret death
+extern cvar_t *g_jkgTurretDeathPitchSpeed;	// pitch spin deg/sec during turret death
+extern cvar_t *g_jkgTurretDeathShotMs;	// ms between random shots during turret death spin
 extern cvar_t *g_jkgPlayerPainChance;	// DF2-style 3p hit-react chance scale (damage * value); 0 disables
 extern cvar_t *g_jkgCamera;		// weapon-fire camera kickback
 extern cvar_t *g_jkgCam;			// tight over-the-shoulder camera (0 = stock chase cam)
@@ -297,5 +301,13 @@ void JKG_NpcClearFirstAlert( gentity_t *self );
 qboolean JKG_ST_CombatMoveEnabled( void );
 qboolean JKG_ST_CombatMoveThink( qboolean canSee, float distSq );
 void JKG_ST_ApplyCombatWalk( void );
+
+qboolean JKG_TurretDeathSpin_Active( const gentity_t *self );
+qboolean JKG_TurretDeathSpin_TryStart( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath );
+void JKG_TurretDeathSpin_Think( gentity_t *self );
+
+void Turret_ApplyPitchBone( gentity_t *self, float pitch );
+void Turret_FireFromMuzzle( gentity_t *ent );
+void Turret_FinishExplodeDeath( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath );
 
 #endif	// JKG_LOCAL_H

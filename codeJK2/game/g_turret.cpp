@@ -24,6 +24,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "g_local.h"
 #include "g_functions.h"
 #include "b_local.h"
+#include "jkg_local.h"
 
 extern team_t TranslateTeamName( const char *name );
 extern	cvar_t	*g_spskill;
@@ -53,67 +54,6 @@ void TurretPain( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, vec
 	}
 
 	G_PlayEffect( "spark_exp_nosnd", point, dir );
-}
-
-//------------------------------------------------------------------------------------------------------------
-void turret_die ( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath,int dFlags,int hitLoc )
-//------------------------------------------------------------------------------------------------------------
-{
-	vec3_t	forward = { 0,0,-1 }, pos;
-
-	// Turn off the thinking of the base & use it's targets
-	self->e_ThinkFunc = thinkF_NULL;
-	self->e_UseFunc = useF_NULL;
-
-	// clear my data
-	self->e_DieFunc  = dieF_NULL;
-	self->takedamage = qfalse;
-	self->health = 0;
-	self->s.loopSound = 0;
-
-	// hack the effect angle so that explode death can orient the effect properly
-	if ( self->spawnflags & 2 )
-	{
-		VectorSet( forward, 0, 0, 1 );
-	}
-
-//	VectorCopy( self->currentOrigin, self->s.pos.trBase );
-
-	if ( self->fxID > 0 )
-	{
-		VectorMA( self->currentOrigin, 12, forward, pos );
-		G_PlayEffect( self->fxID, pos, forward );
-	}
-
-	if ( self->splashDamage > 0 && self->splashRadius > 0 )
-	{
-		G_RadiusDamage( self->currentOrigin, attacker, self->splashDamage, self->splashRadius, attacker, MOD_UNKNOWN );
-	}
-
-	if ( self->s.eFlags & EF_SHADER_ANIM )
-	{
-		self->s.frame = 1; // black
-	}
-
-	self->s.weapon = 0; // crosshair code uses this to mark crosshair red
-
-	if ( self->s.modelindex2 )
-	{
-		// switch to damage model if we should
-		self->s.modelindex = self->s.modelindex2;
-
-		VectorCopy( self->currentAngles, self->s.apos.trBase );
-		VectorClear( self->s.apos.trDelta );
-
-		if ( self->target )
-		{
-			G_UseTargets( self, attacker );
-		}
-	}
-	else
-	{
-		ObjectDie( self, inflictor, attacker, damage, meansOfDeath );
-	}
 }
 
 #define START_DIS 15
@@ -157,6 +97,112 @@ static void turret_fire ( gentity_t *ent, vec3_t start, vec3_t dir )
 	VectorScale( dir, 1100, bolt->s.pos.trDelta );
 	SnapVector( bolt->s.pos.trDelta );		// save net bandwidth
 	VectorCopy( start, bolt->currentOrigin);
+}
+
+//------------------------------------------------------------------------------------------------------------
+void Turret_ApplyPitchBone( gentity_t *self, float pitch )
+//------------------------------------------------------------------------------------------------------------
+{
+	vec3_t desiredAngles;
+
+	if ( self->spawnflags & 2 )
+	{
+		VectorSet( desiredAngles, pitch, 0.0f, 0.0f );
+	}
+	else
+	{
+		VectorSet( desiredAngles, -pitch, 0.0f, 0.0f );
+	}
+
+	gi.G2API_SetBoneAngles( &self->ghoul2[0], "Bone_body", desiredAngles,
+					BONE_ANGLES_POSTMULT, POSITIVE_Y, POSITIVE_Z, POSITIVE_X, NULL, 100, cg.time );
+}
+
+//------------------------------------------------------------------------------------------------------------
+void Turret_FireFromMuzzle( gentity_t *ent )
+//------------------------------------------------------------------------------------------------------------
+{
+	vec3_t		fwd, org;
+	mdxaBone_t	boltMatrix;
+
+	gi.G2API_GetBoltMatrix( ent->ghoul2, ent->playerModel,
+				ent->torsoBolt,
+				&boltMatrix, ent->currentAngles, ent->currentOrigin, (cg.time?cg.time:level.time),
+				NULL, ent->s.modelScale );
+
+	gi.G2API_GiveMeVectorFromMatrix( boltMatrix, ORIGIN, org );
+	gi.G2API_GiveMeVectorFromMatrix( boltMatrix, POSITIVE_Y, fwd );
+
+	VectorMA( org, START_DIS, fwd, org );
+
+	turret_fire( ent, org, fwd );
+}
+
+//------------------------------------------------------------------------------------------------------------
+void Turret_FinishExplodeDeath( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath )
+//------------------------------------------------------------------------------------------------------------
+{
+	vec3_t	forward = { 0,0,-1 }, pos;
+
+	self->e_ThinkFunc = thinkF_NULL;
+	self->e_UseFunc = useF_NULL;
+	self->e_DieFunc  = dieF_NULL;
+	self->takedamage = qfalse;
+	self->health = 0;
+	self->s.loopSound = 0;
+	self->lastImpact = 0;
+
+	if ( self->spawnflags & 2 )
+	{
+		VectorSet( forward, 0, 0, 1 );
+	}
+
+	if ( self->fxID > 0 )
+	{
+		VectorMA( self->currentOrigin, 12, forward, pos );
+		G_PlayEffect( self->fxID, pos, forward );
+	}
+
+	if ( self->splashDamage > 0 && self->splashRadius > 0 )
+	{
+		G_RadiusDamage( self->currentOrigin, attacker, self->splashDamage, self->splashRadius, attacker, MOD_UNKNOWN );
+	}
+
+	if ( self->s.eFlags & EF_SHADER_ANIM )
+	{
+		self->s.frame = 1; // black
+	}
+
+	self->s.weapon = 0; // crosshair code uses this to mark crosshair red
+
+	if ( self->s.modelindex2 )
+	{
+		self->s.modelindex = self->s.modelindex2;
+
+		VectorCopy( self->currentAngles, self->s.apos.trBase );
+		VectorClear( self->s.apos.trDelta );
+
+		if ( self->target )
+		{
+			G_UseTargets( self, attacker );
+		}
+	}
+	else
+	{
+		ObjectDie( self, inflictor, attacker, damage, meansOfDeath );
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------
+void turret_die ( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath,int dFlags,int hitLoc )
+//------------------------------------------------------------------------------------------------------------
+{
+	if ( JKG_TurretDeathSpin_TryStart( self, inflictor, attacker, damage, meansOfDeath ) )
+	{
+		return;
+	}
+
+	Turret_FinishExplodeDeath( self, inflictor, attacker, damage, meansOfDeath );
 }
 
 //-----------------------------------------------------
@@ -274,17 +320,7 @@ static void turret_aim( gentity_t *self )
 		}
 
 		// Note that this is NOT interpolated, so it will be less smooth...On the other hand, it does use Ghoul2 to blend, so it may smooth it out a bit?
-		if ( self->spawnflags & 2 )
-		{
-			VectorSet( desiredAngles, self->speed, 0.0f, 0.0f );
-		}
-		else
-		{
-			VectorSet( desiredAngles, -self->speed, 0.0f, 0.0f );
-		}
-
-		gi.G2API_SetBoneAngles( &self->ghoul2[0], "Bone_body", desiredAngles,
-						BONE_ANGLES_POSTMULT, POSITIVE_Y, POSITIVE_Z, POSITIVE_X, NULL, 100, cg.time );
+		Turret_ApplyPitchBone( self, self->speed );
 	}
 
 	if ( diffYaw || diffPitch )
@@ -437,6 +473,12 @@ void turret_base_think( gentity_t *self )
 	vec3_t		enemyDir, org, org2;
 
 	self->nextthink = level.time + FRAMETIME;
+
+	if ( JKG_TurretDeathSpin_Active( self ) )
+	{
+		JKG_TurretDeathSpin_Think( self );
+		return;
+	}
 
 	if ( self->spawnflags & 1 )
 	{
