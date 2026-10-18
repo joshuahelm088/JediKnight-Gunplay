@@ -2296,6 +2296,10 @@ int PM_GetLandingAnim( void )
 	int anim = pm->ps->legsAnim;
 	if ( PM_SpinningAnim( anim ) || PM_SaberInSpecialAttack( anim ) )
 	{
+		if ( g_jkgDebugLanding && g_jkgDebugLanding->integer )
+		{
+			Com_Printf( "[LAND-DBG] PM_GetLandingAnim: anim=%d is spinning/saberSpecial -> -1\n", anim );
+		}
 		return -1;
 	}
 	switch ( anim )
@@ -2351,6 +2355,10 @@ int PM_GetLandingAnim( void )
 	case BOTH_WALL_RUN_RIGHT://#
 		if ( pm->ps->legsAnimTimer > 500 )
 		{//only land at end of anim
+			if ( g_jkgDebugLanding && g_jkgDebugLanding->integer )
+			{
+				Com_Printf( "[LAND-DBG] PM_GetLandingAnim: wall-run anim=%d timer=%d > 500 -> -1\n", anim, pm->ps->legsAnimTimer );
+			}
 			return -1;
 		}
 		//NOTE: falls through on purpose!
@@ -2563,6 +2571,13 @@ static void PM_CrashLand( void )
 		{
 			delta = PM_CrashLandDelta( pml.previous_velocity, pm->waterlevel );
 		}
+
+		// JKG: plain (non-force) jump -- force the landing anim/sound to play
+		// even when delta is tiny (e.g. standing hop returns ~1.0 from velocity math).
+		if ( pm->ps->pm_flags & PMF_JUMPING )
+		{
+			forceLanding = qtrue;
+		}
 	}
 
 	// FIXME: if duck just as you land, roll and take half damage
@@ -2581,7 +2596,18 @@ static void PM_CrashLand( void )
 
 	if ( delta < 1 )
 	{
+		if ( g_jkgDebugLanding && g_jkgDebugLanding->integer )
+		{
+			Com_Printf( "[LAND-DBG] PM_CrashLand: delta=%.1f < 1, skipping anim+sound entirely\n", delta );
+		}
 		return;
+	}
+
+	if ( g_jkgDebugLanding && g_jkgDebugLanding->integer )
+	{
+		Com_Printf( "[LAND-DBG] PM_CrashLand: delta=%.1f flags=0x%x upmove=%d inDeath=%d inKnockDown=%d inRoll=%d forceLanding=%d\n",
+			delta, (int)pm->ps->pm_flags, (int)pm->cmd.upmove,
+			(int)PM_InDeathAnim(), (int)PM_InKnockDown( pm->ps ), (int)PM_InRoll( pm->ps ), (int)forceLanding );
 	}
 
 	qboolean deadFallSound = qfalse;
@@ -2595,6 +2621,10 @@ static void PM_CrashLand( void )
 				|| forceLanding ) //EV_FALL_SHORT or jumping back or force-land
 			{// decide which landing animation to use
 				int anim = PM_GetLandingAnim();
+				if ( g_jkgDebugLanding && g_jkgDebugLanding->integer )
+				{
+					Com_Printf( "[LAND-DBG] PM_GetLandingAnim: legsAnim=%d -> anim=%d\n", pm->ps->legsAnim, anim );
+				}
 				if ( anim != -1 )
 				{
 					if ( PM_FlippingAnim( pm->ps->torsoAnim ) ||
@@ -2605,6 +2635,15 @@ static void PM_CrashLand( void )
 					PM_SetAnim( pm, SETANIM_LEGS, anim, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD, 100 );	// Only blend over 100ms
 				}
 			}
+			else if ( g_jkgDebugLanding && g_jkgDebugLanding->integer )
+			{
+				Com_Printf( "[LAND-DBG] PM_CrashLand: anim skipped (delta<=10 and no special flags)\n" );
+			}
+		}
+		else if ( g_jkgDebugLanding && g_jkgDebugLanding->integer )
+		{
+			Com_Printf( "[LAND-DBG] PM_CrashLand: anim skipped (upmove=%d inKnockDown=%d inRoll=%d)\n",
+				(int)pm->cmd.upmove, (int)PM_InKnockDown( pm->ps ), (int)PM_InRoll( pm->ps ) );
 		}
 	}
 	else
@@ -2645,9 +2684,17 @@ static void PM_CrashLand( void )
 
 	if ( pm->gent && pm->gent->client && pm->gent->client->respawnTime >= level.time - 500 )
 	{//just spawned in, don't make a noise
+		if ( g_jkgDebugLanding && g_jkgDebugLanding->integer )
+		{
+			Com_Printf( "[LAND-DBG] PM_CrashLand: respawn guard fired (respawnTime=%d level.time=%d diff=%d), skipping sound\n", pm->gent->client->respawnTime, level.time, pm->gent->client->respawnTime - (level.time - 500) );
+		}
 		return;
 	}
 
+	if ( g_jkgDebugLanding && g_jkgDebugLanding->integer )
+	{
+		Com_Printf( "[LAND-DBG] PM_CrashLand: sound dispatch delta=%.1f deadFallSound=%d\n", delta, (int)deadFallSound );
+	}
 	if ( delta >= 75 )
 	{
 		if ( !deadFallSound )
@@ -7048,7 +7095,10 @@ void PM_WeaponLightsaber(void)
 				}
 				break;
 			case BLOCKED_UPPER_RIGHT_PROJ:
-				PM_SetSaberMove( LS_REFLECT_UR );
+				if ( pm->ps->saberMove != LS_REFLECT_UR )
+				{//not already playing this exact deflect, don't restart it every tick
+					PM_SetSaberMove( LS_REFLECT_UR );
+				}
 
 				if ( cg_debugSaber.integer >= 2 )
 				{
@@ -7073,7 +7123,10 @@ void PM_WeaponLightsaber(void)
 				}
 				break;
 			case BLOCKED_UPPER_LEFT_PROJ:
-				PM_SetSaberMove( LS_REFLECT_UL );
+				if ( pm->ps->saberMove != LS_REFLECT_UL )
+				{//not already playing this exact deflect, don't restart it every tick
+					PM_SetSaberMove( LS_REFLECT_UL );
+				}
 
 				if ( cg_debugSaber.integer >= 2 )
 				{
@@ -7098,7 +7151,10 @@ void PM_WeaponLightsaber(void)
 				}
 				break;
 			case BLOCKED_LOWER_RIGHT_PROJ:
-				PM_SetSaberMove( LS_REFLECT_LR );
+				if ( pm->ps->saberMove != LS_REFLECT_LR )
+				{//not already playing this exact deflect, don't restart it every tick
+					PM_SetSaberMove( LS_REFLECT_LR );
+				}
 
 				if ( cg_debugSaber.integer >= 2 )
 				{
@@ -7123,7 +7179,10 @@ void PM_WeaponLightsaber(void)
 				}
 				break;
 			case BLOCKED_LOWER_LEFT_PROJ:
-				PM_SetSaberMove( LS_REFLECT_LL);
+				if ( pm->ps->saberMove != LS_REFLECT_LL )
+				{//not already playing this exact deflect, don't restart it every tick
+					PM_SetSaberMove( LS_REFLECT_LL);
+				}
 
 				if ( cg_debugSaber.integer >= 2 )
 				{
@@ -7148,7 +7207,10 @@ void PM_WeaponLightsaber(void)
 				}
 				break;
 			case BLOCKED_TOP_PROJ:
-				PM_SetSaberMove( LS_REFLECT_UP );
+				if ( pm->ps->saberMove != LS_REFLECT_UP )
+				{//not already playing this exact deflect, don't restart it every tick
+					PM_SetSaberMove( LS_REFLECT_UP );
+				}
 
 				if ( cg_debugSaber.integer >= 2 )
 				{

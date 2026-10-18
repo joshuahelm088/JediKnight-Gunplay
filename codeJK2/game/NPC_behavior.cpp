@@ -31,6 +31,7 @@ we need it...
 #include "g_headers.h"
 #include "g_navigator.h"
 #include "Q3_Interface.h"
+#include "jkg_local.h"
 
 extern cvar_t	*g_AIsurrender;
 extern CNavigator	navigator;
@@ -888,6 +889,11 @@ void NPC_BSJump (void)
 			VectorClear(NPC->client->ps.velocity);
 			NPC_SetAnim(NPC, SETANIM_BOTH, BOTH_LAND1, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD);
 			NPCInfo->jumpState = JS_LANDING;
+			if ( g_jkgDebugLanding && g_jkgDebugLanding->integer )
+			{
+				Com_Printf( "[LAND-DBG] NPC JS_JUMPING->JS_LANDING: anim set but NO land sound fired for '%s' (known gap)\n",
+					NPC->targetname ? NPC->targetname : "?" );
+			}
 			//FIXME: landsound?
 		}
 		else if ( NPC->client->ps.legsAnimTimer > 0 )

@@ -49,6 +49,7 @@ extern cvar_t *g_jkgDebugLocomotion;	// 1 = print player walk/run anim changes a
 extern cvar_t *g_jkgDebugAimCone;	// NPC weapon spread cone (0=off, 1=draw, 2=+throttled print)
 extern cvar_t *g_jkgDebugNpcState;	// NPC AI state marker (0=off, 1=draw, 2=+throttled print)
 extern cvar_t *g_jkgDebugNpcSpeech;	// NPC alert-bark marker (0=off, 1=draw, 2=+print)
+extern cvar_t *g_jkgDebugLanding;	// 1 = print jump landing anim/sound decisions (player + NPC)
 extern cvar_t *g_jkgNpcFirstAlert;	// 1 = each NPC plays an alert the first time they notice the player
 extern cvar_t *g_jkgNoCombatPoints;	// 1 = stormtrooper commander skips point_combat selection (direct hunt/scout)
 extern cvar_t *g_jkgCombatMove;		// 1 = generic range/hunt/strafe combat movement (not combat points)

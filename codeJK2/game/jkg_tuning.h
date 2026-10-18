@@ -27,7 +27,7 @@ Each override keeps the stock value in a trailing comment for easy diffing.
 // Bolt speed: g_jkgBryarVelocity (player) / g_jkgBlasterPistolNpcVelocity (NPC).
 #undef  BRYAR_PISTOL_DAMAGE
 #define BRYAR_PISTOL_DAMAGE			30		// player Bryar only; DF2 +bryarbolt
-#define BRYAR_BOLT_SIZE				3		// new (no stock value)
+#define BRYAR_BOLT_SIZE				0.5f		// new (no stock value)
 // Decay: g_jkgBryarDamageDecay / g_jkgBryarMinDamage (player),
 // g_jkgBlasterPistolNpcDamageDecay / g_jkgBlasterPistolNpcMinDamage (NPC).
 
@@ -36,9 +36,9 @@ Each override keeps the stock value in a trailing comment for easy diffing.
 
 // --- E11 Blaster (WP_BLASTER) ---
 #undef  BLASTER_MAIN_SPREAD
-#define BLASTER_MAIN_SPREAD			2.75f	// stock 0.5f; was 2.25f JKG
+#define BLASTER_MAIN_SPREAD			3.0f	// stock 0.5f; was 2.25f JKG
 #undef  BLASTER_ALT_SPREAD
-#define BLASTER_ALT_SPREAD			2.75f	// stock 1.5f; was 2.25f JKG
+#define BLASTER_ALT_SPREAD			3.0f	// stock 1.5f; was 2.25f JKG
 // Bolt speed: g_jkgBlasterVelocity (player) / g_jkgBlasterNpcVelocity (NPC).
 #undef  BLASTER_DAMAGE
 #define BLASTER_DAMAGE				30		// stock weapons.dat / fallback; player fire uses g_jkgBlasterDamage
@@ -48,7 +48,7 @@ Each override keeps the stock value in a trailing comment for easy diffing.
 #undef  BLASTER_NPC_SPREAD
 #define BLASTER_NPC_SPREAD			1.0f	// stock 0.5f
 #define BLASTER_NPC_AIM_SPREAD_SCALE	0.3f	// stock 0.25f per currentAim point (NPC E-11)
-#define BLASTER_BOLT_SIZE			3		// new (no stock value)
+#define BLASTER_BOLT_SIZE			0.5f		// new (no stock value)
 
 // --- Wookiee Bowcaster ---
 #undef  BOWCASTER_DAMAGE
