@@ -3040,6 +3040,13 @@ void PM_TorsoAnimLightsaber()
 		return;
 	}
 
+	if ( pm->ps->saberBlocked >= BLOCKED_UPPER_RIGHT_PROJ && pm->ps->saberBlocked <= BLOCKED_TOP_PROJ )
+	{//hold the projectile deflect while still under fire; don't reset saberMove to idle and restart the anim every frame
+	 //(the deflect anim is shorter than a frame, so a torsoAnimTimer check would never hold). saberBlocked clears
+	 //via the debounce in PM_WeaponLightsaber once bolts stop, letting the torso return to idle cleanly.
+		return;
+	}
+
 	if (pm->ps->weaponTime > 0)
 	{	// weapon is already busy.
 		return;

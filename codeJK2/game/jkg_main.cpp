@@ -486,9 +486,9 @@ void JKG_RegisterCvars( void )
 	g_jkgBowcasterVelocity = gi.cvar( "g_jkgBowcasterVelocity", "1917", CVAR_ARCHIVE );
 	g_jkgBowcasterNpcVelocity = gi.cvar( "g_jkgBowcasterNpcVelocity", "1533", CVAR_ARCHIVE );
 	g_jkgRepeaterVelocity = gi.cvar( "g_jkgRepeaterVelocity", "2300", CVAR_ARCHIVE );
-	g_jkgBryarDamageDecay = gi.cvar( "g_jkgBryarDamageDecay", "6", CVAR_ARCHIVE );
+	g_jkgBryarDamageDecay = gi.cvar( "g_jkgBryarDamageDecay", "7", CVAR_ARCHIVE );
 	g_jkgBryarMinDamage = gi.cvar( "g_jkgBryarMinDamage", "10", CVAR_ARCHIVE );
-	g_jkgBlasterDamageDecay = gi.cvar( "g_jkgBlasterDamageDecay", "4", CVAR_ARCHIVE );
+	g_jkgBlasterDamageDecay = gi.cvar( "g_jkgBlasterDamageDecay", "5", CVAR_ARCHIVE );
 	g_jkgBlasterMinDamage = gi.cvar( "g_jkgBlasterMinDamage", "10", CVAR_ARCHIVE );
 	g_jkgBlasterNpcDamageDecay = gi.cvar( "g_jkgBlasterNpcDamageDecay", "4", CVAR_ARCHIVE );
 	g_jkgBlasterNpcMinDamage = gi.cvar( "g_jkgBlasterNpcMinDamage", "5", CVAR_ARCHIVE );

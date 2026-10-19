@@ -36,9 +36,9 @@ Each override keeps the stock value in a trailing comment for easy diffing.
 
 // --- E11 Blaster (WP_BLASTER) ---
 #undef  BLASTER_MAIN_SPREAD
-#define BLASTER_MAIN_SPREAD			3.0f	// stock 0.5f; was 2.25f JKG
+#define BLASTER_MAIN_SPREAD			3.75f	// stock 0.5f; was 2.25f JKG
 #undef  BLASTER_ALT_SPREAD
-#define BLASTER_ALT_SPREAD			3.0f	// stock 1.5f; was 2.25f JKG
+#define BLASTER_ALT_SPREAD			3.75f	// stock 1.5f; was 2.25f JKG
 // Bolt speed: g_jkgBlasterVelocity (player) / g_jkgBlasterNpcVelocity (NPC).
 #undef  BLASTER_DAMAGE
 #define BLASTER_DAMAGE				30		// stock weapons.dat / fallback; player fire uses g_jkgBlasterDamage
